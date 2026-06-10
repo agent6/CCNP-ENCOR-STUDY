@@ -138,6 +138,7 @@ show running-config | section router bgp</code></pre>
 route-map PREFER-ISP-B-WEIGHT permit 10
  match ip address prefix-list SVC-PFX
  set weight 500
+route-map PREFER-ISP-B-WEIGHT permit 20
 !
 router bgp 65010
  neighbor 10.13.0.2 route-map PREFER-ISP-B-WEIGHT in
@@ -149,6 +150,7 @@ show bgp ipv4 unicast 198.51.100.0/24</code></pre>
         <pre><code>route-map PREFER-ISP-A-LOCALPREF permit 10
  match ip address prefix-list SVC-PFX
  set local-preference 250
+route-map PREFER-ISP-A-LOCALPREF permit 20
 !
 router bgp 65010
  no neighbor 10.13.0.2 route-map PREFER-ISP-B-WEIGHT in
@@ -159,7 +161,13 @@ show bgp ipv4 unicast 198.51.100.0/24</code></pre>
         <p>Local preference is still an inbound policy decision from the enterprise perspective, but unlike weight it is designed to be carried within the local AS if iBGP exists.</p>
 
         <h3>Method C: AS Path Length</h3>
-        <pre><code>! On R3-ISP-B, make its advertisement to R1 less preferred by path length.
+        <pre><code>! R1-EDGE: remove the previous local-preference policy first.
+router bgp 65010
+ no neighbor 10.12.0.2 route-map PREFER-ISP-A-LOCALPREF in
+ clear ip bgp 10.12.0.2 soft in
+ clear ip bgp 10.13.0.2 soft in
+!
+! On R3-ISP-B, make its advertisement to R1 less preferred by path length.
 route-map PREPEND-TO-R1 permit 10
  set as-path prepend 65020 65020
 router bgp 65020
@@ -207,8 +215,12 @@ show bgp ipv4 unicast 198.51.100.0/24</code></pre>
           <li>A neighbor remains <code>Active</code>: prove whether the neighbor IP is reachable and whether TCP/179 is forming.</li>
           <li>A neighbor resets with a bad peer AS message: compare <code>remote-as</code> on both sides.</li>
           <li>The BGP session is established but no route appears: check address-family activation and whether the exact route exists for the <code>network</code> statement.</li>
+          <li>A route disappears after applying an inbound route-map: add an explicit later permit sequence. A route-map has an implicit deny, even when you only meant to change one prefix.</li>
+          <li>A corrected inbound route-map still does not restore a previously denied prefix: perform a full neighbor clear during the lab window, then recheck <code>State/PfxRcd</code> and the BGP table.</li>
           <li>The BGP table has two paths but the route table has one: identify the best path marker and explain the deciding attribute.</li>
           <li>Traffic takes the unexpected provider: inspect weight, local preference, AS path, origin, MED, and neighbor router ID before changing policy.</li>
+          <li>The first ping across a new directly connected link shows one dot followed by successes: repeat the ping before troubleshooting BGP. The first packet may have been consumed by ARP resolution.</li>
+          <li><code>network 198.51.100.0 mask 255.255.255.0</code> may display as <code>network 198.51.100.0</code> in the running configuration because IOS treats it as a classful /24 network.</li>
         </ol>
         <pre><code>show bgp ipv4 unicast summary
 show bgp ipv4 unicast neighbors 10.12.0.2 | include BGP state|remote AS|Last reset|Prefixes

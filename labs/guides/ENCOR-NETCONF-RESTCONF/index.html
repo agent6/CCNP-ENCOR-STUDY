@@ -40,7 +40,8 @@
 
       <section id="topology" class="panel">
         <h2>Topology</h2>
-        <p>AUTOMATION is the management workstation. R1-MANAGED is the IOS XE device under test. APP-SERVER gives you a routed endpoint so configuration changes can be verified with both API output and data-plane tests. The starting CML topology has addressing, a local user, and payload examples; NETCONF and RESTCONF are intentionally disabled.</p>
+        <p>AUTOMATION is the management workstation. R1-MANAGED is the IOS XE device under test. APP-SERVER gives you a routed endpoint so configuration changes can be verified with both API output and data-plane tests. The starting CML topology has addressing, a local user, and payload examples.</p>
+        <div class="callout warning"><p><strong>CML image limitation:</strong> This IOL-XE image supports legacy <code>netconf ssh</code> on TCP/22, but does not support <code>netconf-yang</code>, TCP/830 NETCONF/YANG, or <code>restconf</code>. RESTCONF and YANG-modeled configuration tasks are included for interpretation and platform comparison, not as runnable CML commands on this image.</p></div>
         <img class="topology" src="assets/netconf-restconf-topology.svg" alt="NETCONF RESTCONF topology">
       </section>
 
@@ -51,10 +52,9 @@
 show ip interface brief
 show ip route
 show users
-show running-config | include ^netconf|^restconf|ip http|username|aaa
-show platform software yang-management process
-show netconf-yang sessions
-show restconf
+show running-config | include ^netconf|^restconf|ip http|username|aaa|enable secret
+show ip ssh
+show ip http server secure status
 ping 10.60.60.10 source 10.60.60.1
 ping 10.70.70.10 source 10.70.70.1</code></pre>
         <p>From AUTOMATION, confirm reachability to the management address:</p>
@@ -64,6 +64,7 @@ traceroute 10.70.70.10
 nc -vz 10.60.60.1 22
 nc -vz 10.60.60.1 830
 nc -vz 10.60.60.1 443</code></pre>
+        <div class="callout warning"><p><strong>Validated behavior:</strong> Use <code>enable</code> with password <code>Cisco123!</code>. AUTOMATION has <code>ssh</code>, <code>nc</code>, and BusyBox <code>wget</code>, but no <code>curl</code>. TCP/22 opens after SSH keys exist; TCP/830 and TCP/443 were refused on this image.</p></div>
       </section>
 
       <section id="task2" class="task">
@@ -75,8 +76,8 @@ aaa new-model
 aaa authentication login default local
 aaa authorization exec default local
 username automation privilege 15 secret Cisco123!
-ip domain-name encor.local
-crypto key generate rsa modulus 2048
+ip domain name encor.local
+crypto key generate rsa general-keys modulus 2048
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 2
@@ -91,30 +92,30 @@ show users</code></pre>
       </section>
 
       <section id="task3" class="task">
-        <h2>Task 3: Enable and Verify NETCONF</h2>
-        <p>Enable NETCONF over SSH, verify the listening service, then inspect sessions and YANG management state.</p>
+        <h2>Task 3: Enable and Verify Legacy NETCONF over SSH</h2>
+        <p>Enable the legacy NETCONF SSH subsystem supported by this image, then compare that behavior with modern NETCONF/YANG expectations.</p>
         <pre><code>! R1-MANAGED
 conf t
-netconf-yang
+netconf ssh
 end
 !
-show running-config | include netconf-yang
-show netconf-yang sessions
-show platform software yang-management process
-show platform software yang-management process state
-show control-plane host open-ports | include 830</code></pre>
-        <p>From AUTOMATION, test the port and retrieve NETCONF capabilities if an SSH client is available:</p>
+show running-config | include ^netconf
+show ip ssh</code></pre>
+        <p>From AUTOMATION, test the port and retrieve legacy NETCONF capabilities through the SSH subsystem:</p>
         <pre><code>nc -vz 10.60.60.1 830
-ssh -s automation@10.60.60.1 -p 830 netconf</code></pre>
-        <p>After the NETCONF hello appears, you should see capability URIs that describe supported datastores, base protocol support, and Cisco/IETF YANG modules. End the session with a NETCONF close-session RPC if you are testing manually.</p>
+ssh -o StrictHostKeyChecking=no \
+  -o UserKnownHostsFile=/tmp/known_hosts_netconf \
+  -s automation@10.60.60.1 netconf</code></pre>
+        <p>Validated result: TCP/830 is refused, but <code>ssh -s ... netconf</code> on TCP/22 returns a NETCONF hello with base NETCONF capabilities such as writable-running, startup, URL, and Cisco legacy capabilities. This is not the same as <code>netconf-yang</code> with YANG-modeled TCP/830 support.</p>
         <pre><code>&lt;rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"&gt;
   &lt;close-session/&gt;
 &lt;/rpc&gt;]]&gt;]]&gt;</code></pre>
+        <div class="callout warning"><p><strong>Unsupported here:</strong> <code>netconf-yang</code>, <code>show netconf-yang sessions</code>, and <code>show platform software yang-management process</code> are rejected by this image.</p></div>
       </section>
 
       <section id="task4" class="task">
-        <h2>Task 4: Enable and Verify RESTCONF</h2>
-        <p>Enable RESTCONF and retrieve YANG-modeled data over HTTPS. RESTCONF uses HTTP verbs and returns XML or JSON depending on headers and endpoint support.</p>
+        <h2>Task 4: Interpret RESTCONF Requirements</h2>
+        <p>RESTCONF uses HTTPS, HTTP verbs, and YANG-modeled resource paths. The CML image in this lab does not support the <code>restconf</code> command, so validate prerequisites and interpret the production commands.</p>
         <pre><code>! R1-MANAGED
 conf t
 restconf
@@ -124,7 +125,7 @@ show running-config | include restconf|ip http
 show restconf
 show ip http server secure status
 show control-plane host open-ports | include 443</code></pre>
-        <p>From AUTOMATION, query the RESTCONF root and interface data. Use insecure TLS only because the lab uses a self-signed certificate.</p>
+        <p>Production-style RESTCONF reads with <code>curl</code> on a supported IOS XE platform:</p>
         <pre><code>curl -k -u automation:Cisco123! https://10.60.60.1/restconf/
 curl -k -u automation:Cisco123! \
   -H "Accept: application/yang-data+json" \
@@ -132,12 +133,18 @@ curl -k -u automation:Cisco123! \
 curl -k -u automation:Cisco123! \
   -H "Accept: application/yang-data+json" \
   https://10.60.60.1/restconf/data/ietf-interfaces:interfaces/interface=Ethernet0%2F1</code></pre>
+        <p>BusyBox <code>wget</code> fallback pattern for environments without <code>curl</code>:</p>
+        <pre><code>wget -S -O- \
+  --header 'Authorization: Basic YXV0b21hdGlvbjpDaXNjbzEyMyE=' \
+  --header 'Accept: application/yang-data+json' \
+  https://10.60.60.1/restconf/</code></pre>
         <p>Interpret HTTP status codes: 200 means a successful read, 201/204 usually indicates a successful create/update, 401 means authentication failed, 403 means authorization or NACM rejected the action, 404 usually means the URI/module/key path is wrong, and 409 often indicates a data conflict.</p>
+        <div class="callout warning"><p><strong>Validated behavior:</strong> On this image, <code>restconf</code> is rejected and HTTP/HTTPS connections from AUTOMATION are refused even when <code>show ip http server secure status</code> reports enabled. Treat RESTCONF commands here as interpretation content for supported IOS XE platforms.</p></div>
       </section>
 
       <section id="task5" class="task">
-        <h2>Task 5: Configure IOS XE with RESTCONF and NETCONF</h2>
-        <p>Use RESTCONF with the IOS XE native YANG model to create a loopback, then use NETCONF-style XML to understand how the same configuration maps to a datastore edit. Verify both from API output and CLI.</p>
+        <h2>Task 5: Interpret IOS XE Configuration with RESTCONF and NETCONF Models</h2>
+        <p>Interpret how RESTCONF and NETCONF would create a loopback through YANG models on a supported platform. This CML image cannot apply these payloads through RESTCONF or NETCONF/YANG.</p>
         <p>Create a RESTCONF payload on AUTOMATION:</p>
         <pre><code>cat &gt; loopback100-native.json &lt;&lt;'EOF'
 {
@@ -161,7 +168,7 @@ curl -k -u automation:Cisco123! \
   -H "Accept: application/yang-data+json" \
   --data @loopback100-native.json \
   https://10.60.60.1/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback=100</code></pre>
-        <p>Verify on R1-MANAGED:</p>
+        <p>Equivalent CLI state to compare against the model payload:</p>
         <pre><code>show ip interface brief | include Loopback100
 show running-config interface Loopback100
 show logging | include RESTCONF|YANG</code></pre>
@@ -197,14 +204,14 @@ curl -k -u automation:Cisco123! \
 # R1-MANAGED
 show ip interface brief
 show running-config interface Loopback100
-show netconf-yang sessions
-show restconf
-show platform software yang-management process</code></pre>
+show running-config | include ^netconf
+show ip ssh
+show ip http server secure status</code></pre>
         <p>Answer these:</p>
         <ul>
-          <li>Which TCP port is used by NETCONF over SSH?</li>
+          <li>Which TCP port is used by modern NETCONF/YANG, and which port did legacy <code>netconf ssh</code> use in this image?</li>
           <li>Which TCP port and server feature are used by RESTCONF?</li>
-          <li>Which commands prove NETCONF/RESTCONF are enabled on the router?</li>
+          <li>Which commands prove legacy NETCONF is enabled on this router, and which modern commands are unsupported?</li>
           <li>Which response or output proves the YANG-modeled configuration was applied?</li>
           <li>What is the difference between reading intended interface config and interface operational state?</li>
         </ul>
@@ -214,8 +221,8 @@ show platform software yang-management process</code></pre>
         <h2>Task 7: Troubleshoot NETCONF and RESTCONF Defects</h2>
         <p>Diagnose the layer where the failure occurs before changing configuration.</p>
         <ol>
-          <li>SSH works on TCP/22, but NETCONF fails because <code>netconf-yang</code> is missing or the YANG process is not running.</li>
-          <li>RESTCONF returns connection refused because HTTPS is disabled or <code>restconf</code> is missing.</li>
+          <li>SSH works on TCP/22, but modern NETCONF/YANG fails because <code>netconf-yang</code> is unsupported or the YANG process is not running.</li>
+          <li>RESTCONF returns connection refused because HTTPS is disabled, <code>restconf</code> is missing, or the platform image does not expose the service.</li>
           <li>RESTCONF returns 401 because the username or password is wrong.</li>
           <li>RESTCONF returns 404 because the module name, list key, or escaped interface name is wrong.</li>
           <li>RESTCONF updates fail because the content type is not <code>application/yang-data+json</code> or XML payload structure is wrong.</li>
@@ -232,14 +239,15 @@ show control-plane host open-ports
 show logging | include YANG|NETCONF|RESTCONF|HTTP
 debug netconf-yang
 debug restconf</code></pre>
+        <div class="callout warning"><p><strong>CML limitation:</strong> Several troubleshooting commands in this block are useful on supported IOS XE platforms but are rejected by this IOL-XE image. The validated runnable checks are <code>show running-config | include ^netconf</code>, <code>show ip ssh</code>, <code>netconf ssh</code>, and SSH subsystem testing from AUTOMATION.</p></div>
       </section>
 
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>
         <div class="grade">
           <div class="check"><b>Management Plane</b><span>AAA, SSH, HTTPS, local credentials, and reachability are correct.</span></div>
-          <div class="check"><b>NETCONF</b><span>NETCONF is enabled, reachable on TCP/830, and sessions/capabilities can be verified.</span></div>
-          <div class="check"><b>RESTCONF</b><span>RESTCONF is enabled, reachable over HTTPS, and YANG data can be read with correct headers and URIs.</span></div>
+          <div class="check"><b>NETCONF</b><span>Legacy NETCONF over SSH is enabled and capabilities can be verified; modern NETCONF/YANG limitations are identified.</span></div>
+          <div class="check"><b>RESTCONF</b><span>RESTCONF prerequisites and production commands are interpreted, including why this CML image cannot run them.</span></div>
           <div class="check"><b>Model Use</b><span>You can map CLI configuration to YANG-modeled JSON/XML and verify applied state.</span></div>
         </div>
       </section>

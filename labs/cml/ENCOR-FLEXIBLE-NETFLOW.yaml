@@ -72,7 +72,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       interface Ethernet0/0
@@ -182,7 +181,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       interface Ethernet0/0
@@ -325,7 +323,7 @@ nodes:
       ip route add default via 10.20.20.1
       mkdir -p /www
       echo "app-server" > /www/index.html
-      busybox httpd -h /www -p 80
+      /usr/sbin/httpd -f -p 80 -h /www >/tmp/httpd.log 2>&1 &
 
 
       echo "app-server" > /etc/hostname

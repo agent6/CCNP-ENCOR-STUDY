@@ -20,6 +20,7 @@
       <a href="#task3">Task 3: Summarization</a>
       <a href="#task4">Task 4: Filtering</a>
       <a href="#task5">Task 5: Validation</a>
+      <a href="#troubleshooting">Troubleshooting</a>
       <a href="#grading">Grade Entire Lab</a>
       <a href="#references">References</a>
     </nav>
@@ -50,7 +51,7 @@
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Configure Multiple Normal Areas</h2>
-        <p>Place transit links and LANs in the correct areas. Do not use stub or NSSA area types; the exam topic calls out multiple normal areas.</p>
+        <p>The starting CML YAML already places transit links and LANs in the correct normal areas. Do not use stub or NSSA area types; the exam topic calls out multiple normal areas. Verify the starting state before adding policy.</p>
         <pre><code>router ospf 10
  router-id 1.1.1.1
  passive-interface default
@@ -62,16 +63,24 @@
 show ip ospf interface brief
 show ip ospf database summary
 show ip route ospf</code></pre>
+        <p>R1-HQ should have full adjacencies with R2-CORE in Area 0 and R3-DIST in Area 10. R2-CORE should have full adjacencies with R1-HQ in Area 0 and R4-BR in Area 20.</p>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Summarize at ABRs</h2>
         <p>Summarize only on ABRs and only in the direction where the summary should be advertised. Use <code>area range</code> for inter-area summaries.</p>
+        <h3>R1-HQ Area 10 Summary</h3>
         <pre><code>router ospf 10
  area 10 range 10.10.0.0 255.255.0.0
- area 20 range 10.20.0.0 255.255.0.0
 !
 show ip ospf database summary 10.10.0.0
 show ip route 10.10.0.0 255.255.0.0</code></pre>
+        <h3>R2-CORE Area 20 Summary</h3>
+        <pre><code>router ospf 10
+ area 20 range 10.20.0.0 255.255.0.0
+!
+show ip ospf database summary 10.20.0.0
+show ip route 10.20.0.0 255.255.0.0</code></pre>
+        <p>Each ABR installs a matching Null0 route for its summary. That discard route prevents loops if a packet matches the aggregate but no longer has a more specific route inside the area.</p>
         <p>Depth check: <code>area range</code> summarizes routes between OSPF areas. <code>summary-address</code> is for external routes redistributed into OSPF.</p>
       </section>
       <section id="task4" class="task">
@@ -86,7 +95,7 @@ router ospf 10
 show ip ospf database summary
 show ip route 10.20.99.99
 show ip protocols | section Routing for Networks</code></pre>
-        <p>Filtering inter-area routes affects Type-3 LSAs. It is not the same as distribute-list filtering of routes from the local RIB.</p>
+        <p>Filtering inter-area routes affects Type-3 LSAs. It is not the same as distribute-list filtering of routes from the local RIB. After the filter is applied on R2-CORE, R2 still has the 10.20.99.99/32 route because it is intra-area inside Area 20. R1-HQ should no longer see a specific Type-3 LSA for 10.20.99.99, but traffic to that address can still match the 10.20.0.0/16 aggregate.</p>
       </section>
       <section id="task5" class="task">
         <h2>Task 5: Validation and Troubleshooting</h2>
@@ -100,6 +109,22 @@ show ip ospf database summary adv-router 1.1.1.1
 show ip route ospf | begin Gateway
 show ip prefix-list
 show ip ospf statistics</code></pre>
+        <p>Final proof from R1-HQ:</p>
+        <pre><code>show ip ospf database summary 10.20.99.99
+show ip route 10.20.0.0 255.255.0.0
+ping 10.20.20.10 source 10.0.12.1
+ping 10.30.30.10 source 10.0.13.1</code></pre>
+      </section>
+      <section id="troubleshooting" class="panel">
+        <h2>Troubleshooting Notes from CML Validation</h2>
+        <ul>
+          <li>The IOL-XE and IOL-L2 images used for this lab reject <code>no ip domain-lookup</code> during startup. It is not needed and has been removed from the YAML.</li>
+          <li><code>area range</code> created a local Null0 route for the aggregate on the ABR. This is expected and should not be removed.</li>
+          <li>A prefix-list filter can hide a more specific Type-3 LSA while a covering aggregate remains reachable. Verify both the OSPF database and the route table so you know whether you removed detail or removed reachability.</li>
+          <li>On R2-CORE, 10.20.99.99/32 remains in the routing table after filtering because R2 is attached to Area 20. Check the result from R1-HQ to confirm what left Area 20.</li>
+          <li>If summarization appears ineffective, confirm that the command is on the ABR attached to that area. R1-HQ summarizes Area 10; R2-CORE summarizes Area 20.</li>
+          <li>Use <code>show ip ospf database summary &lt;prefix&gt;</code> to inspect Type-3 LSAs. A plain route lookup may still resolve through a less-specific aggregate.</li>
+        </ul>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>

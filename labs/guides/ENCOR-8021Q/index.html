@@ -380,6 +380,7 @@
       <a href="#task3">Task 3: VLAN Pruning</a>
       <a href="#task4">Task 4: Troubleshooting</a>
       <a href="#task5">Task 5: Validation</a>
+      <a href="#troubleshooting">Troubleshooting Notes</a>
       <a href="#grading">Grade Entire Lab</a>
       <a href="#solutions">Solutions</a>
     </nav>
@@ -422,7 +423,7 @@
         <ul>
           <li>Use Cisco Modeling Labs IOL-L2 nodes for every switch in this lab.</li>
           <li>Use Cisco Modeling Labs IOL nodes for routers if this topology is extended later. This 802.1Q lab does not require routers.</li>
-          <li>IOL-L2 uses 802.1Q trunking for switch trunks; do not use Catalyst hardware-specific assumptions or images.</li>
+          <li>IOL-L2 uses 802.1Q trunking for switch trunks. In this CML image, set `switchport trunk encapsulation dot1q` before `switchport mode trunk` so the interface is no longer in Auto encapsulation state.</li>
           <li>Layer 3 gateways already exist elsewhere; this lab focuses only on Layer 2 trunk transport.</li>
           <li>Do not use EtherChannel in this lab. Each link is intentionally evaluated as an individual trunk.</li>
           <li>Use `write memory` or `copy running-config startup-config` only after the verification tasks pass.</li>
@@ -570,7 +571,7 @@ show cdp neighbors detail</code></pre>
         <h3>Requirements</h3>
         <ol>
           <li>Create VLANs 10, 20, 30, 40, 100, and 999 on every switch that must transport them.</li>
-          <li>Use IOL-L2 trunk commands. Do not configure hardware-specific trunk encapsulation commands.</li>
+          <li>Use IOL-L2 trunk commands. Configure `switchport trunk encapsulation dot1q` before forcing trunk mode.</li>
           <li>Force trunk mode on all inter-switch links.</li>
           <li>Set native VLAN 999 on every trunk.</li>
           <li>Disable DTP negotiation with `switchport nonegotiate` on all trunks that support the command.</li>
@@ -593,6 +594,7 @@ vlan 999
 !
 interface range Ethernet0/0-1
  description 802.1Q trunks to distribution layer
+ switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 999
  switchport nonegotiate
@@ -601,13 +603,15 @@ end</code></pre>
 
         <h3>Verification</h3>
         <pre><code>show interfaces trunk
-show interfaces ethernet0/0 switchport | include Administrative Mode|Operational Mode|Negotiation|Trunking Native
+show interfaces ethernet0/0 switchport | include Mode|Negotiation|Native|Encapsulation
 show dtp interface ethernet0/0</code></pre>
 
         <h3>Expected Output</h3>
-        <pre><code>CORE-1#show interfaces ethernet0/0 switchport | include Mode|Negotiation|Native
+        <pre><code>CORE-1#show interfaces ethernet0/0 switchport | include Mode|Negotiation|Native|Encapsulation
 Administrative Mode: trunk
 Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
 Negotiation of Trunking: Off
 Trunking Native Mode VLAN: 999 (NATIVE-BLACKHOLE)</code></pre>
       </section>
@@ -657,15 +661,16 @@ Et1/1      30,40,100,999</code></pre>
         <p>Three defects remain in the network. Use show commands to locate and correct them without replacing the entire interface configuration.</p>
 
         <h3>Defect A: Native VLAN Mismatch</h3>
-        <p>`SRV-ACCESS` reports a native VLAN inconsistency on one uplink. The link is up, but STP blocks the affected VLANs.</p>
-        <pre><code>SRV-ACCESS#show spanning-tree inconsistentports
-Name                 Interface              Inconsistency
--------------------- ---------------------- ------------------
-VLAN0999             Et0/1                  PVID_Inc
-
-SRV-ACCESS#show interfaces ethernet0/1 trunk
+        <p>`SRV-ACCESS` has a native VLAN mismatch on one uplink. On this IOL-L2 image, the mismatch may not appear as an STP inconsistent port, so compare local trunk state with CDP neighbor detail.</p>
+        <pre><code>SRV-ACCESS#show interfaces ethernet0/1 trunk
 Port        Mode             Encapsulation  Status        Native vlan
-Et0/1      on               802.1q         trunking      1</code></pre>
+Et0/1      on               802.1q         trunking      1
+
+SRV-ACCESS#show cdp neighbors detail
+-------------------------
+Device ID: DIST-3
+Interface: Ethernet0/1,  Port ID (outgoing port): Ethernet1/1
+Native VLAN: 999</code></pre>
 
         <h3>Defect B: Missing VLAN</h3>
         <p>Users can reach the application server in VLAN 30, but database access in VLAN 40 fails through `DIST-2`.</p>
@@ -678,7 +683,14 @@ Et1/1      30,100,999</code></pre>
         <pre><code>ACCESS-2#show interfaces ethernet0/1 switchport | include Administrative Mode|Operational Mode|Negotiation
 Administrative Mode: dynamic desirable
 Operational Mode: trunk
-Negotiation of Trunking: On</code></pre>
+Negotiation of Trunking: On
+
+ACCESS-2#show interfaces ethernet0/1 trunk
+Port        Mode             Encapsulation  Status        Native vlan
+Et0/1      desirable        802.1q         trunking      999
+
+Port        Vlans allowed on trunk
+Et0/1      1-4094</code></pre>
 
         <h3>Requirements</h3>
         <ol>
@@ -700,8 +712,8 @@ show spanning-tree inconsistentports
 show spanning-tree vlan 10,20,30,40,100
 show mac address-table dynamic vlan 10
 show mac address-table dynamic vlan 40
-ping 10.30.0.10 source vlan 10
-traceroute 10.40.0.10 source vlan 20</code></pre>
+ping 10.30.0.10 source Vlan10 repeat 3
+ping 10.40.0.10 source Vlan20 repeat 3</code></pre>
 
         <h3>Completion Criteria</h3>
         <ul>
@@ -712,6 +724,28 @@ traceroute 10.40.0.10 source vlan 20</code></pre>
           <li>No STP inconsistent ports remain.</li>
           <li>MAC addresses appear on expected trunks for VLANs 10, 20, 30, and 40.</li>
         </ul>
+      </section>
+
+      <section id="troubleshooting" class="panel">
+        <h2>Troubleshooting Notes</h2>
+        <div class="callout warning">
+          <p><strong>Trunk mode rejected because encapsulation is Auto:</strong> On this IOL-L2 image, `switchport mode trunk` can fail with `Command rejected: An interface whose trunk encapsulation is "Auto" can not be configured to "trunk" mode.` Set `switchport trunk encapsulation dot1q` first, then apply `switchport mode trunk`, the native VLAN, allowed VLAN list, and `switchport nonegotiate`.</p>
+        </div>
+        <div class="callout warning">
+          <p><strong>`nonegotiate` rejected after trunk mode fails:</strong> If trunk mode was rejected, the interface may still be dynamic. `switchport nonegotiate` then fails because DTP is still active. Fix the encapsulation and trunk mode first, then reapply `switchport nonegotiate`.</p>
+        </div>
+        <div class="callout">
+          <p><strong>Unsupported convenience commands:</strong> This IOL-L2 image may reject `no ip domain-lookup`. That does not affect 802.1Q behavior; remove it from pasted startup templates if it appears in the console as an invalid input.</p>
+        </div>
+        <div class="callout">
+          <p><strong>Native VLAN mismatch evidence:</strong> Do not depend on `show spanning-tree inconsistentports` as the only signal in CML. In this lab image, a native VLAN mismatch can leave the inconsistent-port table empty. Compare `show interfaces trunk` on the local port with the neighbor's `Native VLAN` value in `show cdp neighbors detail`.</p>
+        </div>
+        <div class="callout">
+          <p><strong>Access VLAN auto-created:</strong> If startup output says `Access VLAN does not exist. Creating vlan 10` or `Creating vlan 20`, that is informational. Verify with `show vlan brief`; if the VLAN exists and the access port is assigned correctly, continue.</p>
+        </div>
+        <div class="callout">
+          <p><strong>First ping timeout:</strong> The first ICMP echo can time out while ARP resolves across the repaired trunk path. A result such as `Success rate is 66 percent (2/3)` is acceptable for the first test; repeat the ping if you need a clean `100 percent` confirmation.</p>
+        </div>
       </section>
 
       <section id="grading" class="panel">
@@ -772,6 +806,7 @@ vlan 999
  name NATIVE-BLACKHOLE
 !
 interface range Ethernet0/0-1
+ switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 999
  switchport nonegotiate
@@ -812,6 +847,7 @@ end
 ! Defect C: dynamic negotiation on ACCESS-2
 configure terminal
 interface Ethernet0/1
+ switchport trunk encapsulation dot1q
  switchport mode trunk
  switchport trunk native vlan 999
  switchport trunk allowed vlan 10,20,999

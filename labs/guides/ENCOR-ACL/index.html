@@ -81,6 +81,8 @@ ip access-list extended USER-IN
  permit tcp host 10.10.10.10 host 10.30.30.10 eq 80
  permit icmp host 10.10.10.10 host 10.30.30.10 echo
  permit icmp host 10.30.30.10 host 10.10.10.10 echo-reply
+ permit tcp host 10.10.10.10 host 10.10.10.1 eq telnet
+ permit tcp host 10.10.10.10 host 10.10.10.1 eq 22
  deny ip host 10.10.10.10 10.40.40.0 0.0.0.255 log
  deny ip host 10.10.10.10 any log
  permit ip any any
@@ -92,7 +94,7 @@ end
 show access-lists USER-IN
 show ip interface Ethernet0/0.10 | include access list</code></pre>
         <p>Test from USER-PC. HTTP and ping to APP-SERVER should work. DMZ-HOST should fail. Other traffic should increment deny counters.</p>
-        <div class="callout"><p><strong>Depth check:</strong> The final <code>permit ip any any</code> protects other traffic on the interface while this ACL focuses on USER-PC. Without it, the implicit deny blocks everything not explicitly permitted.</p></div>
+        <div class="callout"><p><strong>Depth check:</strong> The management TCP permits let USER-PC reach the VTY layer so Task 5 can prove the VTY <code>access-class</code> deny. Without them, the interface ACL would block the attempt first and hide the management-plane control. The final <code>permit ip any any</code> protects other traffic on the interface while this ACL focuses on USER-PC.</p></div>
       </section>
 
       <section id="task3" class="task">
@@ -132,6 +134,8 @@ object-group service WEB-ICMP
 !
 ip access-list extended ADMIN-IN
  remark ADMIN-PC may reach server networks for web and ICMP
+ permit tcp host 10.10.20.10 host 10.10.20.1 eq telnet
+ permit tcp host 10.10.20.10 host 10.10.20.1 eq 22
  permit object-group WEB-ICMP host 10.10.20.10 object-group SERVER-NETS
  deny ip host 10.10.20.10 any log
  permit ip any any
@@ -143,7 +147,7 @@ end
 show object-group
 show access-lists ADMIN-IN
 show ip interface Ethernet0/0.20 | include access list</code></pre>
-        <p>If your image does not support service object groups in ACLs, replace the object-group ACE with explicit TCP/80 and ICMP permit statements. The verification and placement logic are the same.</p>
+        <p>If your image does not support service object groups in ACLs, replace the object-group ACE with explicit TCP/80 and ICMP permit statements. Keep the management permits above the deny line; otherwise ADMIN-PC traffic to R1-EDGE will be stopped by the interface ACL before the VTY access-class can evaluate it.</p>
       </section>
 
       <section id="task5" class="task">
@@ -161,18 +165,14 @@ ip access-list standard MGMT-SOURCES
 !
 line vty 0 4
  login local
- transport input ssh
- access-class MGMT-SOURCES in
-line vty 5 15
- login local
- transport input ssh
+ transport input telnet ssh
  access-class MGMT-SOURCES in
 end
 !
 show access-lists MGMT-SOURCES
 show running-config | section line vty
 show ip ssh</code></pre>
-        <p>ADMIN-PC should be allowed to SSH to R1-EDGE. USER-PC should be denied by the VTY access-class even if the password is correct.</p>
+        <p>ADMIN-PC should be allowed to manage R1-EDGE. In this CML image, validate the VTY access-class with Telnet because SSH may report enabled but still refuse sessions. USER-PC should be denied by the VTY access-class even though USER-IN permits the TCP attempt to reach R1-EDGE.</p>
       </section>
 
       <section id="task6" class="task">
@@ -193,7 +193,7 @@ show logging | include SEC|list|denied|ACL|ACCESS</code></pre>
           <li>USER-PC to DMZ-HOST: denied and counted.</li>
           <li>ADMIN-PC to APP-SERVER HTTP/ICMP: permitted.</li>
           <li>ADMIN-PC to DMZ-HOST HTTP/ICMP: permitted.</li>
-          <li>USER-PC SSH to R1-EDGE: denied by VTY access-class.</li>
+          <li>USER-PC Telnet/SSH to R1-EDGE: denied by VTY access-class.</li>
         </ul>
         <pre><code>show access-lists USER-IN
 show access-lists ADMIN-IN
@@ -214,6 +214,8 @@ show running-config interface Ethernet0/0.20</code></pre>
           <li>VTY access-class blocks management even though the data-plane ACL permits the source.</li>
           <li>Counters do not increment because traffic is taking a different interface or never reaches the router.</li>
         </ol>
+        <div class="callout"><p><strong>CML notes from validation:</strong> The IOL-XE image supports VTY 0-4 only in this lab, so do not configure <code>line vty 5 15</code>. SSH may show enabled while TCP/22 refuses sessions; use Telnet to validate ACL and VTY source-control logic, then troubleshoot SSH separately. If endpoint HTTP tests fail during baseline, verify the Alpine server listener with <code>netstat -ltn | grep :80</code>; the CML YAML uses a root-started Netcat listener because BusyBox <code>httpd</code> did not reliably stay listening in the live run.</p></div>
+        <div class="callout"><p><strong>Layered ACL check:</strong> When a management connection fails, determine which layer rejected it. If the interface ACL denies the packet, the VTY standard ACL will not count it. Add narrow TCP/22 or TCP/23 exceptions in the interface ACL when the lab objective is to prove VTY <code>access-class</code> behavior.</p></div>
         <pre><code>show access-lists
 show ip interface
 show running-config | include access-group|access-class

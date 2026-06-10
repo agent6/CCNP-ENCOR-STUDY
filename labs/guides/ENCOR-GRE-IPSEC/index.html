@@ -38,22 +38,55 @@
       <section id="task1" class="task">
         <h2>Task 1: Establish Plain GRE</h2>
         <p>Build Tunnel10 first without IPsec. This separates routing and encapsulation problems from crypto problems.</p>
-        <pre><code>interface tunnel10
+        <h3>HQ-RTR</h3>
+        <pre><code>enable
+terminal length 0
+show ip route 198.51.100.6
+show ip route 0.0.0.0
+ping 198.51.100.6 source Ethernet0/0
+!
+configure terminal
+interface Tunnel10
  description GRE overlay to BR-RTR
  ip address 172.16.10.1 255.255.255.252
- tunnel source ethernet0/0
+ tunnel source Ethernet0/0
  tunnel destination 198.51.100.6
  tunnel mode gre ip
  no shutdown
 !
-ip route 10.60.0.0 255.255.255.0 tunnel10
-show interface tunnel10
-ping 172.16.10.2 source 172.16.10.1</code></pre>
+ip route 10.60.0.0 255.255.255.0 Tunnel10
+end
+show interface Tunnel10
+show ip route 10.60.0.0</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>enable
+terminal length 0
+show ip route 198.51.100.2
+show ip route 0.0.0.0
+ping 198.51.100.2 source Ethernet0/0
+!
+configure terminal
+interface Tunnel10
+ description GRE overlay to HQ-RTR
+ ip address 172.16.10.2 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 198.51.100.2
+ tunnel mode gre ip
+ no shutdown
+!
+ip route 10.10.0.0 255.255.255.0 Tunnel10
+end
+show interface Tunnel10
+show ip route 10.10.0.0
+ping 172.16.10.1 source 172.16.10.2</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> On this IOL-XE image, the temporary GRE static route installed reliably as an interface-only route. The <code>Tunnel10 172.16.10.x</code> form remained in running-config but did not install in the routing table during validation.</p></div>
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Protect GRE with IPsec</h2>
         <p>Apply an IPsec profile directly to the GRE tunnel. This protects tunnel packets without building a separate crypto ACL that matches LAN-to-LAN traffic.</p>
-        <pre><code>crypto ikev2 proposal ENCOR-PROP
+        <h3>HQ-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
  encryption aes-cbc-256
  integrity sha256
  group 14
@@ -80,31 +113,85 @@ crypto ipsec profile GRE-PROTECT
  set transform-set ENCOR-TS
  set ikev2-profile ENCOR-IKEV2
 !
-interface tunnel10
- tunnel protection ipsec profile GRE-PROTECT</code></pre>
+interface Tunnel10
+ tunnel protection ipsec profile GRE-PROTECT
+end</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer HQ-RTR
+  address 198.51.100.2
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.2 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile GRE-PROTECT
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface Tunnel10
+ tunnel protection ipsec profile GRE-PROTECT
+end</code></pre>
         <div class="callout"><p><strong>Design depth:</strong> GRE over IPsec can also be built with a crypto map that matches protocol GRE between public peer addresses. Tunnel protection is usually cleaner because the protection is tied to the tunnel interface.</p></div>
+        <div class="callout"><p><strong>What to notice:</strong> With GRE tunnel protection, the IPsec proxy identities are protocol 47 between the public transport endpoints, not the private LAN prefixes.</p></div>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Run Routing over the Tunnel</h2>
-        <p>Enable OSPF over Tunnel10. Do not advertise the public transport network into the overlay.</p>
-        <pre><code>router ospf 10
+        <p>Enable OSPF over Tunnel10. Remove the temporary static LAN routes before checking OSPF routes; otherwise the static routes hide the OSPF-learned paths.</p>
+        <h3>HQ-RTR</h3>
+        <pre><code>configure terminal
+no ip route 10.60.0.0 255.255.255.0 Tunnel10
+router ospf 10
  passive-interface default
- no passive-interface tunnel10
+ no passive-interface Tunnel10
  network 172.16.10.0 0.0.0.3 area 0
  network 10.10.0.0 0.0.0.255 area 0
+end
 !
 show ip ospf neighbor
 show ip route ospf
 show ip protocols</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+no ip route 10.10.0.0 255.255.255.0 Tunnel10
+router ospf 10
+ passive-interface default
+ no passive-interface Tunnel10
+ network 172.16.10.0 0.0.0.3 area 0
+ network 10.60.0.0 0.0.0.255 area 0
+end
+!
+show ip ospf neighbor
+show ip route ospf
+show ip protocols</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> OSPF may take a few hello intervals to appear after the second router is configured. If the first check is empty, verify <code>show ip ospf interface Tunnel10</code> before changing crypto.</p></div>
       </section>
       <section id="task4" class="task">
         <h2>Task 4: Validate Encryption</h2>
         <p>Generate LAN-to-LAN traffic and prove the GRE packets are encrypted on the underlay.</p>
         <pre><code>ping 10.60.0.10 source 10.10.0.1 repeat 10
+show ip ospf neighbor
+show ip route ospf
 show crypto ikev2 sa detailed
 show crypto ipsec sa peer 198.51.100.6
-show crypto session interface tunnel10 detail
-show interface tunnel10 | include Tunnel protocol|Tunnel source|MTU</code></pre>
+show crypto session interface Tunnel10 detail
+show interface Tunnel10 | include Tunnel protocol|Tunnel source|Tunnel protection|MTU</code></pre>
         <p>Expect IPsec counters to increment while routing still points to Tunnel10. If GRE works but counters stay zero, the tunnel is probably not protected or traffic is using a different path.</p>
       </section>
       <section id="task5" class="task">
@@ -116,7 +203,7 @@ show interface tunnel10 | include Tunnel protocol|Tunnel source|MTU</code></pre>
         </ol>
         <pre><code>show crypto session detail
 show crypto ikev2 sa detailed
-show ip ospf interface tunnel10
+show ip ospf interface Tunnel10
 show access-lists
 ping 10.60.0.10 size 1400 df-bit source 10.10.0.1</code></pre>
       </section>

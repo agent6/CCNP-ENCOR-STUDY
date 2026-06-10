@@ -72,11 +72,10 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
-      ip domain-name encor.local
+      ip domain name encor.local
       username admin privilege 15 secret Admin123!
-      crypto key generate rsa modulus 2048
+      crypto key generate rsa general-keys modulus 2048
       ip ssh version 2
       !
       interface Ethernet0/0
@@ -130,10 +129,6 @@ nodes:
        logging synchronous
       !
       line vty 0 4
-       login local
-       transport input ssh
-      !
-      line vty 5 15
        login local
        transport input ssh
       !
@@ -213,11 +208,10 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
-      ip domain-name encor.local
+      ip domain name encor.local
       username admin privilege 15 secret Admin123!
-      crypto key generate rsa modulus 2048
+      crypto key generate rsa general-keys modulus 2048
       ip ssh version 2
       !
       interface Ethernet0/0
@@ -243,10 +237,6 @@ nodes:
        logging synchronous
       !
       line vty 0 4
-       login local
-       transport input ssh
-      !
-      line vty 5 15
        login local
        transport input ssh
       !
@@ -306,7 +296,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       vlan 10
@@ -494,7 +483,7 @@ nodes:
       ip route add default via 10.30.30.1
       mkdir -p /www
       echo "copp-app-server" > /www/index.html
-      busybox httpd -h /www -p 80
+      /usr/sbin/httpd -f -p 80 -h /www >/tmp/httpd.log 2>&1 &
 
       echo "app-server" > /etc/hostname
       cat <<EOF > /etc/hosts

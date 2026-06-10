@@ -41,12 +41,15 @@
         <h2>Topology</h2>
         <p>R1-NAT is the enterprise edge. HQ-USER uses outbound PAT. HQ-WEB receives a one-to-one static NAT. HQ-APP receives a TCP static PAT mapping. R2-INET represents the outside network and OUTSIDE-CLIENT tests inbound and outbound reachability.</p>
         <img class="topology" src="assets/nat-pat-topology.svg" alt="NAT and PAT topology">
+        <div class="callout"><p><strong>Console access:</strong> On IOS routers, enter <code>enable</code> and <code>terminal length 0</code> before running the router show/configuration commands. Alpine endpoints use username <code>cisco</code> and password <code>cisco</code>.</p></div>
       </section>
 
       <section id="task1" class="task">
         <h2>Task 1: Baseline Without NAT</h2>
         <p>Confirm the underlay before configuring NAT. The inside hosts should reach R1-NAT, and R1-NAT should reach R2-INET. Inside hosts should not have successful outside connectivity yet because their private addresses are not translated.</p>
-        <pre><code>show ip interface brief
+        <pre><code>enable
+terminal length 0
+show ip interface brief
 show ip route
 show ip cef 198.51.100.10
 ping 203.0.113.1
@@ -74,16 +77,19 @@ interface Ethernet0/3
  ip nat inside
 !
 ip nat inside source list NAT-USERS interface Ethernet0/2 overload</code></pre>
-        <p>Generate traffic and verify:</p>
+        <p>Verify the policy before generating traffic:</p>
         <pre><code>clear ip nat translation *
 clear ip nat statistics
 show access-lists NAT-USERS
 show ip nat statistics
-show ip nat translations
-ping 198.51.100.10 repeat 5
+show ip nat translations</code></pre>
+        <p>Generate traffic from HQ-USER, then return to R1-NAT and verify the dynamic translations:</p>
+        <pre><code>ping -c 5 198.51.100.10</code></pre>
+        <pre><code>show ip nat translations
 show ip nat translations verbose
 show ip cef 198.51.100.10</code></pre>
         <div class="callout"><p><strong>Depth check:</strong> PAT translates many inside local addresses to one inside global address by using transport identifiers such as TCP/UDP ports, or ICMP identifiers for ping traffic.</p></div>
+        <div class="callout"><p><strong>Troubleshooting note from live CML:</strong> A router-originated ping from R1-NAT does not prove inside dynamic PAT, because the traffic is sourced by the NAT router itself instead of by an inside host matching <code>NAT-USERS</code>. Use HQ-USER to create the dynamic PAT entries, then verify them on R1-NAT.</p></div>
       </section>
 
       <section id="task3" class="task">
@@ -101,18 +107,18 @@ traceroute 203.0.113.20</code></pre>
 
       <section id="task4" class="task">
         <h2>Task 4: Configure Static PAT Port Forwarding</h2>
-        <p>Publish only TCP port 80 on HQ-APP by mapping outside TCP port 8080 to the inside server. This is different from one-to-one static NAT because only a specific protocol and port are exposed.</p>
-        <pre><code>ip nat inside source static tcp 10.10.30.10 80 203.0.113.30 8080
+        <p>Publish only TCP port 8080 on HQ-APP by mapping outside TCP port 8080 to the inside server. This is different from one-to-one static NAT because only a specific protocol and port are exposed.</p>
+        <pre><code>ip nat inside source static tcp 10.10.30.10 8080 203.0.113.30 8080
 show ip nat translations | include 203.0.113.30
 show ip nat statistics</code></pre>
-        <p>On HQ-APP, start a simple web listener if it is not already running:</p>
-        <pre><code>mkdir -p /www
-echo "hq-app" > /www/index.html
-busybox httpd -h /www -p 80</code></pre>
+        <p>On HQ-APP, start a simple Netcat-backed listener if it is not already running:</p>
+        <pre><code>while true; do printf "HTTP/1.1 200 OK\r\nContent-Length: 7\r\n\r\nhq-app\n" | nc -l -p 8080; done &
+ps | grep nc</code></pre>
         <p>From OUTSIDE-CLIENT, test the port mapping:</p>
         <pre><code>wget -O- http://203.0.113.30:8080
 nc -vz 203.0.113.30 8080</code></pre>
-        <p>If HTTP tools are unavailable, use the router outputs to verify the static TCP translation and then attempt a TCP connection with whatever client is available in the Alpine image.</p>
+        <p>If HTTP tools are unavailable, use <code>nc -vz 203.0.113.30 8080</code> and the router outputs to verify the static TCP translation.</p>
+        <div class="callout"><p><strong>Troubleshooting note from live CML:</strong> The Alpine image used here did not include the <code>busybox httpd</code> applet, and the non-root <code>cisco</code> user could not write to <code>/www</code>. A refused TCP connection on the global address means the NAT path may be present but the inside service is not listening. Use the Netcat listener above for a tool that exists in this image.</p></div>
       </section>
 
       <section id="task5" class="task">
@@ -124,9 +130,10 @@ ip nat pool NAT-POOL 203.0.113.40 203.0.113.45 netmask 255.255.255.0
 ip nat inside source list NAT-USERS pool NAT-POOL overload
 show running-config | include ip nat inside source|ip nat pool
 show ip nat statistics</code></pre>
-        <p>Generate new traffic from HQ-USER and compare the table:</p>
-        <pre><code>ping 198.51.100.10 repeat 5
-show ip nat translations
+        <p>Generate new traffic from HQ-USER:</p>
+        <pre><code>ping -c 5 198.51.100.10</code></pre>
+        <p>Return to R1-NAT and compare the table:</p>
+        <pre><code>show ip nat translations
 show ip nat statistics</code></pre>
         <p>Interpretation: both methods perform PAT, but interface PAT uses the outside interface address while pool PAT allocates from the configured inside global pool.</p>
       </section>

@@ -56,8 +56,9 @@ annotations:
   color: "#263946"
   rotation: 0
   text_bold: false
-  text_content: Starting state is global routing only. Students move interfaces into
-    CORP/GUEST/SERVICES VRFs and validate isolation and controlled route leaking.
+  text_content: Starting state is global routing only. Students build CORP/GUEST
+    VRFs, create tagged VRF transit subinterfaces, and validate isolated service
+    reachability.
   text_font: sans-serif
   text_italic: false
   text_size: 14
@@ -83,7 +84,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -309,7 +309,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -329,7 +328,7 @@ nodes:
        no shutdown
       !
       interface Loopback0
-       description Shared service loopback for controlled leak
+       description Shared service loopback - move to CORP during the lab
        ip address 10.100.0.10 255.255.255.255
        no shutdown
       !
@@ -719,7 +718,8 @@ links:
   label: GUEST-SERVER-eth0<->DC-RTR-Ethernet0/2
 lab:
   description: CCNP ENCOR VRF-lite segmentation lab using IOL routers and Alpine endpoints.
-  notes: Starting state is global routing only. Students move interfaces into CORP/GUEST/SERVICES
-    VRFs and validate isolation and controlled route leaking.
+  notes: Starting state is global routing only. Students build CORP/GUEST VRFs,
+    create tagged transit subinterfaces on the router-to-router link, and validate
+    CORP-only service reachability.
   title: ENCOR-VRF
   version: 0.3.0

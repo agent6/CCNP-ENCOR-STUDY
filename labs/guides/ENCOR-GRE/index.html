@@ -42,16 +42,19 @@
       <section id="task1" class="task">
         <h2>Task 1: Validate the Underlay</h2>
         <p>Confirm HQ-RTR and BR-RTR can reach each other across INET-RTR using only transport addresses. Do not configure a tunnel until the underlay is stable.</p>
-        <pre><code>show ip route 198.51.100.0
+        <pre><code>show ip route 0.0.0.0
+show ip route 198.51.100.0
 show ip cef 198.51.100.6
 ping 198.51.100.6 source ethernet0/0
 traceroute 198.51.100.6 source ethernet0/0
 show cdp neighbors detail</code></pre>
+        <div class="callout"><p><strong>CML note:</strong> The remote tunnel endpoint may be reachable through the default route, so an exact <code>show ip route 198.51.100.6</code> lookup can report that the subnet is not in the table while the underlay ping still succeeds.</p></div>
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Configure GRE</h2>
         <p>Build Tunnel10. Use physical interface sources first, then evaluate the loopback-source alternative.</p>
-        <pre><code>configure terminal
+        <pre><code>! HQ-RTR
+configure terminal
 interface tunnel10
  description GRE overlay to BR-RTR
  ip address 172.16.10.1 255.255.255.252
@@ -60,33 +63,56 @@ interface tunnel10
  tunnel mode gre ip
  no shutdown
 end
-show interface tunnel10
-show tunnel interface tunnel10</code></pre>
+show interface tunnel10 | include line protocol|Tunnel source
+!
+! BR-RTR
+configure terminal
+interface tunnel10
+ description GRE overlay to HQ-RTR
+ ip address 172.16.10.2 255.255.255.252
+ tunnel source ethernet0/0
+ tunnel destination 198.51.100.2
+ tunnel mode gre ip
+ no shutdown
+end
+show interface tunnel10 | include line protocol|Tunnel source</code></pre>
         <div class="callout"><p><strong>Design depth:</strong> A physical tunnel source is simple but fails if that interface goes down. A loopback tunnel source survives underlay path changes, but only if the loopback is advertised or statically routed in the underlay.</p></div>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Route Through the Overlay</h2>
         <p>Use static routes first, then compare with a lightweight routing protocol over the tunnel.</p>
-        <pre><code>configure terminal
-ip route 10.60.0.0 255.255.255.0 tunnel10
+        <pre><code>! HQ-RTR
+configure terminal
+ip route 10.60.0.0 255.255.255.0 tunnel10 172.16.10.2
 end
 show ip route 10.60.0.0
 show ip cef 10.60.0.10 detail
 ping 10.60.0.10 source 10.10.0.1
 traceroute 10.60.0.10 source 10.10.0.1</code></pre>
+        <pre><code>! BR-RTR
+configure terminal
+ip route 10.10.0.0 255.255.255.0 tunnel10 172.16.10.1
+end
+show ip route 10.10.0.0
+ping 10.10.0.10 source 10.60.0.1</code></pre>
         <p>Static routing makes the data path obvious. OSPF or EIGRP over GRE can remove manual route maintenance, but you must still verify neighbor formation, passive-interface choices, and tunnel MTU.</p>
       </section>
       <section id="task4" class="task">
         <h2>Task 4: MTU, MSS, and Keepalive</h2>
         <p>GRE adds overhead. Validate the largest safe payload and configure TCP MSS adjustment if user traffic crosses the tunnel.</p>
-        <pre><code>show interface tunnel10 | include MTU|line protocol|Keepalive
-ping 10.60.0.10 size 1476 df-bit source 10.10.0.1
+        <pre><code>! Apply on HQ-RTR and BR-RTR.
 configure terminal
 interface tunnel10
  ip mtu 1476
  ip tcp adjust-mss 1436
  keepalive 10 3
-end</code></pre>
+end
+show interface tunnel10 | include MTU|line protocol|Keepalive|Tunnel source
+!
+! HQ-RTR
+ping 10.60.0.10 size 1476 df-bit source 10.10.0.1
+ping 10.60.0.10 size 1477 df-bit source 10.10.0.1</code></pre>
+        <p>With tunnel MTU set to 1476, the 1476-byte DF-bit ping should succeed and the 1477-byte DF-bit ping should fail. That gives a concrete MTU boundary.</p>
       </section>
       <section id="task5" class="task">
         <h2>Task 5: Troubleshooting</h2>
@@ -101,6 +127,7 @@ show ip route 198.51.100.6
 show ip route 10.60.0.10
 show ip cef exact-route 10.10.0.10 10.60.0.10
 debug tunnel keepalive</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> <code>show tunnel interface tunnel10</code> is not supported on this IOL-XE image. Use <code>show interface tunnel10</code>, <code>show running-config interface tunnel10</code>, route output, and CEF output instead.</p></div>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>

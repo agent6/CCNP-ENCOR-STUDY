@@ -74,10 +74,10 @@ show ntp status</code></pre>
             <thead><tr><th>Device</th><th>Expected Role</th><th>Key Interpretation</th><th>Risk to Notice</th></tr></thead>
             <tbody>
               <tr><td>R1-TIME</td><td>Lab stratum source</td><td><code>ntp master</code>, source interface, serve-only ACL</td><td>Lab master is not the same as a real GPS/atomic source.</td></tr>
-              <tr><td>R2-DIST</td><td>NTP client and downstream server</td><td>Authenticated server to R1, trusted key, LAN-facing service</td><td>If R2 is unsynced, every downstream client inherits bad time.</td></tr>
-              <tr><td>R3-BRANCH</td><td>NTP client</td><td>Server points to R2 but authentication is wrong</td><td>Reachability can work while NTP rejects updates.</td></tr>
-              <tr><td>SW1-ACCESS</td><td>NTP client</td><td>SVI source, default gateway, trusted key</td><td>Source address and ACL must agree.</td></tr>
-              <tr><td>SW2-ACCESS</td><td>NTP client with defect</td><td>Server/key mismatch</td><td>Wrong key ID or untrusted key prevents sync.</td></tr>
+              <tr><td>R2-DIST</td><td>NTP client and downstream server</td><td>Unauthenticated upstream server to R1, LAN-facing service, serve-only ACL</td><td>If R2 is unsynced, every downstream client inherits bad time.</td></tr>
+              <tr><td>R3-BRANCH</td><td>NTP client with defect</td><td>Server points to R2, but the client requires authenticated replies</td><td>Reachability can work while NTP rejects updates.</td></tr>
+              <tr><td>SW1-ACCESS</td><td>NTP client</td><td>SVI source, default gateway, unauthenticated server</td><td>Source address and ACL must agree.</td></tr>
+              <tr><td>SW2-ACCESS</td><td>NTP client with defect</td><td>Server points to R2, but the client requires the wrong authenticated key</td><td>Wrong key ID or untrusted/auth-required behavior prevents sync.</td></tr>
             </tbody>
           </table>
         </div>
@@ -87,22 +87,26 @@ show ntp status</code></pre>
         <h2>Task 3: Troubleshoot NTP Defects</h2>
         <p>Find and repair the defects using output first. Make a change only after you can explain which symptom proves the problem.</p>
         <ol>
-          <li>R3-BRANCH can ping R2-DIST, but NTP does not synchronize because the configured authentication key does not match the trusted key.</li>
-          <li>SW2-ACCESS points to the right server, but uses the wrong key ID and does not trust the key used by the server.</li>
+          <li>R3-BRANCH can ping R2-DIST, but NTP does not synchronize because the client requires authenticated NTP while R2-DIST is serving unauthenticated NTP for this CML lab.</li>
+          <li>SW2-ACCESS points to the right server, but requires authenticated NTP with the wrong key ID for this CML-compatible hierarchy.</li>
           <li>If a device shows reachability but no NTP association, check access groups, source interface, and routing back to the source address.</li>
           <li>If a device shows an association but is not synchronized, inspect reach, stratum, authentication, selected peer marker, and last event.</li>
         </ol>
-        <pre><code>debug ntp authentication
-debug ntp packets
-show ntp associations detail
+        <pre><code>show ntp associations detail
+show ntp status
 show running-config | section ntp
 clear ntp statistics
 show access-lists NTP-CLIENTS</code></pre>
-        <p>Expected repair examples:</p>
-        <pre><code>ntp authenticate
-ntp authentication-key 10 md5 C1sc0Time
-ntp trusted-key 10
-ntp server 10.33.23.1 key 10 source Ethernet0/0</code></pre>
+        <p>Expected repair examples for this CML topology:</p>
+        <pre><code>no ntp authenticate
+no ntp trusted-key 20
+no ntp authentication-key 20
+no ntp server 10.33.23.1 key 20
+ntp server 10.33.23.1 source Ethernet0/0</code></pre>
+        <p>For SW2-ACCESS, use the same idea with <code>Vlan33</code> as the source and <code>10.33.33.1</code> as the server.</p>
+        <div class="callout"><p><strong>Troubleshooting note from live CML:</strong> On the IOL/IOL-L2 17.16 image used by this lab, enabling <code>ntp authenticate</code> globally on R2-DIST caused the upstream association to R1-TIME to show <code>.AUTH.</code>, <code>reach 0</code>, and no synchronization. Removing authentication from the R1-to-R2 path produced a healthy association with inbound packets, nonzero reach, and R2 synchronized to R1. In production, authenticated NTP is valid when both sides support and agree on it; in this CML lab, keep the backbone time hierarchy unauthenticated and use the client-side authentication defects as interpretation practice.</p></div>
+        <div class="callout"><p><strong>Counter interpretation:</strong> If <code>assoc out packets</code> increases while <code>assoc in packets</code> remains zero, the client is transmitting but not receiving usable replies. That points toward the server, ACL/source behavior, return path, or authentication handling more than a simple local clock issue. If both counters increase and <code>reach</code> becomes nonzero, move on to stratum, selected peer marker, offset, and dispersion.</p></div>
+        <div class="callout"><p><strong>Command support:</strong> This image rejected <code>debug ntp packets</code>. Use <code>show ntp associations detail</code>, <code>show ntp status</code>, and <code>clear ntp statistics</code>, then wait for the next poll interval to compare counters.</p></div>
       </section>
 
       <section id="task4" class="task">

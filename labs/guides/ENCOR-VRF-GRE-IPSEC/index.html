@@ -42,7 +42,8 @@
       </section>
       <section id="task1" class="task">
         <h2>Task 1: Build the Front-Door VRF</h2>
-        <p>Move the Internet-facing interface into a TRANSPORT VRF. Reapply the IP address after the VRF assignment.</p>
+        <p>Move the Internet-facing interface into a TRANSPORT VRF. Reapply the IP address after the VRF assignment. Build both peers so the underlay is symmetric before adding GRE or IPsec.</p>
+        <h3>HQ-RTR</h3>
         <pre><code>configure terminal
 vrf definition TRANSPORT
  description Internet underlay for encrypted tunnels
@@ -59,10 +60,29 @@ ip route vrf TRANSPORT 0.0.0.0 0.0.0.0 198.51.100.1
 end
 show ip route vrf TRANSPORT
 ping vrf TRANSPORT 198.51.100.6 source 198.51.100.2</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+vrf definition TRANSPORT
+ description Internet underlay for encrypted tunnels
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/0
+ description WAN underlay to INET-RTR
+ vrf forwarding TRANSPORT
+ ip address 198.51.100.6 255.255.255.252
+ no shutdown
+!
+ip route vrf TRANSPORT 0.0.0.0 0.0.0.0 198.51.100.5
+end
+show ip route vrf TRANSPORT
+ping vrf TRANSPORT 198.51.100.2 source 198.51.100.6</code></pre>
+        <div class="callout warning"><p><strong>CML behavior:</strong> IOS removes an interface IP address when you apply <code>vrf forwarding</code>. Reapply the IP address after moving the interface. If an exact default-route lookup looks odd, validate the underlay with a sourced <code>ping vrf TRANSPORT</code>; the lab was validated with successful sourced pings in both directions.</p></div>
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Build GRE Over the Transport VRF</h2>
         <p>Bind the tunnel source lookup to the front-door VRF while keeping the tunnel interface itself available for overlay routing.</p>
+        <h3>HQ-RTR</h3>
         <pre><code>configure terminal
 interface tunnel10
  description GRE overlay over TRANSPORT VRF
@@ -75,12 +95,36 @@ interface tunnel10
 end
 show interface tunnel10
 show ip route vrf TRANSPORT 198.51.100.6</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+interface tunnel10
+ description GRE overlay over TRANSPORT VRF
+ ip address 172.16.10.2 255.255.255.252
+ tunnel source ethernet0/0
+ tunnel destination 198.51.100.2
+ tunnel vrf TRANSPORT
+ tunnel mode gre ip
+ no shutdown
+end
+show interface tunnel10
+ping 172.16.10.1 source 172.16.10.2</code></pre>
         <p>If the platform uses a different syntax, look for the same behavior: the tunnel destination must be resolved in the transport VRF, not the global routing table.</p>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Protect the GRE Tunnel with IPsec</h2>
-        <p>Apply an IPsec profile to Tunnel10. The peer address is still reached through TRANSPORT.</p>
-        <pre><code>crypto ikev2 keyring ENCOR-KEYS
+        <p>Apply an IPsec profile to Tunnel10. The peer address is still reached through TRANSPORT, so the IKEv2 policy and profile must match the front-door VRF.</p>
+        <h3>HQ-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ match fvrf TRANSPORT
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
  peer BR-RTR
   address 198.51.100.6
   pre-shared-key local cisco123
@@ -88,6 +132,7 @@ show ip route vrf TRANSPORT 198.51.100.6</code></pre>
 !
 crypto ikev2 profile ENCOR-IKEV2
  match identity remote address 198.51.100.6 255.255.255.255
+ match fvrf TRANSPORT
  authentication local pre-share
  authentication remote pre-share
  keyring local ENCOR-KEYS
@@ -100,12 +145,55 @@ crypto ipsec profile GRE-PROTECT
  set ikev2-profile ENCOR-IKEV2
 !
 interface tunnel10
- tunnel protection ipsec profile GRE-PROTECT</code></pre>
+ tunnel protection ipsec profile GRE-PROTECT
+end
+show crypto ikev2 sa
+show crypto ipsec sa peer 198.51.100.6</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ match fvrf TRANSPORT
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer HQ-RTR
+  address 198.51.100.2
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.2 255.255.255.255
+ match fvrf TRANSPORT
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile GRE-PROTECT
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface tunnel10
+ tunnel protection ipsec profile GRE-PROTECT
+end
+ping 172.16.10.1 source 172.16.10.2
+show crypto ikev2 sa
+show crypto ipsec sa peer 198.51.100.2</code></pre>
+        <div class="callout warning"><p><strong>Front-door VRF trap:</strong> If <code>match fvrf TRANSPORT</code> is missing from the IKEv2 policy or profile, the tunnel can stay up but IPsec stays down. In CML this showed as <code>fvrf: TRANSPORT</code>, no active SAs, protocol 47 send errors, and failed tunnel pings. Add the front-door VRF match on both peers.</p></div>
       </section>
       <section id="task4" class="task">
         <h2>Task 4: Carry CORP Routes Across the Overlay</h2>
         <p>Place the customer-facing LAN in VRF CORP and route it through the encrypted GRE tunnel. Do not leak TRANSPORT routes into CORP.</p>
-        <pre><code>vrf definition CORP
+        <h3>HQ-RTR</h3>
+        <pre><code>configure terminal
+vrf definition CORP
  address-family ipv4
  exit-address-family
 !
@@ -124,7 +212,30 @@ end
 show ip route vrf CORP
 show ip route vrf TRANSPORT
 ping vrf CORP 10.60.0.10 source 10.10.0.1</code></pre>
-        <div class="callout warning"><p><strong>Ordering trap:</strong> Applying <code>vrf forwarding CORP</code> to Tunnel10 removes its IP address. Reapply the tunnel IP after assigning the overlay VRF.</p></div>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+vrf definition CORP
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/1
+ description CORP LAN
+ vrf forwarding CORP
+ ip address 10.60.0.1 255.255.255.0
+ no shutdown
+!
+interface tunnel10
+ vrf forwarding CORP
+ ip address 172.16.10.2 255.255.255.252
+!
+ip route vrf CORP 10.10.0.0 255.255.255.0 tunnel10
+end
+show ip route vrf CORP
+show interface tunnel10 | include Tunnel10|line protocol|Tunnel source|Tunnel protocol|Tunnel protection
+ping vrf CORP 10.10.0.10 source 10.60.0.1
+show crypto ikev2 sa
+show crypto ipsec sa peer 198.51.100.2</code></pre>
+        <div class="callout warning"><p><strong>Ordering trap:</strong> Applying <code>vrf forwarding CORP</code> to Tunnel10 removes its IP address. Reapply the tunnel IP after assigning the overlay VRF. On the validated IOL image the message said the tunnel IPv4 address was removed due to disabling the VRF, even though the next state was correct after the address was reapplied.</p></div>
       </section>
       <section id="task5" class="task">
         <h2>Task 5: Failure Analysis</h2>
@@ -134,6 +245,8 @@ ping vrf CORP 10.60.0.10 source 10.10.0.1</code></pre>
           <li>Tunnel10 is down because the tunnel destination is resolved in the wrong VRF.</li>
           <li>IKEv2 is up but CORP traffic fails because Tunnel10 was protected but not placed in the CORP VRF.</li>
           <li>IPsec counters increment one way only because the branch peer uses a different source address.</li>
+          <li>Protected GRE fails because IKEv2 does not match the front-door VRF. GRE over IPsec uses protocol 47 selectors between the public peer addresses.</li>
+          <li>Two READY IKEv2 SAs appear after repeated failed negotiation attempts. Clear crypto sessions if you want a clean display before grading.</li>
         </ol>
         <pre><code>show ip route vrf TRANSPORT 198.51.100.6
 show ip cef vrf TRANSPORT 198.51.100.6 detail

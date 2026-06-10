@@ -92,9 +92,6 @@ nodes:
       !
       ntp source Ethernet0/0
       ntp master 2
-      ntp authenticate
-      ntp authentication-key 10 md5 C1sc0Time
-      ntp trusted-key 10
       ntp access-group serve-only NTP-CLIENTS
       !
       line con 0
@@ -200,10 +197,7 @@ nodes:
        deny any log
       !
       ntp source Ethernet0/0
-      ntp authenticate
-      ntp authentication-key 10 md5 C1sc0Time
-      ntp trusted-key 10
-      ntp server 10.33.12.1 key 10 prefer
+      ntp server 10.33.12.1 prefer source Ethernet0/0
       ntp access-group serve-only NTP-DOWNSTREAM
       !
       line con 0
@@ -300,7 +294,7 @@ nodes:
       ntp authentication-key 20 md5 WrongTimeKey
       ntp trusted-key 20
       ntp server 10.33.23.1 key 20
-      ! Intentional defect: R2-DIST serves authenticated NTP with key 10, not key 20.
+      ! Intentional defect: R3 requires authenticated NTP, but R2-DIST is serving unauthenticated NTP in this CML-compatible lab.
       !
       line con 0
        exec-timeout 0 0
@@ -402,10 +396,7 @@ nodes:
       ip default-gateway 10.33.33.1
       !
       ntp source Vlan33
-      ntp authenticate
-      ntp authentication-key 10 md5 C1sc0Time
-      ntp trusted-key 10
-      ntp server 10.33.33.1 key 10
+      ntp server 10.33.33.1 source Vlan33
       !
       banner exec ^
       PTP interpretation excerpt for SW1-ACCESS:
@@ -509,7 +500,7 @@ nodes:
       ntp authentication-key 20 md5 WrongTimeKey
       ntp trusted-key 20
       ntp server 10.33.33.1 key 20
-      ! Intentional defect: SW2 should use trusted key 10 for R2-DIST.
+      ! Intentional defect: SW2 requires authenticated NTP, but R2-DIST is serving unauthenticated NTP in this CML-compatible lab.
       !
       banner exec ^
       PTP interpretation excerpt for SW2-ACCESS:

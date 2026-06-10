@@ -30,7 +30,7 @@
         <div class="meta-grid">
           <div class="metric"><b>75 min</b><span>Estimated time</span></div>
           <div class="metric"><b>ENCOR 2.2.b</b><span>IPsec tunneling</span></div>
-          <div class="metric"><b>IOL routers</b><span>HQ, Internet, Branch</span></div>
+          <div class="metric"><b>IOL routers</b><span>HQ, INET, BR, EDGE, DC</span></div>
           <div class="metric"><b>5 tasks</b><span>Configure, compare, verify</span></div>
         </div>
       </section>
@@ -42,15 +42,20 @@
       <section id="task1" class="task">
         <h2>Task 1: Crypto Baseline</h2>
         <p>Before configuring IPsec, prove that clear-text LAN traffic would fail or cross the wrong path and that peer transport addresses are reachable.</p>
-        <pre><code>show ip route 198.51.100.6
-ping 198.51.100.6 source ethernet0/0
+        <pre><code>enable
+terminal length 0
+show ip route 198.51.100.6
+show ip route 0.0.0.0
+ping 198.51.100.6 source Ethernet0/0
 show access-lists
 show crypto ikev2 sa
 show crypto ipsec sa</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> An exact lookup for the peer transport address may show <code>% Subnet not in table</code> because the peer is reached through the default route. Verify the default route and the sourced underlay ping.</p></div>
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Configure Policy-Based IPsec</h2>
-        <p>Use a crypto ACL to define interesting traffic between HQ and branch LANs. Keep the ACL symmetric on both peers.</p>
+        <p>Use a crypto ACL to define interesting traffic between HQ and branch LANs. Configure both peers with reversed ACLs and matching IKEv2 parameters.</p>
+        <h3>HQ-RTR</h3>
         <pre><code>configure terminal
 crypto ikev2 proposal ENCOR-PROP
  encryption aes-cbc-256
@@ -84,37 +89,169 @@ crypto map ENCOR-MAP 10 ipsec-isakmp
  set ikev2-profile ENCOR-IKEV2
  match address VPN-TRAFFIC
 !
-interface ethernet0/0
+interface Ethernet0/0
  crypto map ENCOR-MAP
 end</code></pre>
+        <h3>BR-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer HQ-RTR
+  address 198.51.100.2
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.2 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+ip access-list extended VPN-TRAFFIC
+ permit ip 10.60.0.0 0.0.0.255 10.10.0.0 0.0.0.255
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto map ENCOR-MAP 10 ipsec-isakmp
+ set peer 198.51.100.2
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+ match address VPN-TRAFFIC
+!
+interface Ethernet0/0
+ crypto map ENCOR-MAP
+end</code></pre>
+        <div class="callout"><p><strong>Interpretation:</strong> IOS XE warns while an IKEv2 proposal, policy, or profile is incomplete. Those warnings clear once encryption, integrity, DH group, proposal, authentication, identity match, and keyring are all configured.</p></div>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Compare Route-Based IPsec</h2>
-        <p>On a second pair of routers, build a virtual tunnel interface and apply an IPsec profile. This method makes the tunnel a routable interface and avoids crypto ACL route ambiguity.</p>
-        <pre><code>crypto ipsec profile ENCOR-PROFILE
+        <p>On EDGE-RTR and DC-RTR, build virtual tunnel interfaces and apply an IPsec profile. This method makes the tunnel a routable interface and avoids crypto ACL route ambiguity.</p>
+        <h3>EDGE-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer DC-RTR
+  address 203.0.113.6
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 203.0.113.6 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto ipsec profile ENCOR-PROFILE
  set transform-set ENCOR-TS
  set ikev2-profile ENCOR-IKEV2
 !
-interface tunnel20
- description Route-based IPsec VTI to branch
+interface Tunnel20
+ description Route-based IPsec VTI to DC-RTR
  ip address 172.16.20.1 255.255.255.252
- tunnel source ethernet0/0
- tunnel destination 198.51.100.6
+ tunnel source Ethernet0/0
+ tunnel destination 203.0.113.6
  tunnel mode ipsec ipv4
  tunnel protection ipsec profile ENCOR-PROFILE
+ no shutdown
 !
-ip route 10.60.0.0 255.255.255.0 tunnel20</code></pre>
+ip route 10.80.0.0 255.255.255.0 Tunnel20 172.16.20.2
+end</code></pre>
+        <h3>DC-RTR</h3>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer EDGE-RTR
+  address 203.0.113.2
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 203.0.113.2 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto ipsec profile ENCOR-PROFILE
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface Tunnel20
+ description Route-based IPsec VTI to EDGE-RTR
+ ip address 172.16.20.2 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 203.0.113.2
+ tunnel mode ipsec ipv4
+ tunnel protection ipsec profile ENCOR-PROFILE
+ no shutdown
+!
+ip route 10.70.0.0 255.255.255.0 Tunnel20 172.16.20.1
+end</code></pre>
         <div class="callout"><p><strong>Comparison:</strong> Crypto maps encrypt traffic selected by an ACL on an interface. VTIs encrypt traffic routed to a tunnel interface. Both are valid; verification must match the model.</p></div>
+        <div class="callout warning"><p><strong>CML note:</strong> Tunnel20 can show line protocol down before interesting traffic builds the IKE/IPsec SAs. Initiate a ping to the opposite tunnel address, then recheck the tunnel and crypto state.</p></div>
       </section>
       <section id="task4" class="task">
         <h2>Task 4: Verification Depth</h2>
         <p>Generate interesting traffic and verify both IKE and IPsec state. Do not rely on only the ping result.</p>
-        <pre><code>ping 10.60.0.10 source 10.10.0.1 repeat 5
+        <h3>Policy-Based IPsec</h3>
+        <pre><code># HQ-RTR
+ping 10.60.0.10 source 10.10.0.1 repeat 5
 show crypto ikev2 sa detailed
 show crypto ipsec sa peer 198.51.100.6
 show crypto session detail
 show access-lists VPN-TRAFFIC
-show platform hardware qfp active feature ipsec datapath drops</code></pre>
+!
+# BR-RTR
+show crypto ikev2 sa
+show crypto ipsec sa peer 198.51.100.2
+show crypto session detail
+show access-lists VPN-TRAFFIC</code></pre>
+        <h3>Route-Based IPsec VTI</h3>
+        <pre><code># EDGE-RTR
+ping 172.16.20.2 source Tunnel20 repeat 5
+ping 10.80.0.1 source 10.70.0.1 repeat 5
+show interface Tunnel20
+show crypto ikev2 sa
+show crypto ipsec sa peer 203.0.113.6
+show crypto session detail
+show ip route 10.80.0.0
+!
+# DC-RTR
+ping 172.16.20.1 source Tunnel20 repeat 5
+ping 10.70.0.1 source 10.80.0.1 repeat 5
+show interface Tunnel20
+show crypto ikev2 sa
+show crypto ipsec sa peer 203.0.113.2
+show crypto session detail
+show ip route 10.70.0.0</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> The validated VTI reachability tests use router tunnel addresses and router LAN-interface sources. If you extend testing to Alpine endpoint hosts, first prove the router-to-router VTI path, then troubleshoot endpoint default gateways separately.</p></div>
         <p>Look for incrementing encaps and decaps counters. A one-way counter usually means peer ACL mismatch, NAT interference, wrong peer identity, or return routing failure.</p>
       </section>
       <section id="task5" class="task">
@@ -123,12 +260,18 @@ show platform hardware qfp active feature ipsec datapath drops</code></pre>
           <li>IKEv2 fails because the remote identity does not match the profile.</li>
           <li>IKE is up but IPsec counters do not increment because the crypto ACL is reversed on one peer.</li>
           <li>Encaps increment but decaps remain zero because the return route points to the Internet instead of the VPN.</li>
+          <li>A VTI remains down until traffic to the opposite tunnel address or routed prefix triggers IKE/IPsec negotiation.</li>
+          <li>Interface-only static routes to a VTI are less explicit in verification output than routes that include the tunnel next-hop address.</li>
         </ol>
         <pre><code>debug crypto ikev2 protocol
 debug crypto ikev2 error
 show crypto ikev2 sa detailed
 show crypto ipsec sa | include local ident|remote ident|pkts encaps|pkts decaps
-show ip route 10.60.0.0</code></pre>
+show crypto session detail
+show interface Tunnel20
+show ip route 10.60.0.0
+show ip route 10.80.0.0
+show ip cef 10.80.0.1 detail</code></pre>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>

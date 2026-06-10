@@ -72,12 +72,11 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       username automation privilege 15 secret Cisco123!
       enable secret Cisco123!
-      ip domain-name encor.local
+      ip domain name encor.local
       ip ssh version 2
       !
       interface Ethernet0/0
@@ -250,7 +249,7 @@ nodes:
       ip route add default via 10.70.70.1
       mkdir -p /www
       echo "netconf-restconf-app-server" > /www/index.html
-      busybox httpd -h /www -p 80
+      /usr/sbin/httpd -f -p 80 -h /www >/tmp/httpd.log 2>&1 &
 
       echo "app-server" > /etc/hostname
       cat <<EOF > /etc/hosts

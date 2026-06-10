@@ -72,7 +72,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       interface Ethernet0/0
@@ -98,9 +97,6 @@ nodes:
        logging synchronous
       !
       line vty 0 4
-       login
-      !
-      line vty 5 15
        login
       !
       end
@@ -179,7 +175,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       interface Ethernet0/0
@@ -201,9 +196,6 @@ nodes:
        logging synchronous
       !
       line vty 0 4
-       login
-      !
-      line vty 5 15
        login
       !
       end
@@ -282,7 +274,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       vlan 81

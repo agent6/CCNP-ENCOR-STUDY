@@ -54,12 +54,12 @@ show control-plane
 show policy-map control-plane
 show running-config | section control-plane
 show users</code></pre>
-        <p>From ADMIN-PC and ATTACK-PC, test traffic to R1-EDGE and through R1-EDGE:</p>
+        <p>From ADMIN-PC and ATTACK-PC, test traffic to R1-EDGE and through R1-EDGE. If SSH is not enabled, verify that the startup config used <code>ip domain name encor.local</code> before generating RSA keys.</p>
         <pre><code>ping -c 5 10.10.10.1
 ping -c 5 10.10.20.1
 ping -c 5 10.30.30.10
 wget -O- http://10.30.30.10
-ssh admin@10.10.10.1</code></pre>
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null admin@10.10.10.1</code></pre>
         <p>From R1-EDGE, confirm the routing protocol is healthy before policing it:</p>
         <pre><code>show ip ospf neighbor detail
 show ip protocols
@@ -151,7 +151,7 @@ ping -c 10 10.10.10.1</code></pre>
 show access-lists
 show processes cpu sorted | exclude 0.00
 show logging | include POLICE|CoPP|CP|SSH|OSPF</code></pre>
-        <p>Expected result: class counters increment for matched traffic. Some ICMP packets may be dropped if the offered rate exceeds the policer. OSPF neighbors should remain full.</p>
+        <p>Expected result: class counters increment for matched traffic. Drops may stay at zero in CML under short tests if the offered rate stays below the policer. OSPF neighbors should remain full.</p>
       </section>
 
       <section id="task5" class="task">
@@ -159,10 +159,12 @@ show logging | include POLICE|CoPP|CP|SSH|OSPF</code></pre>
         <p>CoPP policies often fail because a useful protocol is missing from the policy, or because class-default is too strict. Confirm the routing class handles OSPF and the management class handles SSH while untrusted sources fall into a lower-priority class.</p>
         <pre><code>! R1-EDGE
 show ip ospf neighbor
-show policy-map control-plane class CM-COPP-ROUTING
-show policy-map control-plane class CM-COPP-MGMT
-show policy-map control-plane class class-default
+show policy-map control-plane
+show access-lists COPP-MGMT-SSH
+show access-lists COPP-ICMP
+show access-lists COPP-OSPF
 show tcp brief | include :22</code></pre>
+        <p>Some IOS XE images treat <code>show policy-map control-plane class NAME</code> as ambiguous. Use the full control-plane policy output and scroll to the class you need.</p>
         <p>Optional refinement: split trusted and untrusted SSH so scans are limited more aggressively than known admin hosts.</p>
         <pre><code>conf t
 ip access-list extended COPP-UNTRUSTED-SSH
@@ -198,9 +200,10 @@ show running-config | section policy-map
 show running-config | section control-plane
 show ip ospf neighbor detail
 show access-lists
-show platform software fed active punt cause summary
 show processes cpu history</code></pre>
-        <div class="callout"><p><strong>Operational note:</strong> Platform support and exact punt visibility commands vary. If a platform-specific punt command is unavailable, use <code>show policy-map control-plane</code>, protocol state, and controlled traffic tests as the authoritative evidence for this lab.</p></div>
+        <div class="callout"><p><strong>Operational note:</strong> Platform support and exact punt visibility commands vary. In this CML IOL-XE image, <code>show platform software fed active punt cause summary</code> is not available. Use <code>show policy-map control-plane</code>, protocol state, ACL counters, and controlled traffic tests as the authoritative evidence for this lab.</p></div>
+        <div class="callout"><p><strong>Endpoint note:</strong> If APP-SERVER refuses HTTP, log in as root and verify the listener with <code>netstat -ltn | grep ':80'</code>. The packaged CML file starts <code>/usr/sbin/httpd -f -p 80 -h /www</code> so a fresh import should already have TCP/80 listening.</p></div>
+        <div class="callout"><p><strong>Startup note:</strong> This image supports VTY 0-4 only and uses <code>ip domain name</code> with a space. <code>line vty 5 15</code> and <code>ip domain-name</code> will produce startup parser errors.</p></div>
       </section>
 
       <section id="grading" class="panel">

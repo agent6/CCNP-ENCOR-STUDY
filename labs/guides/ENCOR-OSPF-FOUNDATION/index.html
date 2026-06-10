@@ -20,6 +20,7 @@
       <a href="#task3">Task 3: OSPFv3</a>
       <a href="#task4">Task 4: Passive Interfaces</a>
       <a href="#task5">Task 5: Verification</a>
+      <a href="#troubleshooting">Troubleshooting</a>
       <a href="#grading">Grade Entire Lab</a>
       <a href="#references">References</a>
     </nav>
@@ -40,71 +41,242 @@
       </section>
       <section id="task1" class="task">
         <h2>Task 1: Baseline Underlay and Router IDs</h2>
-        <p>Confirm all connected interfaces are up and assign stable router IDs. OSPFv3 also needs a router ID even when routing IPv6.</p>
+        <p>Confirm all connected interfaces are up before configuring OSPF. The CML starting state already has IPv4 and IPv6 addresses on every routed link, router ID loopbacks on R1 through R4, and endpoint default gateways. Use <code>enable</code> and <code>terminal length 0</code> on each router before collecting output.</p>
         <pre><code>show ip interface brief
 show ipv6 interface brief
 show ip route connected
 show ipv6 route connected
 show cdp neighbors detail</code></pre>
+        <p>Use these router IDs for both OSPFv2 and OSPFv3:</p>
+        <table>
+          <thead><tr><th>Router</th><th>Router ID</th><th>Area Role</th></tr></thead>
+          <tbody>
+            <tr><td>R1-HQ</td><td>1.1.1.1</td><td>Area 0 and Area 10 ABR</td></tr>
+            <tr><td>R2-CORE</td><td>2.2.2.2</td><td>Area 0 and Area 20 ABR</td></tr>
+            <tr><td>R3-DIST</td><td>3.3.3.3</td><td>Area 10 internal router</td></tr>
+            <tr><td>R4-BR</td><td>4.4.4.4</td><td>Area 20 internal router</td></tr>
+            <tr><td>R5-SVC</td><td>5.5.5.5</td><td>Service router connected to Areas 10 and 20</td></tr>
+          </tbody>
+        </table>
       </section>
       <section id="task2" class="task">
-        <h2>Task 2: Configure OSPFv2 Area 0</h2>
-        <p>Use classic OSPFv2 network statements on the backbone, then compare with interface-level <code>ip ospf</code> syntax on one link.</p>
+        <h2>Task 2: Configure OSPFv2</h2>
+        <p>Use classic OSPFv2 network statements and explicitly set point-to-point network type on routed transit links. Leave user and server LANs passive so their prefixes advertise without sending Hellos toward endpoints.</p>
+        <h3>R1-HQ</h3>
         <pre><code>router ospf 10
  router-id 1.1.1.1
  passive-interface default
- no passive-interface ethernet0/0
- network 10.0.12.0 0.0.0.255 area 0
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ network 1.1.1.1 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.255 area 0
+ network 10.0.12.0 0.0.0.3 area 0
+ network 10.0.13.0 0.0.0.3 area 10
 !
-interface ethernet0/1
- ip ospf 10 area 0
+interface Ethernet0/1
+ ip ospf network point-to-point
+!
+interface Ethernet0/2
  ip ospf network point-to-point</code></pre>
-        <p>Know both configuration styles. Network statements select interfaces by address; interface-level OSPF makes the area membership explicit on the interface.</p>
+        <h3>R2-CORE</h3>
+        <pre><code>router ospf 10
+ router-id 2.2.2.2
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+ network 2.2.2.2 0.0.0.0 area 0
+ network 10.0.0.0 0.0.0.255 area 0
+ network 10.0.12.0 0.0.0.3 area 0
+ network 10.0.24.0 0.0.0.3 area 20
+!
+interface Ethernet0/1
+ ip ospf network point-to-point
+!
+interface Ethernet0/2
+ ip ospf network point-to-point</code></pre>
+        <h3>R3-DIST</h3>
+        <pre><code>router ospf 10
+ router-id 3.3.3.3
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ network 3.3.3.3 0.0.0.0 area 10
+ network 10.0.13.0 0.0.0.3 area 10
+ network 10.0.35.0 0.0.0.3 area 10
+ network 10.10.10.0 0.0.0.255 area 10
+!
+interface Ethernet0/0
+ ip ospf network point-to-point
+!
+interface Ethernet0/1
+ ip ospf network point-to-point</code></pre>
+        <h3>R4-BR</h3>
+        <pre><code>router ospf 10
+ router-id 4.4.4.4
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ network 4.4.4.4 0.0.0.0 area 20
+ network 10.0.24.0 0.0.0.3 area 20
+ network 10.0.45.0 0.0.0.3 area 20
+ network 10.20.20.0 0.0.0.255 area 20
+!
+interface Ethernet0/0
+ ip ospf network point-to-point
+!
+interface Ethernet0/1
+ ip ospf network point-to-point</code></pre>
+        <h3>R5-SVC</h3>
+        <pre><code>router ospf 10
+ router-id 5.5.5.5
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ network 10.20.99.99 0.0.0.0 area 10
+ network 10.0.35.0 0.0.0.3 area 10
+ network 10.0.45.0 0.0.0.3 area 20
+ network 10.30.30.0 0.0.0.255 area 10
+!
+interface Ethernet0/0
+ ip ospf network point-to-point
+!
+interface Ethernet0/1
+ ip ospf network point-to-point</code></pre>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Configure OSPFv3</h2>
-        <p>Enable IPv6 unicast routing and configure OSPFv3 for IPv6. Depending on IOS XE train, you may see classic interface OSPFv3 or address-family OSPFv3.</p>
-        <pre><code>ipv6 unicast-routing
+        <p>Configure OSPFv3 with the classic interface syntax supported by this IOL-XE image. OSPFv3 still requires a 32-bit router ID, so reuse the same IDs from OSPFv2.</p>
+        <h3>R1-HQ</h3>
+        <pre><code>interface Ethernet0/0
+ ipv6 ospf 10 area 0
+!
+interface Ethernet0/1
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/2
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+!
 ipv6 router ospf 10
  router-id 1.1.1.1
  passive-interface default
- no passive-interface ethernet0/0
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2</code></pre>
+        <h3>R2-CORE</h3>
+        <pre><code>interface Ethernet0/0
+ ipv6 ospf 10 area 0
 !
-interface ethernet0/0
- ipv6 ospf 10 area 0</code></pre>
-        <p>Alternative style:</p>
-        <pre><code>router ospfv3 10
- router-id 1.1.1.1
- address-family ipv6 unicast
-  passive-interface default
-  no passive-interface ethernet0/0
- exit-address-family
+interface Ethernet0/1
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
 !
-interface ethernet0/0
- ospfv3 10 ipv6 area 0</code></pre>
+interface Ethernet0/2
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+!
+ipv6 router ospf 10
+ router-id 2.2.2.2
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2</code></pre>
+        <h3>R3-DIST</h3>
+        <pre><code>interface Ethernet0/0
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/1
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/2
+ ipv6 ospf 10 area 10
+!
+ipv6 router ospf 10
+ router-id 3.3.3.3
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1</code></pre>
+        <h3>R4-BR</h3>
+        <pre><code>interface Ethernet0/0
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/1
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/2
+ ipv6 ospf 10 area 20
+!
+ipv6 router ospf 10
+ router-id 4.4.4.4
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1</code></pre>
+        <h3>R5-SVC</h3>
+        <pre><code>interface Ethernet0/0
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/1
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+!
+interface Ethernet0/2
+ ipv6 ospf 10 area 10
+!
+ipv6 router ospf 10
+ router-id 5.5.5.5
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1</code></pre>
+        <p>You may also see newer OSPFv3 address-family syntax in production, such as <code>router ospfv3 10</code> with <code>address-family ipv6 unicast</code> and interface command <code>ospfv3 10 ipv6 area 0</code>. Be able to recognize it, but use the classic syntax above for this CML lab.</p>
       </section>
       <section id="task4" class="task">
         <h2>Task 4: Passive Interfaces</h2>
-        <p>Advertise user LANs without sending Hellos toward endpoints. Use <code>passive-interface default</code> and explicitly enable transit links.</p>
+        <p>Confirm the passive design. Transit links must be non-passive. LAN interfaces to HQ-USER, BR-USER, and APP-SERVER should advertise their connected prefixes but never form OSPF neighbors.</p>
         <pre><code>show ip ospf interface brief
 show ipv6 ospf interface brief
 show ip protocols
 show ipv6 protocols</code></pre>
-        <p>A passive OSPF interface still advertises its connected prefix. It simply does not form neighbor adjacencies on that interface.</p>
+        <p>On point-to-point transit links, expect <code>FULL/-</code>. On the Area 0 Ethernet segment through AREA0-SW, expect DR/BDR neighbor roles. A passive OSPF interface still advertises its connected prefix; it simply does not send Hellos or form adjacencies on that interface.</p>
       </section>
       <section id="task5" class="task">
-        <h2>Task 5: Verification and Defect Repair</h2>
-        <ol>
-          <li>Fix a neighbor stuck in INIT because Hellos are not reciprocated.</li>
-          <li>Fix duplicate router IDs that prevent stable adjacency.</li>
-          <li>Fix a LAN that is missing from OSPF because it was never selected by the process.</li>
-        </ol>
+        <h2>Task 5: Verification</h2>
+        <p>Verify adjacencies, route installation, and data-plane reachability. Start with neighbor state, then prove routes and pings. Do not rely on ping alone.</p>
         <pre><code>show ip ospf neighbor detail
 show ipv6 ospf neighbor detail
 show ip route ospf
 show ipv6 route ospf
 show ip ospf database router
-debug ip ospf adj</code></pre>
+show ipv6 ospf database router</code></pre>
+        <p>Useful reachability checks from R1-HQ:</p>
+        <pre><code>ping 10.30.30.10 source 10.0.13.1
+ping 10.20.20.10 source 10.0.12.1
+ping 2001:db8:30:30::10 source 2001:db8:0:13::1
+ping 2001:db8:20:20::10 source 2001:db8:0:12::1</code></pre>
+        <p>Useful reachability checks from R5-SVC:</p>
+        <pre><code>ping 10.10.10.10
+ping 10.20.20.10
+ping 2001:db8:10:10::10
+ping 2001:db8:20:20::10</code></pre>
+      </section>
+      <section id="troubleshooting" class="panel">
+        <h2>Troubleshooting Notes from CML Validation</h2>
+        <ul>
+          <li>The IOL-XE image used for this lab rejects <code>no ip domain-lookup</code> during startup. It is not required for the lab and has been removed from the YAML.</li>
+          <li>If a routed transit adjacency does not look right, verify both sides use <code>ip ospf network point-to-point</code> and <code>ipv6 ospf network point-to-point</code> on the /30 and IPv6 transit links.</li>
+          <li><code>FULL/-</code> is expected on point-to-point links. DR and BDR roles are expected on the shared Area 0 Ethernet segment through AREA0-SW.</li>
+          <li>If a LAN prefix is missing from the route table, check whether the interface was selected by the OSPFv2 <code>network</code> statement or OSPFv3 interface command. A passive interface can still advertise the prefix.</li>
+          <li>If IPv6 OSPF neighbors are missing while IPv4 OSPF works, check for the interface-level <code>ipv6 ospf 10 area X</code> command. OSPFv3 is not enabled by IPv4 network statements.</li>
+          <li>Console input can occasionally drop the first characters of a command in the browser terminal. If a command returns an unexpected parser error but the syntax is valid, retype that command at the prompt.</li>
+          <li>The first ping may fail while ARP or IPv6 neighbor discovery resolves. Confirm with the full success rate and routing table before treating one dropped packet as an OSPF issue.</li>
+        </ul>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>

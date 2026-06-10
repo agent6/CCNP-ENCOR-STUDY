@@ -72,7 +72,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       interface Ethernet0/0
@@ -115,9 +114,6 @@ nodes:
        logging synchronous
       !
       line vty 0 4
-       login
-      !
-      line vty 5 15
        login
       !
       end
@@ -196,7 +192,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       !
       vlan 10
@@ -386,7 +381,9 @@ nodes:
       ip route add default via 10.30.30.1
       mkdir -p /www
       echo "acl-app-server" > /www/index.html
-      busybox httpd -h /www -p 80
+      while true; do
+        printf "HTTP/1.1 200 OK\r\nContent-Length: 15\r\n\r\nacl-app-server\n" | nc -l -p 80
+      done &
 
       echo "app-server" > /etc/hostname
       cat <<EOF > /etc/hosts
@@ -428,7 +425,9 @@ nodes:
       ip route add default via 10.40.40.1
       mkdir -p /www
       echo "acl-dmz-host" > /www/index.html
-      busybox httpd -h /www -p 80
+      while true; do
+        printf "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nacl-dmz-host\n" | nc -l -p 80
+      done &
 
       echo "dmz-host" > /etc/hostname
       cat <<EOF > /etc/hosts

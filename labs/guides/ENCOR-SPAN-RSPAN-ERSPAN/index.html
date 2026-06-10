@@ -59,6 +59,7 @@ traceroute 10.20.20.10</code></pre>
         <pre><code>ip link set eth0 promisc on
 tcpdump -ni eth0
 # If tcpdump is not available, verify switch monitor-session state and interface counters.</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> The initial topology wiring must place APP-SERVER on R2-CORE Ethernet0/1, ERSPAN-COLLECTOR on R2-CORE Ethernet0/2, and RSPAN-ANALYZER on SW2-ANALYZER Ethernet0/2. If CLIENT cannot ping <code>10.20.20.10</code>, check the physical links before troubleshooting SPAN.</p></div>
       </section>
 
       <section id="task2" class="task">
@@ -73,6 +74,7 @@ show interfaces Ethernet0/0 counters
 show interfaces Ethernet0/3 counters</code></pre>
         <p>Generate traffic again from CLIENT. The analyzer should see copies of frames sourced from or destined to the monitored client port.</p>
         <div class="callout"><p><strong>Depth check:</strong> A SPAN destination port is not a normal access port while it is a destination. Do not use a production uplink, trunk, or user port as the destination unless you intend to dedicate it to capture.</p></div>
+        <div class="callout warning"><p><strong>CML note:</strong> Local SPAN syntax is supported on IOL-L2 and <code>show monitor session 1</code> reports the source and destination. Some interface counter commands may return little or no output on this image, so use monitor-session state and analyzer capture where available.</p></div>
       </section>
 
       <section id="task3" class="task">
@@ -100,10 +102,16 @@ show interfaces trunk</code></pre>
       </section>
 
       <section id="task4" class="task">
-        <h2>Task 4: Configure ERSPAN Over the Routed Network</h2>
-        <p>Configure R1-EDGE as the ERSPAN source. It should mirror traffic on its client-facing interface and encapsulate the copy to ERSPAN-COLLECTOR across the routed network.</p>
-        <pre><code>! R1-EDGE
-monitor session 3 type erspan-source
+        <h2>Task 4: Interpret ERSPAN Over the Routed Network</h2>
+        <p>Validate the routed prerequisites for ERSPAN, then interpret the production-style ERSPAN source configuration. The available CML IOL and IOL-L2 images do not support runnable ERSPAN source configuration.</p>
+        <pre><code>! R1-EDGE CML readiness checks
+show ip route 10.50.50.10
+ping 10.50.50.10 source 10.0.12.1
+!
+! Unsupported on this IOL-XE image:
+monitor session 3 type erspan-source</code></pre>
+        <p>Production-style ERSPAN source configuration to interpret on supported Catalyst/IOS XE platforms:</p>
+        <pre><code>monitor session 3 type erspan-source
  source interface Ethernet0/0 both
  destination
   erspan-id 30
@@ -111,13 +119,12 @@ monitor session 3 type erspan-source
   origin ip address 10.0.12.1
  no shutdown
 !
-show monitor session 3
-show ip route 10.50.50.10
-ping 10.50.50.10 source 10.0.12.1</code></pre>
-        <p>On ERSPAN-COLLECTOR, capture GRE/ERSPAN traffic if tooling is available:</p>
+show monitor session 3</code></pre>
+        <p>On ERSPAN-COLLECTOR, capture GRE/ERSPAN traffic if the platform supports ERSPAN source and tooling is available:</p>
         <pre><code>ip link set eth0 promisc on
 tcpdump -ni eth0 proto gre or host 10.0.12.1</code></pre>
         <p>Depth check: ERSPAN is not just “remote SPAN.” It uses IP encapsulation, so routing, source address selection, MTU, ACLs, and collector reachability matter.</p>
+        <div class="callout warning"><p><strong>CML limitation:</strong> Validation showed <code>monitor session 3 type erspan-source</code> is rejected on both <code>iol-xe</code> and <code>ioll2-xe</code> in this lab. Treat ERSPAN here as configuration interpretation plus routed collector-readiness validation.</p></div>
       </section>
 
       <section id="task5" class="task">
@@ -154,6 +161,7 @@ show ip interface brief</code></pre>
           <li>RSPAN VLAN is pruned from the trunk between switches.</li>
           <li>ERSPAN source cannot route to the collector from the configured origin IP.</li>
           <li>ERSPAN ID/source does not match what the collector expects.</li>
+          <li>The platform image does not support ERSPAN source configuration even though local SPAN and RSPAN are supported.</li>
         </ol>
         <pre><code>show monitor session all
 show vlan id 999

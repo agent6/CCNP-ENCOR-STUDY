@@ -65,17 +65,19 @@ wget -O- http://10.20.20.10</code></pre>
         <h2>Task 2: Configure an ICMP Echo IP SLA Operation</h2>
         <p>Configure R1-BRANCH to probe the application server address using a stable source interface. Tune frequency, timeout, and threshold so you can interpret the result.</p>
         <pre><code>! R1-BRANCH
+ip route 10.0.24.0 255.255.255.252 Ethernet0/1 10.0.12.2
+!
 ip sla 10
- icmp-echo 10.20.20.10 source-interface Ethernet0/0
+ icmp-echo 10.0.24.2 source-interface Ethernet0/1
  frequency 5
  timeout 1000
  threshold 200
-ip sla schedule 10 life forever start-time now
+ip sla schedule 10 start-time now life forever
 !
 show ip sla configuration 10
 show ip sla statistics 10
 show ip sla summary</code></pre>
-        <p>Depth check: ICMP echo proves routed reachability to the target address. It does not prove HTTP is listening, and it does not prove the same path is used by every application flow.</p>
+        <p>Depth check: IP SLA 10 intentionally probes <code>10.0.24.2</code>, the R4 address reachable only through the primary path. If you probe the application server itself, the operation can recover through the backup path and reinstall the broken primary route, causing route flapping.</p>
       </section>
 
       <section id="task3" class="task">
@@ -86,21 +88,23 @@ track 10 ip sla 10 reachability
  delay down 10 up 5
 !
 no ip route 10.20.20.0 255.255.255.0 10.0.12.2
-ip route 10.20.20.0 255.255.255.0 10.0.12.2 track 10
-ip route 10.20.20.0 255.255.255.0 10.0.13.2 200
+ip route 10.20.20.0 255.255.255.0 Ethernet0/1 10.0.12.2 track 10
+ip route 10.20.20.0 255.255.255.0 Ethernet0/2 10.0.13.2 200
 !
 show track 10
 show ip route 10.20.20.0
 show ip sla statistics 10</code></pre>
-        <p>Test failover by administratively shutting the primary-facing interface on R1-BRANCH or R2-PRIMARY. Verify that the tracked route is removed and the floating route is installed.</p>
-        <pre><code>! R1-BRANCH
+        <p>Test SLA-driven failover by shutting the R2-PRIMARY link toward R4-SERVICES. This breaks the primary path beyond R1's next hop while leaving R1's local primary interface up.</p>
+        <pre><code>! R2-PRIMARY
 interface Ethernet0/1
  shutdown
 !
+! R1-BRANCH
 show track 10
 show ip route 10.20.20.0
 traceroute 10.20.20.10 source 10.10.10.1
 !
+! R2-PRIMARY
 interface Ethernet0/1
  no shutdown</code></pre>
         <div class="callout"><p><strong>Depth check:</strong> Tracking the far server catches more than local link failure. Tracking only the interface line protocol would miss upstream black holes beyond the first hop.</p></div>
@@ -115,10 +119,11 @@ show ip sla responder
 !
 ! R1-BRANCH
 ip sla 20
- udp-jitter 10.20.20.1 16384 source-interface Ethernet0/0 codec g711ulaw
+ udp-jitter 10.20.20.1 16384
  frequency 10
  timeout 2000
-ip sla schedule 20 life forever start-time now
+ threshold 1000
+ip sla schedule 20 start-time now life forever
 !
 show ip sla configuration 20
 show ip sla statistics 20
@@ -131,11 +136,11 @@ show ip sla statistics 20 details</code></pre>
         <p>Configure a TCP connect operation from R1-BRANCH to APP-SERVER on TCP/80. This tests application-port reachability more directly than ICMP echo.</p>
         <pre><code>! R1-BRANCH
 ip sla 30
- tcp-connect 10.20.20.10 80 source-interface Ethernet0/0
+ tcp-connect 10.20.20.10 80 control disable source-ip 10.10.10.1
  frequency 10
  timeout 2000
  threshold 500
-ip sla schedule 30 life forever start-time now
+ip sla schedule 30 start-time now life forever
 !
 show ip sla configuration 30
 show ip sla statistics 30
@@ -171,11 +176,13 @@ show running-config | include ^track|^ip route 10.20.20.0</code></pre>
         <p>Use symptoms and show output before changing configuration.</p>
         <ol>
           <li>The operation is configured but never scheduled, so no statistics update.</li>
+          <li>The schedule command is entered as <code>life forever start-time now</code> and the operation stays inactive; use <code>start-time now life forever</code> on this image.</li>
           <li>The source interface is wrong, so the return path is missing or the probe uses an unexpected address.</li>
+          <li>The ICMP probe tracks the final application server, which remains reachable over the backup path and causes route flapping. Track a primary-path-specific target instead.</li>
           <li>The timeout is shorter than the real path delay, causing false failures.</li>
           <li>The tracked route is installed but the floating backup route has a lower administrative distance than intended.</li>
-          <li>UDP jitter fails because the responder is not enabled on the target router.</li>
-          <li>ICMP succeeds but TCP connect fails because the service is not listening or the port is filtered.</li>
+          <li>UDP jitter fails because the responder is not enabled on the target router or because the default threshold is greater than the configured timeout.</li>
+          <li>ICMP succeeds but TCP connect fails because the service is not listening, the port is filtered, or <code>control disable</code> was omitted when probing a normal TCP server.</li>
           <li>Failover works, but failback flaps because no track delay was configured.</li>
         </ol>
         <pre><code>debug ip sla trace

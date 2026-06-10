@@ -68,7 +68,6 @@ traceroute 10.20.20.10</code></pre>
  match transport source-port
  match transport destination-port
  match interface input
- match ip protocol
  collect counter bytes long
  collect counter packets long
  collect timestamp sys-uptime first
@@ -76,7 +75,9 @@ traceroute 10.20.20.10</code></pre>
  collect routing next-hop address ipv4</code></pre>
         <p>Alternative style to recognize:</p>
         <pre><code>flow monitor ENCOR-PREDEFINED
- record netflow ipv4 original-input</code></pre>
+ record netflow ipv4 original-input
+ exporter ENCOR-COLLECTOR</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> This IOL-XE image rejects <code>match ip protocol</code> in the custom record. Use the predefined <code>netflow ipv4 original-input</code> record when you need protocol fields such as <code>IP PROT</code> in table output.</p></div>
         <div class="callout"><p><strong>Depth check:</strong> A custom record lets you decide what defines a unique flow. A predefined record is faster to deploy, but you must still understand what fields it matches and collects.</p></div>
       </section>
 
@@ -106,8 +107,6 @@ show ip route 10.50.50.10</code></pre>
  description Monitor client-to-server flows
  record ENCOR-IPV4-RECORD
  exporter ENCOR-COLLECTOR
- cache timeout active 60
- cache timeout inactive 15
 !
 interface Ethernet0/0
  ip flow monitor ENCOR-IPV4-MONITOR input
@@ -115,6 +114,7 @@ interface Ethernet0/0
 interface Ethernet0/1
  ip flow monitor ENCOR-IPV4-MONITOR output</code></pre>
         <p>Interpret direction carefully. Input on Ethernet0/0 records traffic as it arrives from CLIENT. Output on Ethernet0/1 records forwarded traffic as it leaves toward R2-WAN. If you attach the monitor to the collector interface only, client-to-server flows will not appear there.</p>
+        <div class="callout warning"><p><strong>CML note:</strong> This IOL-XE image rejected monitor-level <code>cache timeout active</code> and <code>cache timeout inactive</code>. The validated default cache used inactive timeout 15 seconds and active timeout 1800 seconds.</p></div>
       </section>
 
       <section id="task5" class="task">
@@ -127,10 +127,12 @@ wget -O- http://10.20.20.10
 # R1-EDGE
 show flow monitor ENCOR-IPV4-MONITOR cache
 show flow monitor ENCOR-IPV4-MONITOR cache format table
+show flow monitor ENCOR-PREDEFINED cache format table
 show flow monitor ENCOR-IPV4-MONITOR statistics
 show flow exporter statistics
 show running-config interface Ethernet0/0
 show running-config interface Ethernet0/1</code></pre>
+        <div class="callout warning"><p><strong>Validation note:</strong> R1-generated pings do not enter Ethernet0/0, so they do not prove the ingress monitor. Generate traffic from CLIENT, then check cache while traffic is active or before the 15-second inactive timer exports the flow.</p></div>
         <p>Explain the record:</p>
         <ul>
           <li>Which source and destination addresses define the flow?</li>
@@ -139,6 +141,7 @@ show running-config interface Ethernet0/1</code></pre>
           <li>Did exporter counters increment after cache aging or manual clearing?</li>
         </ul>
         <pre><code>clear flow monitor ENCOR-IPV4-MONITOR cache
+clear flow monitor ENCOR-PREDEFINED cache
 show flow exporter statistics</code></pre>
       </section>
 
@@ -152,9 +155,11 @@ show flow exporter statistics</code></pre>
           <li>The collector sees UDP packets but cannot decode fields because the template has not been exported or the wrong export protocol is configured.</li>
           <li>Short tests do not export immediately because inactive/active cache timers have not expired.</li>
           <li>Only one side of a conversation appears because ingress and egress are monitored asymmetrically.</li>
+          <li>The custom record shows ICMP as transport ports <code>0/2048</code> because this image did not accept protocol as a match field; use the predefined record to see <code>IP PROT 1</code>.</li>
         </ol>
         <pre><code>show flow monitor
 show flow monitor ENCOR-IPV4-MONITOR cache
+show flow monitor ENCOR-PREDEFINED cache
 show flow monitor ENCOR-IPV4-MONITOR statistics
 show flow exporter
 show flow exporter statistics

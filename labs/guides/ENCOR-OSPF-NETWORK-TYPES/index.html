@@ -20,6 +20,7 @@
       <a href="#task3">Task 3: Passive Interfaces</a>
       <a href="#task4">Task 4: Mismatch Defects</a>
       <a href="#task5">Task 5: Verification</a>
+      <a href="#troubleshooting">Troubleshooting</a>
       <a href="#grading">Grade Entire Lab</a>
       <a href="#references">References</a>
     </nav>
@@ -37,34 +38,137 @@
       <section id="topology" class="panel"><h2>Topology</h2><img class="topology" src="../ENCOR-OSPF/assets/ospf-topology.svg" alt="OSPF topology"></section>
       <section id="task1" class="task">
         <h2>Task 1: Interpret Broadcast Network Behavior</h2>
-        <p>R1-HQ and R2-CORE share the IOL-L2 AREA0-SW segment. Verify DR/BDR election and neighbor state.</p>
+        <p>R1-HQ and R2-CORE share the IOL-L2 AREA0-SW segment. Ethernet0/0 must remain broadcast for both OSPFv2 and OSPFv3 so DR/BDR election is meaningful.</p>
         <pre><code>show ip ospf interface ethernet0/0
 show ip ospf neighbor
 show ip ospf database network
-show ipv6 ospf interface ethernet0/0</code></pre>
+show ipv6 ospf interface ethernet0/0
+show ipv6 ospf neighbor</code></pre>
+        <p>If R2-CORE shows Ethernet0/0 as point-to-point, repair only that interface. A mixed broadcast/point-to-point adjacency can still reach FULL, but the lab goal is to interpret the correct network type.</p>
+        <pre><code>R2-CORE# configure terminal
+interface Ethernet0/0
+ no ip ospf network point-to-point
+ no ipv6 ospf network point-to-point
+end</code></pre>
         <p>On broadcast networks, FULL adjacency is expected with the DR/BDR. 2-WAY can be normal between DROTHER routers on a larger segment.</p>
       </section>
       <section id="task2" class="task">
         <h2>Task 2: Convert Routed Links to Point-to-Point</h2>
-        <p>On true router-to-router links, use point-to-point network type to avoid unnecessary DR election.</p>
-        <pre><code>interface ethernet0/1
+        <p>On true router-to-router links, use point-to-point network type to avoid unnecessary DR election. Also enable the direct R1-HQ to R2-CORE Area 0 link for both OSPFv2 and OSPFv3.</p>
+        <pre><code>R1-HQ# configure terminal
+router ospf 10
+ no passive-interface Ethernet0/2
+ network 10.0.12.0 0.0.0.3 area 0
+exit
+interface Ethernet0/1
  ip ospf network point-to-point
+ ipv6 ospf 10 area 10
  ipv6 ospf network point-to-point
-!
-show ip ospf interface ethernet0/1
+exit
+interface Ethernet0/2
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+exit
+ipv6 router ospf 10
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+end</code></pre>
+        <pre><code>R2-CORE# configure terminal
+router ospf 10
+ no passive-interface Ethernet0/2
+ network 10.0.12.0 0.0.0.3 area 0
+exit
+interface Ethernet0/1
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/2
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 0
+ ipv6 ospf network point-to-point
+exit
+ipv6 router ospf 10
+ no passive-interface Ethernet0/1
+ no passive-interface Ethernet0/2
+end</code></pre>
+        <pre><code>show ip ospf interface brief
+show ipv6 ospf interface brief
 show ip ospf neighbor detail</code></pre>
         <p>Alternative: on some platforms and OSPFv3 address-family style, use <code>ospfv3 network point-to-point</code> or the equivalent interface command shown by the parser.</p>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Passive Interfaces with Intent</h2>
-        <p>Enable <code>passive-interface default</code>, then disable passive mode only on real neighbor links. Verify LAN prefixes still advertise.</p>
-        <pre><code>router ospf 10
+        <p>Use <code>passive-interface default</code>, then disable passive mode only on real neighbor links. LAN prefixes should still advertise, but they should not send Hellos toward hosts.</p>
+        <pre><code>R3-DIST# configure terminal
+interface Ethernet0/0
+ no ip ospf hello-interval
+ no ip ospf dead-interval
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/1
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/2
+ ipv6 ospf 10 area 10
+exit
+ipv6 router ospf 10
+ router-id 3.3.3.3
  passive-interface default
- no passive-interface ethernet0/0
- no passive-interface ethernet0/1
-!
-show ip protocols
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+end</code></pre>
+        <pre><code>R4-BR# configure terminal
+router ospf 10
+ no passive-interface Ethernet0/0
+exit
+interface Ethernet0/0
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/1
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/2
+ ipv6 ospf 10 area 20
+exit
+ipv6 router ospf 10
+ router-id 4.4.4.4
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+end</code></pre>
+        <pre><code>R5-SVC# configure terminal
+interface Ethernet0/0
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 10
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/1
+ ip ospf network point-to-point
+ ipv6 ospf 10 area 20
+ ipv6 ospf network point-to-point
+exit
+interface Ethernet0/2
+ ipv6 ospf 10 area 10
+exit
+ipv6 router ospf 10
+ router-id 5.5.5.5
+ passive-interface default
+ no passive-interface Ethernet0/0
+ no passive-interface Ethernet0/1
+end</code></pre>
+        <pre><code>show ip protocols
 show ip ospf interface brief
+show ipv6 ospf interface brief
 show ip route ospf</code></pre>
       </section>
       <section id="task4" class="task">
@@ -76,11 +180,13 @@ show ip route ospf</code></pre>
           <li>R4-BR cannot form a neighbor because the transit interface is still passive.</li>
           <li>OSPFv3 is configured, but the interface-level OSPFv3 network type does not match the neighbor.</li>
         </ol>
+        <p>Use focused show commands before changing anything. The repair should explain which symptom proved each defect.</p>
         <pre><code>show ip ospf interface
 show ip ospf neighbor detail
 show logging | include OSPF
 debug ip ospf hello
-show ipv6 protocols</code></pre>
+show ipv6 protocols
+show ipv6 ospf interface brief</code></pre>
       </section>
       <section id="task5" class="task">
         <h2>Task 5: Verification Across OSPFv2 and OSPFv3</h2>
@@ -90,8 +196,24 @@ show ip ospf interface brief
 show ipv6 ospf interface brief
 show ip route ospf
 show ipv6 route ospf
-ping 10.20.20.10 source 10.10.10.1
-ping 2001:db8:20:20::10 source 2001:db8:10:10::1</code></pre>
+ping 10.20.20.10 source 10.0.13.1
+ping 10.30.30.10 source 10.0.13.1
+ping 2001:db8:20:20::10 source 2001:db8:0:13::1
+ping 2001:db8:30:30::10 source 2001:db8:0:13::1</code></pre>
+        <p>The source address must exist on the device where you run the ping. R1-HQ does not own the HQ user LAN address 10.10.10.1; that address is on R3-DIST.</p>
+      </section>
+      <section id="troubleshooting" class="panel">
+        <h2>Troubleshooting Notes</h2>
+        <ul>
+          <li>If a router displays a non-blocking startup warning for <code>no ip domain-lookup</code>, continue the lab. The packaged YAML has been cleaned so this warning should not appear on a fresh import.</li>
+          <li>A mixed OSPF network type can still show a FULL neighbor. Always verify the interface type with <code>show ip ospf interface</code> or <code>show ipv6 ospf interface</code>, not neighbor state alone.</li>
+          <li>Timer mismatches usually leave the interface selected for OSPF but prevent a stable neighbor. In this lab, R3-DIST Ethernet0/0 should return to default hello/dead timers to match R1-HQ.</li>
+          <li>A passive transit interface advertises its connected subnet but sends no Hellos. If an expected neighbor is missing, compare <code>show ip protocols</code> passive interfaces with the physical topology.</li>
+          <li>OSPFv3 is enabled per interface in this lab. IPv4 OSPF <code>network</code> statements do not enable OSPFv3.</li>
+          <li>The R5-SVC router icon sits directly above APP-SERVER in the CML topology. If the console says <code>app-server login:</code>, close that console and right-click the router icon above it.</li>
+          <li>If the browser console drops the first characters of a command and IOS reports an invalid input marker, retype the exact command at the prompt before troubleshooting the network.</li>
+          <li>One dropped packet on the first ping can be ARP or IPv6 neighbor discovery. Use the final success rate after the adjacency and route tables are stable.</li>
+        </ul>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>

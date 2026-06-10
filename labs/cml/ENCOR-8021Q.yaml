@@ -84,7 +84,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -132,6 +131,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to DIST-1 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -140,6 +140,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-2 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -346,7 +347,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -367,6 +367,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to DIST-3 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -375,6 +376,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-4 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -581,7 +583,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -602,6 +603,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to CORE-1 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -610,6 +612,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-2 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -618,6 +621,7 @@ nodes:
       !
       interface Ethernet1/0
        description 802.1Q trunk to ACCESS-1 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -824,7 +828,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -845,6 +848,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to CORE-1 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -853,6 +857,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-1 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -861,6 +866,7 @@ nodes:
       !
       interface Ethernet1/0
        description 802.1Q trunk to ACCESS-1 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -869,6 +875,7 @@ nodes:
       !
       interface Ethernet1/1
        description 802.1Q trunk to SRV-ACCESS Ethernet0/0 - DEFECT missing VLAN 40
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 30,100,999
@@ -1075,7 +1082,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -1096,6 +1102,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to CORE-2 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -1104,6 +1111,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-4 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -1112,6 +1120,7 @@ nodes:
       !
       interface Ethernet1/0
        description 802.1Q trunk to ACCESS-2 Ethernet0/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -1120,6 +1129,7 @@ nodes:
       !
       interface Ethernet1/1
        description 802.1Q trunk to SRV-ACCESS Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 30,40,100,999
@@ -1326,7 +1336,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -1347,6 +1356,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to CORE-2 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -1355,6 +1365,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-3 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,30,40,100,999
@@ -1363,6 +1374,7 @@ nodes:
       !
       interface Ethernet1/0
        description 802.1Q trunk to ACCESS-2 Ethernet0/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -1569,7 +1581,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -1590,6 +1601,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to DIST-1 Ethernet1/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -1598,6 +1610,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-2 Ethernet1/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -1818,7 +1831,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -1839,6 +1851,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to DIST-2 Ethernet1/1
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 30,40,100,999
@@ -1847,6 +1860,7 @@ nodes:
       !
       interface Ethernet0/1
        description 802.1Q trunk to DIST-3 Ethernet1/1 - DEFECT native VLAN mismatch
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 1
        switchport trunk allowed vlan 30,40,100,999
@@ -2067,7 +2081,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       vtp mode transparent
       !
       spanning-tree mode rapid-pvst
@@ -2088,6 +2101,7 @@ nodes:
       !
       interface Ethernet0/0
        description 802.1Q trunk to DIST-3 Ethernet1/0
+       switchport trunk encapsulation dot1q
        switchport mode trunk
        switchport trunk native vlan 999
        switchport trunk allowed vlan 10,20,999
@@ -2096,6 +2110,7 @@ nodes:
       !
       interface Ethernet0/1
        description DEFECT dynamic desirable uplink to DIST-4 Ethernet1/0
+       switchport trunk encapsulation dot1q
        switchport mode dynamic desirable
        switchport trunk native vlan 999
        no shutdown

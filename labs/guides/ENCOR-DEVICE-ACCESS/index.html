@@ -105,17 +105,12 @@ show privilege</code></pre>
         <p>Build SSH-only remote access. Telnet should not be accepted. VTY lines should authenticate against local users and use sane session timers.</p>
         <pre><code>! R1-SECURE
 conf t
-ip domain-name encor.local
-crypto key generate rsa modulus 2048
+ip domain name encor.local
+crypto key generate rsa general-keys modulus 2048
 ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 2
 line vty 0 4
- login local
- transport input ssh
- exec-timeout 10 0
- logging synchronous
-line vty 5 15
  login local
  transport input ssh
  exec-timeout 10 0
@@ -128,7 +123,7 @@ show running-config | section line vty</code></pre>
         <pre><code>ssh -l netadmin 10.80.80.1
 ssh -l operator 10.80.80.1
 telnet 10.80.80.1</code></pre>
-        <p>Expected behavior: SSH with valid local users succeeds; Telnet fails because the VTY transport is SSH-only.</p>
+        <p>If you cannot open R2-JUMP's console, you can still prove the VTY behavior from R1-SECURE with <code>ssh -l netadmin 10.80.80.1</code> and <code>telnet 10.80.80.1</code>. Expected behavior: SSH with valid local users succeeds; Telnet fails because the VTY transport is SSH-only.</p>
       </section>
 
       <section id="task5" class="task">
@@ -147,7 +142,7 @@ end
 show running-config | include ^privilege|^login
 show login
 show privilege</code></pre>
-        <p>Log in as <code>operator</code> and compare available commands to <code>netadmin</code>. Then intentionally fail authentication three times from R2-JUMP and verify the temporary quiet mode.</p>
+        <p>Log in as <code>operator</code> and compare available commands to <code>netadmin</code>. Then intentionally fail authentication three times from R2-JUMP and verify the temporary quiet mode. If you are using a self-SSH session from R1-SECURE, exit the SSH session before continuing so you return to the physical console session.</p>
         <pre><code>show login
 show logging | include LOGIN|SEC_LOGIN
 show users</code></pre>
@@ -190,6 +185,10 @@ ping 10.90.90.10 source 10.90.90.1</code></pre>
           <li>The operator user can enter privileged EXEC unexpectedly because a line privilege setting overrides your intended user privilege.</li>
           <li>All remote logins fail because quiet mode is active after repeated bad attempts.</li>
           <li>A user sees a limited command set because local privilege level is lower than expected.</li>
+          <li><code>show ip ssh</code> reports no SECSH RSA keys because the key generation command did not run. On this CML IOL-XE image, use <code>ip domain name</code> and <code>crypto key generate rsa general-keys modulus 2048</code>.</li>
+          <li>The startup parser rejects <code>line vty 5 15</code> on this image. Harden <code>line vty 0 4</code>, which is the available VTY range in this topology.</li>
+          <li>After you apply <code>login local</code> to the console line and exit a nested SSH session, CML may show <code>Press RETURN to get started</code>. Press Enter and log in with a local username.</li>
+          <li>A lower-privilege user may be able to run an allowed <code>show running-config</code> command while sensitive lines are hidden or omitted. Use <code>show privilege</code>, <code>show users</code>, and a simple allowed show command to prove the privilege behavior.</li>
         </ol>
         <pre><code>show running-config | section line
 show running-config | include ^username|^enable secret|^privilege|^login

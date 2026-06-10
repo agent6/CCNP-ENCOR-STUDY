@@ -28,7 +28,7 @@
       <section id="overview" class="panel">
         <h2>Overview</h2>
         <p>This lab targets ENCOR 3.3.c: configure first hop redundancy protocols, such as HSRP and VRRP. You will configure HSRP for VLAN 10 and VRRP for VLAN 20 across two distribution routers, verify the active/master gateway roles, and test failover with tracking and preemption.</p>
-        <p>The starting CML topology includes VLAN trunks, access ports, routed uplinks, host addressing, and upstream routing. FHRP is intentionally absent so the hosts initially point to a gateway address that does not exist until you configure the virtual gateways.</p>
+        <p>The starting CML topology includes VLAN trunks, access ports, routed uplinks, host addressing, and an OSPF underlay. FHRP is intentionally absent so the hosts initially point to a gateway address that does not exist until you configure the virtual gateways.</p>
         <div class="meta-grid">
           <div class="metric"><b>90 min</b><span>Estimated time</span></div>
           <div class="metric"><b>ENCOR 3.3.c</b><span>HSRP and VRRP</span></div>
@@ -39,18 +39,27 @@
 
       <section id="topology" class="panel">
         <h2>Topology</h2>
-        <p>R1-DIST-A and R2-DIST-B are redundant default gateways on VLANs 10 and 20. ACCESS-SW provides Layer 2 access and trunks both VLANs to the routers. R3-CORE and APP-SERVER provide an upstream destination for end-to-end failover tests.</p>
+        <p>R1-DIST-A and R2-DIST-B are redundant default gateways on VLANs 10 and 20. ACCESS-SW provides Layer 2 access and trunks both VLANs to the routers. R3-CORE and APP-SERVER provide an upstream destination for end-to-end failover tests. OSPF is preloaded on the routed underlay with point-to-point uplinks and VLAN-specific interface costs so return traffic follows the intended gateway after failover.</p>
         <img class="topology" src="assets/fhrp-topology.svg" alt="First hop redundancy topology">
       </section>
 
       <section id="task1" class="task">
         <h2>Task 1: Baseline VLANs, Routing, and Host Failure</h2>
         <p>Confirm the Layer 2 and routed underlay first. The user hosts should fail to reach their default gateway virtual IPs before FHRP is configured.</p>
+        <p>On IOS/IOL devices, enter privileged EXEC and disable paging before you start collecting output:</p>
+        <pre><code>enable
+terminal length 0</code></pre>
+        <p>On Alpine host consoles, log in with username <code>cisco</code> and password <code>cisco</code>.</p>
+        <p>On ACCESS-SW:</p>
         <pre><code>show vlan brief
 show interfaces trunk
-show ip interface brief
+show cdp neighbors detail</code></pre>
+        <p>On R1-DIST-A, R2-DIST-B, and R3-CORE:</p>
+        <pre><code>show ip interface brief
 show ip route
 show cdp neighbors detail
+show ip ospf neighbor
+show ip route ospf
 show standby brief
 show vrrp brief</code></pre>
         <p>From the hosts:</p>
@@ -61,106 +70,123 @@ ping -c 3 10.99.99.10
 # USER-VRRP
 ping -c 3 10.20.20.1
 ping -c 3 10.99.99.10</code></pre>
-        <p>Expected interpretation: host-to-gateway fails because 10.10.10.1 and 10.20.20.1 are virtual gateway addresses that have not been created yet.</p>
+        <p>Expected interpretation: host-to-gateway fails because 10.10.10.1 and 10.20.20.1 are virtual gateway addresses that have not been created yet. OSPF should already show FULL neighbors between each distribution router and R3-CORE, and APP-SERVER should be reachable from the routers once a valid first-hop gateway exists for the hosts.</p>
+        <div class="callout"><p><strong>Live CML note:</strong> The IOL startup log may show <code>no ip domain-lookup</code> as invalid during boot. That warning is non-blocking for this lab. For routed OSPF links, the topology uses <code>ip ospf network point-to-point</code>; without it, the neighbors may sit in EXSTART/DR behavior on two-node Ethernet links.</p></div>
       </section>
 
       <section id="task2" class="task">
         <h2>Task 2: Configure HSRP for VLAN 10</h2>
         <p>Configure R1-DIST-A as the preferred HSRP active router for VLAN 10 and R2-DIST-B as standby. Use preempt so the preferred gateway can resume active role after recovering.</p>
         <pre><code>! R1-DIST-A
+configure terminal
 interface Ethernet0/0.10
  standby version 2
  standby 10 ip 10.10.10.1
  standby 10 priority 120
  standby 10 preempt
  standby 10 authentication md5 key-string ENCOR-HSRP
+end
 !
 ! R2-DIST-B
+configure terminal
 interface Ethernet0/0.10
  standby version 2
  standby 10 ip 10.10.10.1
  standby 10 priority 100
  standby 10 preempt
- standby 10 authentication md5 key-string ENCOR-HSRP</code></pre>
+ standby 10 authentication md5 key-string ENCOR-HSRP
+end</code></pre>
         <p>Verify both sides:</p>
         <pre><code>show standby brief
 show standby Ethernet0/0.10
 show standby neighbors
 show arp | include 10.10.10.1
 show mac address-table dynamic vlan 10</code></pre>
-        <div class="callout"><p><strong>Depth check:</strong> HSRP has an active and standby router. The host default gateway points to the virtual IP, while the active router answers ARP for that virtual IP using an HSRP virtual MAC.</p></div>
+        <div class="callout"><p><strong>Depth check:</strong> HSRP has an active and standby router. The host default gateway points to the virtual IP, while the active router answers ARP for that virtual IP using an HSRP virtual MAC. Immediately after adding the second router, <code>show standby brief</code> may briefly show Listen or Speak while hello/hold timers settle; recheck after one hold interval before troubleshooting a real mismatch.</p></div>
       </section>
 
       <section id="task3" class="task">
         <h2>Task 3: Configure VRRP for VLAN 20</h2>
         <p>Configure R2-DIST-B as the preferred VRRP master for VLAN 20 and R1-DIST-A as backup. This gives you both protocol behaviors and avoids making a single router primary for every VLAN.</p>
         <pre><code>! R1-DIST-A
+configure terminal
 interface Ethernet0/0.20
  vrrp 20 ip 10.20.20.1
  vrrp 20 priority 100
  vrrp 20 preempt
+end
 !
 ! R2-DIST-B
+configure terminal
 interface Ethernet0/0.20
  vrrp 20 ip 10.20.20.1
  vrrp 20 priority 120
- vrrp 20 preempt</code></pre>
+ vrrp 20 preempt
+end</code></pre>
         <p>Verify:</p>
         <pre><code>show vrrp brief
 show vrrp
 show arp | include 10.20.20.1
 show mac address-table dynamic vlan 20</code></pre>
-        <p>Interpretation focus: VRRP uses master/backup terminology and a VRRP virtual MAC. HSRP and VRRP solve the same first-hop problem, but their states, defaults, and protocol details differ.</p>
+        <p>Interpretation focus: VRRP uses master/backup terminology and a VRRP virtual MAC. HSRP and VRRP solve the same first-hop problem, but their states, defaults, and protocol details differ. In this CML image the classic syntax <code>vrrp 20 ip 10.20.20.1</code> is accepted. A newly created VRRP group may temporarily show Backup with master <code>0.0.0.0</code>; wait for the master-down timer and verify again.</p>
       </section>
 
       <section id="task4" class="task">
         <h2>Task 4: Add Tracking and Preemption</h2>
         <p>A gateway should not stay active or master if its upstream path is down. Track the routed uplink on each preferred router and reduce priority enough for the peer to take over.</p>
         <pre><code>! R1-DIST-A tracks its upstream link for HSRP VLAN 10
+configure terminal
 track 10 interface Ethernet0/1 line-protocol
 interface Ethernet0/0.10
  standby 10 track 10 decrement 40
+end
 !
 ! R2-DIST-B tracks its upstream link for VRRP VLAN 20
+configure terminal
 track 20 interface Ethernet0/1 line-protocol
 interface Ethernet0/0.20
- vrrp 20 track 20 decrement 40</code></pre>
+ vrrp 20 track 20 decrement 40
+end</code></pre>
         <p>Verify tracked object state and FHRP priority:</p>
         <pre><code>show track
 show standby Ethernet0/0.10
 show vrrp
 show logging | include HSRP|VRRP|TRACK</code></pre>
-        <p>Depth check: preempt controls whether a higher-priority router takes back the role after it recovers. Tracking changes the effective priority; it does not directly shut down the FHRP group.</p>
+        <p>Depth check: preempt controls whether a higher-priority router takes back the role after it recovers. Tracking changes the effective priority; it does not directly shut down the FHRP group. If the preferred router still appears active immediately after a tracked failure, wait one protocol interval and recheck; live validation showed both HSRP and VRRP needed a short convergence window before the peer took over.</p>
       </section>
 
       <section id="task5" class="task">
         <h2>Task 5: Test Failover and Recovery</h2>
         <p>Run continuous pings from hosts to APP-SERVER, then fail the preferred gateway uplink. Observe the FHRP role change, packet loss, and recovery behavior.</p>
         <pre><code># USER-HSRP
-ping 10.99.99.10
+ping -c 20 10.99.99.10
 
 # USER-VRRP
-ping 10.99.99.10</code></pre>
+ping -c 20 10.99.99.10</code></pre>
         <p>On R1-DIST-A, fail the HSRP-preferred uplink:</p>
-        <pre><code>interface Ethernet0/1
+        <pre><code>configure terminal
+interface Ethernet0/1
  shutdown
-!
+end
 show track
 show standby brief
 show ip route 10.99.99.0</code></pre>
         <p>On R2-DIST-B, fail the VRRP-preferred uplink:</p>
-        <pre><code>interface Ethernet0/1
+        <pre><code>configure terminal
+interface Ethernet0/1
  shutdown
-!
+end
 show track
 show vrrp brief
 show ip route 10.99.99.0</code></pre>
         <p>Recover both links and confirm preemption behavior:</p>
-        <pre><code>interface Ethernet0/1
+        <pre><code>configure terminal
+interface Ethernet0/1
  no shutdown
-!
+end
 show standby brief
 show vrrp brief</code></pre>
+        <div class="callout"><p><strong>Troubleshooting insight:</strong> FHRP role changes and end-to-end reachability are different checks. During validation, the original static return routes on R3 allowed the FHRP role to move while APP-SERVER return traffic still followed the failed router. The fixed lab uses OSPF underlay costs instead. If gateway failover works but app pings fail, check <code>show ip route 10.10.10.0</code>, <code>show ip route 10.20.20.0</code>, and <code>show ip ospf neighbor</code> on R3-CORE.</p></div>
       </section>
 
       <section id="task6" class="task">
@@ -172,17 +198,19 @@ show vrrp brief</code></pre>
           <li>A host can ARP for the virtual gateway but cannot reach upstream because the active router lost its routed uplink and tracking is missing.</li>
           <li>VRRP preemption does not occur as expected because the recovered router has lower effective priority.</li>
           <li>The virtual IP is configured outside the subnet or conflicts with a real interface address.</li>
+          <li>End-to-end pings fail after a correct FHRP role change because the upstream router still has the wrong return path.</li>
         </ol>
         <pre><code>show standby brief
 show standby all
 show vrrp brief
 show vrrp
 show track
+show ip ospf neighbor
+show ip route ospf
 show ip interface brief
 show running-config interface Ethernet0/0.10
 show running-config interface Ethernet0/0.20
-debug standby terse
-debug vrrp events</code></pre>
+show logging | include HSRP|VRRP|TRACK|OSPF</code></pre>
       </section>
 
       <section id="grading" class="panel">

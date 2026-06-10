@@ -83,7 +83,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -302,7 +301,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -530,7 +528,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -749,7 +746,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -968,7 +964,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !

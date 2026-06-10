@@ -71,7 +71,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -302,7 +301,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -533,7 +531,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -764,7 +761,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -995,7 +991,6 @@ nodes:
       !
       no logging console
       no aaa new-model
-      no ip domain-lookup
       ip cef
       ipv6 unicast-routing
       !
@@ -1220,7 +1215,6 @@ nodes:
       hostname AREA0-SW
       !
       no logging console
-      no ip domain-lookup
       !
       interface range Ethernet0/0-1
        description Area 0 broadcast segment access ports

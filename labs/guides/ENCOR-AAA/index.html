@@ -33,7 +33,7 @@
         <div class="meta-grid">
           <div class="metric"><b>90 min</b><span>Estimated time</span></div>
           <div class="metric"><b>ENCOR 5.1.b</b><span>AAA authN/authZ</span></div>
-          <div class="metric"><b>IOL routers</b><span>AAA target and SSH client</span></div>
+          <div class="metric"><b>IOL routers</b><span>AAA target and VTY client</span></div>
           <div class="metric"><b>7 tasks</b><span>Configure, apply, test, troubleshoot</span></div>
         </div>
       </section>
@@ -106,12 +106,12 @@ end
 show running-config | section aaa
 show running-config | section tacacs
 show aaa servers</code></pre>
-        <p>The lab AAA-SERVER does not run a TACACS+ service by default. That is intentional: the VTY method list should try the server group and then use local fallback. In production, the same method-list structure points to ISE or another TACACS+ service.</p>
+        <p>The lab AAA-SERVER does not run a TACACS+ service by default. That is intentional: the VTY method list should try the server group and then use local fallback. In production, the same method-list structure points to ISE or another TACACS+ service. In this CML image, <code>show aaa servers</code> may not display useful server detail until an AAA transaction occurs, so verify the configured method lists and live login behavior.</p>
       </section>
 
       <section id="task4" class="task">
         <h2>Task 4: Apply AAA Authentication to Console and VTY Lines</h2>
-        <p>Apply the named method lists. Keep console behavior predictable and use SSH-only VTY access for remote management.</p>
+        <p>Apply the named method lists. Keep console behavior predictable. Configure SSH because it is the production management transport, but permit Telnet in this CML lab so the AAA method list can be validated if the IOL SSH server refuses sessions.</p>
         <pre><code>! R1-AAA
 conf t
 line console 0
@@ -120,22 +120,16 @@ line console 0
  logging synchronous
 line vty 0 4
  login authentication VTY-AUTH
- transport input ssh
- exec-timeout 10 0
- logging synchronous
-line vty 5 15
- login authentication VTY-AUTH
- transport input ssh
+ transport input telnet ssh
  exec-timeout 10 0
  logging synchronous
 end
 !
 show running-config | section line con
 show running-config | section line vty</code></pre>
-        <p>From R2-JUMP, test valid and invalid logins. A valid local user should work after the TACACS+ attempt fails over to local.</p>
-        <pre><code>ssh -l aaa-admin 10.81.81.1
-ssh -l aaa-ops 10.81.81.1
-ssh -l no-such-user 10.81.81.1
+        <p>From R2-JUMP, test valid and invalid logins. A valid local user should work after the TACACS+ attempt fails over to local. Use Telnet for the scored CML validation; optionally try SSH and troubleshoot it if the image supports inbound SSH.</p>
+        <pre><code>telnet 10.81.81.1
+ssh -v 2 -l aaa-admin 10.81.81.1
 telnet 10.81.81.1</code></pre>
       </section>
 
@@ -155,10 +149,6 @@ line vty 0 4
  authorization exec VTY-EXEC
  authorization commands 1 VTY-CMD
  authorization commands 15 VTY-CMD
-line vty 5 15
- authorization exec VTY-EXEC
- authorization commands 1 VTY-CMD
- authorization commands 15 VTY-CMD
 end
 !
 show running-config | include ^aaa authorization
@@ -168,7 +158,7 @@ show running-config | section line vty</code></pre>
 show users
 show running-config
 configure terminal</code></pre>
-        <p>Interpretation focus: local privilege is coarse. TACACS+ command authorization can return per-command permit/deny decisions. RADIUS generally does not provide the same per-command authorization model.</p>
+        <p>Interpretation focus: local privilege is coarse. TACACS+ command authorization can return per-command permit/deny decisions. RADIUS generally does not provide the same per-command authorization model. Do not rely only on the prompt character: in this image <code>aaa-ops</code> can display a <code>#</code> prompt while <code>show privilege</code> correctly reports privilege level 5 and privilege-15 commands are rejected.</p>
       </section>
 
       <section id="task6" class="task">
@@ -201,6 +191,9 @@ aaa accounting commands 15 default start-stop group TACACS-ADMIN</code></pre>
           <li>AAA-SERVER is reachable by ping but TACACS+ fails because the shared key, source interface, or service is wrong.</li>
           <li>Local fallback works for server timeout but not for an explicit reject from the AAA server.</li>
           <li>Console access is broken because console and VTY method lists were treated the same without a break-glass design.</li>
+          <li>This IOL image supports <code>line vty 0 4</code> only. If <code>line vty 5 15</code> is rejected, configure and verify VTY 0-4.</li>
+          <li>If SSH is refused even though <code>show tcp brief all</code> shows TCP/22 listening, validate the AAA method list over Telnet in this lab and record SSH as an image-specific transport issue.</li>
+          <li>A successful login can still land at the wrong privilege until exec authorization is applied. Use <code>show privilege</code> and command attempts to prove authorization.</li>
         </ol>
         <pre><code>show running-config | section aaa
 show running-config | section tacacs
@@ -208,10 +201,12 @@ show running-config | section line
 show aaa servers
 show users
 show privilege
-show logging | include AAA|TACACS|LOGIN
+show tcp brief all | include \.22|10.81
+show logging | include AAA|TACACS|LOGIN|SSH
 debug aaa authentication
 debug aaa authorization
 debug tacacs
+debug ip ssh
 undebug all</code></pre>
       </section>
 

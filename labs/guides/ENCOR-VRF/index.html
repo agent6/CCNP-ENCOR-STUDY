@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CCNP ENCOR Lab: VRF-Lite Segmentation</title>
+  <title>CCNP ENCOR Lab: VRF-Lite Segmentation with Tagged Transit</title>
   <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
   <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
 </head>
@@ -13,7 +13,7 @@
       <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
       <div>
         <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
-        <h1>VRF-Lite Segmentation and Route Leaking</h1>
+        <h1>VRF-Lite Segmentation with Tagged Transit</h1>
       </div>
     </div>
   </header>
@@ -27,7 +27,7 @@
       <a href="#task1">Task 1: Baseline Audit</a>
       <a href="#task2">Task 2: Build VRFs</a>
       <a href="#task3">Task 3: Prove Isolation</a>
-      <a href="#task4">Task 4: Route Leaking</a>
+      <a href="#task4">Task 4: CORP-Only Service Reachability</a>
       <a href="#task5">Task 5: Troubleshooting</a>
       <a href="#grading">Grade Entire Lab</a>
       <a href="#references">References</a>
@@ -35,8 +35,8 @@
     <div class="content">
       <section id="overview" class="panel">
         <h2>Overview</h2>
-        <p>This lab targets ENCOR 2.2.a: configure and verify VRF as a data path virtualization technology. You will create VRF-lite routing tables, move interfaces into the correct VRFs, validate control-plane separation, and selectively leak routes without collapsing segmentation.</p>
-        <p>The lab is CCNP-level because the success criteria are not just "ping works." You must prove which routing table owns each interface, explain why pings fail without a VRF context, and repair route leaking without adding broad default routes.</p>
+        <p>This lab targets ENCOR 2.2.a: configure and verify VRF as a data path virtualization technology. You will create VRF-lite routing tables, move interfaces into the correct VRFs, build tagged VRF transit across one physical link, and validate control-plane separation.</p>
+        <p>The lab is CCNP-level because the success criteria are not just "ping works." You must prove which routing table owns each interface, explain why pings fail without a VRF context, and keep CORP and GUEST separated while allowing CORP-only access to a service prefix.</p>
         <div class="meta-grid">
           <div class="metric"><b>60 min</b><span>Estimated time</span></div>
           <div class="metric"><b>ENCOR 2.2.a</b><span>Exam topic</span></div>
@@ -46,7 +46,7 @@
       </section>
       <section id="topology" class="panel">
         <h2>Topology</h2>
-        <p>Use HQ-RTR as the campus edge and DC-RTR as the service edge. CORP and GUEST must remain separated end to end. A shared services loopback is reachable only after controlled route leaking is configured.</p>
+        <p>Use HQ-RTR as the campus edge and DC-RTR as the service edge. CORP and GUEST must remain separated end to end. The single router-to-router physical link is split into 802.1Q subinterfaces: VLAN 10 carries CORP and VLAN 20 carries GUEST.</p>
         <img class="topology" src="../ENCOR-VIRT/assets/wan-topology.svg" alt="WAN virtualization topology">
       </section>
       <section id="plan" class="panel">
@@ -55,9 +55,8 @@
           <table>
             <thead><tr><th>VRF</th><th>Purpose</th><th>Example Interfaces</th><th>Routes Expected</th></tr></thead>
             <tbody>
-              <tr><td>CORP</td><td>Employee traffic</td><td>HQ-RTR e0/1, DC-RTR e0/1</td><td>10.10.0.0/24, 10.30.0.0/24, leaked 10.100.0.10/32</td></tr>
-              <tr><td>GUEST</td><td>Untrusted user traffic</td><td>HQ-RTR e0/2, DC-RTR e0/2</td><td>10.20.0.0/24, 10.40.0.0/24 only</td></tr>
-              <tr><td>SERVICES</td><td>Shared management/service prefix</td><td>DC-RTR loopback100</td><td>10.100.0.10/32</td></tr>
+              <tr><td>CORP</td><td>Employee traffic</td><td>HQ-RTR e0/1, e0/0.10; DC-RTR e0/1, e0/0.10</td><td>10.10.0.0/24, 172.16.10.0/30, 10.30.0.0/24, 10.100.0.10/32</td></tr>
+              <tr><td>GUEST</td><td>Untrusted user traffic</td><td>HQ-RTR e0/2, e0/0.20; DC-RTR e0/2, e0/0.20</td><td>10.20.0.0/24, 172.16.20.0/30, 10.40.0.0/24 only</td></tr>
             </tbody>
           </table>
         </div>
@@ -75,7 +74,8 @@ show running-config interface ethernet0/2</code></pre>
       <section id="task2" class="task">
         <h2>Task 2: Build VRFs</h2>
         <p>Create VRFs using the modern <code>vrf definition</code> syntax. Know the legacy <code>ip vrf</code> form, but use one style consistently in production.</p>
-        <pre><code>configure terminal
+        <pre><code>! HQ-RTR
+configure terminal
 vrf definition CORP
  description Employee routing table
  address-family ipv4
@@ -85,6 +85,20 @@ vrf definition GUEST
  description Guest routing table
  address-family ipv4
  exit-address-family
+!
+interface ethernet0/0
+ no ip address
+ no shutdown
+!
+interface ethernet0/0.10
+ encapsulation dot1Q 10
+ vrf forwarding CORP
+ ip address 172.16.10.1 255.255.255.252
+!
+interface ethernet0/0.20
+ encapsulation dot1Q 20
+ vrf forwarding GUEST
+ ip address 172.16.20.1 255.255.255.252
 !
 interface ethernet0/1
  description CORP LAN
@@ -97,44 +111,117 @@ interface ethernet0/2
  vrf forwarding GUEST
  ip address 10.20.0.1 255.255.255.0
  no shutdown
+!
+no ip route 10.30.0.0 255.255.255.0 172.16.0.2
+no ip route 10.40.0.0 255.255.255.0 172.16.0.2
+no ip route 10.100.0.10 255.255.255.255 172.16.0.2
+ip route vrf CORP 10.30.0.0 255.255.255.0 172.16.10.2
+ip route vrf GUEST 10.40.0.0 255.255.255.0 172.16.20.2
+end
+!
+! DC-RTR
+configure terminal
+vrf definition CORP
+ description Employee routing table
+ address-family ipv4
+ exit-address-family
+!
+vrf definition GUEST
+ description Guest routing table
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/0
+ no ip address
+ no shutdown
+!
+interface ethernet0/0.10
+ encapsulation dot1Q 10
+ vrf forwarding CORP
+ ip address 172.16.10.2 255.255.255.252
+!
+interface ethernet0/0.20
+ encapsulation dot1Q 20
+ vrf forwarding GUEST
+ ip address 172.16.20.2 255.255.255.252
+!
+interface ethernet0/1
+ description APP server LAN - CORP
+ vrf forwarding CORP
+ ip address 10.30.0.1 255.255.255.0
+ no shutdown
+!
+interface ethernet0/2
+ description Guest service LAN - GUEST
+ vrf forwarding GUEST
+ ip address 10.40.0.1 255.255.255.0
+ no shutdown
+!
+no ip route 10.10.0.0 255.255.255.0 172.16.0.1
+no ip route 10.20.0.0 255.255.255.0 172.16.0.1
+ip route vrf CORP 10.10.0.0 255.255.255.0 172.16.10.1
+ip route vrf GUEST 10.20.0.0 255.255.255.0 172.16.20.1
 end</code></pre>
         <p>Alternative syntax you may encounter: <code>ip vrf CORP</code> with <code>ip vrf forwarding CORP</code>. Verification expectations are the same, but the running configuration format differs.</p>
       </section>
       <section id="task3" class="task">
         <h2>Task 3: Prove Isolation</h2>
         <p>Verify the global table cannot see VRF routes, then verify each VRF can reach only its own connected and static routes.</p>
-        <pre><code>show ip route
-show ip route vrf CORP
-show ip route vrf GUEST
+        <pre><code>show vrf
+show ip route
+show ip route vrf CORP connected
+show ip route vrf GUEST connected
+show ip route vrf CORP 10.30.0.0
+show ip route vrf GUEST 10.40.0.0
+ping vrf CORP 172.16.10.2 source 172.16.10.1
+ping vrf GUEST 172.16.20.2 source 172.16.20.1
 ping vrf CORP 10.30.0.10 source 10.10.0.1
 ping vrf GUEST 10.40.0.10 source 10.20.0.1
 traceroute vrf CORP 10.30.0.10 source 10.10.0.1</code></pre>
         <p>A normal <code>ping 10.30.0.10</code> should fail until the correct VRF context is supplied.</p>
       </section>
       <section id="task4" class="task">
-        <h2>Task 4: Controlled Route Leaking</h2>
-        <p>Leak only the shared service /32 from SERVICES into CORP. Do not leak GUEST into CORP, and do not solve the problem with a global default route.</p>
-        <pre><code>configure terminal
-ip route vrf SERVICES 10.100.0.10 255.255.255.255 loopback100
-ip route vrf CORP 10.100.0.10 255.255.255.255 10.30.0.1 global
+        <h2>Task 4: CORP-Only Service Reachability</h2>
+        <p>Make the shared service loopback reachable from CORP only. Do not add a GUEST route to the service prefix, and do not solve the problem with a global default route.</p>
+        <pre><code>! DC-RTR
+configure terminal
+interface loopback0
+ description Shared service loopback - CORP only
+ vrf forwarding CORP
+ ip address 10.100.0.10 255.255.255.255
+ no shutdown
 end
 show ip route vrf CORP 10.100.0.10
-show ip cef vrf CORP 10.100.0.10 detail</code></pre>
-        <p>Static leaking is intentionally used here because it is transparent and easy to audit. Larger environments often use MP-BGP route targets, but that belongs to broader VPN design rather than this focused ENCOR VRF-lite task.</p>
+!
+! HQ-RTR
+configure terminal
+ip route vrf CORP 10.100.0.10 255.255.255.255 172.16.10.2
+end
+show ip route vrf CORP 10.100.0.10
+show ip route vrf GUEST 10.100.0.10
+ping vrf CORP 10.100.0.10 source 10.10.0.1
+ping vrf GUEST 10.100.0.10 source 10.20.0.1</code></pre>
+        <p>The CORP ping should succeed and the GUEST lookup should report that the subnet is not in the table. Larger environments may use MP-BGP route targets for inter-VRF leaking, but this lab keeps the focus on ENCOR VRF-lite forwarding behavior.</p>
       </section>
       <section id="task5" class="task">
         <h2>Task 5: Troubleshooting</h2>
         <p>Fix these defects without changing the segmentation policy:</p>
         <ol>
           <li>HQ-RTR e0/2 has an IP address but is not in VRF GUEST.</li>
-          <li>CORP can reach the shared service, but GUEST can also reach it because of an overbroad static route.</li>
+          <li>The remote CORP or GUEST route is missing because the tagged transit subinterface is not up in the same VRF on both routers.</li>
+          <li>CORP can reach the shared service, but GUEST can also reach it because of an overbroad GUEST static route.</li>
           <li>A technician tests with <code>ping 10.30.0.10</code> and reports failure even though CORP routing is correct.</li>
         </ol>
         <pre><code>show running-config | section vrf
-show ip interface brief vrf all
+show vrf
+show ip interface brief
+show running-config interface ethernet0/0.10
+show running-config interface ethernet0/0.20
 show ip route vrf GUEST 10.100.0.10
 show ip cef vrf CORP 10.30.0.10
 ping vrf CORP 10.30.0.10 source 10.10.0.1</code></pre>
+        <div class="callout warning"><p><strong>CML note:</strong> This IOL-XE image does not support <code>show ip interface brief vrf all</code>. Use <code>show vrf</code>, normal <code>show ip interface brief</code>, and per-VRF routing-table commands instead.</p></div>
+        <div class="callout warning"><p><strong>Design note:</strong> A single global transit interface does not carry traffic into the remote VRF. Use tagged subinterfaces, separate physical links, tunnels, or another VRF-aware transport so packets arrive in the intended routing table on both routers.</p></div>
       </section>
       <section id="grading" class="panel">
         <h2>Grade Entire Lab</h2>
@@ -142,7 +229,7 @@ ping vrf CORP 10.30.0.10 source 10.10.0.1</code></pre>
           <div class="check"><b>VRF ownership</b><span>All customer-facing interfaces appear in the intended VRF.</span></div>
           <div class="check"><b>Route isolation</b><span>Global, CORP, and GUEST tables have distinct routes.</span></div>
           <div class="check"><b>Context-aware tests</b><span>Pings and traceroutes use the right VRF context.</span></div>
-          <div class="check"><b>Controlled leak</b><span>Only the shared service prefix is reachable from CORP.</span></div>
+          <div class="check"><b>Controlled service</b><span>Only CORP reaches the shared service prefix; GUEST has no route to it.</span></div>
         </div>
       </section>
       <section id="references" class="panel">
