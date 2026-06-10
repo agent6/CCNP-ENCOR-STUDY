@@ -1,0 +1,91 @@
+[
+  {
+    "domain": "1.0 Architecture (15%)",
+    "topics": [
+      { "id": "1.1", "title": "Explain the different design principles used in an enterprise network" },
+      { "id": "1.1.a", "title": "High-level enterprise network design such as 2-tier, 3-tier, fabric, and cloud" },
+      { "id": "1.1.b", "title": "High availability techniques such as redundancy, FHRP, and SSO" },
+      { "id": "1.2", "title": "Explain the working principles of the Cisco Catalyst SD-WAN solution" },
+      { "id": "1.2.a", "title": "SD-WAN control and data planes elements" },
+      { "id": "1.2.b", "title": "Benefits and limitations of Catalyst SD-WAN solution" },
+      { "id": "1.3", "title": "Explain the working principles of the Cisco SD-Access solution" },
+      { "id": "1.3.a", "title": "SD-Access control and data planes elements" },
+      { "id": "1.3.b", "title": "Traditional campus interoperating with SD-Access" },
+      { "id": "1.4", "title": "Interpret QoS configurations" }
+    ]
+  },
+  {
+    "domain": "2.0 Virtualization (10%)",
+    "topics": [
+      { "id": "2.1", "title": "Describe device virtualization technologies" },
+      { "id": "2.1.a", "title": "Hypervisor type 1 and 2" },
+      { "id": "2.1.b", "title": "Virtual machine" },
+      { "id": "2.1.c", "title": "Virtual switching" },
+      { "id": "2.2", "title": "Configure and verify data path virtualization technologies" },
+      { "id": "2.2.a", "title": "VRF" },
+      { "id": "2.2.b", "title": "GRE and IPsec tunneling" },
+      { "id": "2.3", "title": "Describe network virtualization concepts" },
+      { "id": "2.3.a", "title": "LISP" },
+      { "id": "2.3.b", "title": "VXLAN" }
+    ]
+  },
+  {
+    "domain": "3.0 Infrastructure (30%)",
+    "topics": [
+      { "id": "3.1", "title": "Layer 2" },
+      { "id": "3.1.a", "title": "Troubleshoot static and dynamic 802.1q trunking protocols" },
+      { "id": "3.1.b", "title": "Troubleshoot static and dynamic EtherChannels" },
+      { "id": "3.1.c", "title": "Configure and verify common Spanning Tree Protocols (RSTP, MST) and Spanning Tree enhancements such as root guard and BPDU guard" },
+      { "id": "3.2", "title": "Layer 3" },
+      { "id": "3.2.a", "title": "Compare routing concepts of EIGRP and OSPF (advanced distance vector vs. link state, load balancing, path selection, path operations, metrics, and area types)" },
+      { "id": "3.2.b", "title": "Configure simple OSPFv2/v3 environments, including multiple normal areas, summarization, and filtering (neighbor adjacency, point-to-point, and broadcast network types, and passive-interface)" },
+      { "id": "3.2.c", "title": "Configure and verify eBGP between directly connected neighbors (best path selection algorithm and neighbor relationships)" },
+      { "id": "3.2.d", "title": "Describe policy-based routing" },
+      { "id": "3.3", "title": "IP Services" },
+      { "id": "3.3.a", "title": "Interpret network time protocol configurations such as NTP and PTP" },
+      { "id": "3.3.b", "title": "Configure NAT/PAT" },
+      { "id": "3.3.c", "title": "Configure first hop redundancy protocols, such as HSRP, VRRP" },
+      { "id": "3.3.d", "title": "Describe multicast protocols, such as RPF check, PIM SM, IGMP v2/v3, SSM, bidir, and MSDP" }
+    ]
+  },
+  {
+    "domain": "4.0 Network Assurance (10%)",
+    "topics": [
+      { "id": "4.1", "title": "Diagnose network problems using such as debugs, conditional debugs, traceroute, ping, SNMP, and syslog" },
+      { "id": "4.2", "title": "Configure and verify Flexible NetFlow" },
+      { "id": "4.3", "title": "Configure SPAN/RSPAN/ERSPAN" },
+      { "id": "4.4", "title": "Configure and verify IPSLA" },
+      { "id": "4.5", "title": "Describe how Cisco Catalyst Center (formerly Cisco DNA Center) is used to apply network configuration, monitoring, and management using traditional and AI-powered workflows" },
+      { "id": "4.6", "title": "Configure and verify NETCONF and RESTCONF" }
+    ]
+  },
+  {
+    "domain": "5.0 Security (20%)",
+    "topics": [
+      { "id": "5.1", "title": "Configure and verify device access control" },
+      { "id": "5.1.a", "title": "Lines and local user authentication" },
+      { "id": "5.1.b", "title": "Authentication and authorization using AAA" },
+      { "id": "5.2", "title": "Configure and verify infrastructure security features" },
+      { "id": "5.2.a", "title": "ACLs" },
+      { "id": "5.2.b", "title": "CoPP" },
+      { "id": "5.3", "title": "Describe REST API security" },
+      { "id": "5.4", "title": "Describe the components of network security design" },
+      { "id": "5.4.a", "title": "Threat defense" },
+      { "id": "5.4.b", "title": "Endpoint security" },
+      { "id": "5.4.c", "title": "Next-generation firewall" },
+      { "id": "5.4.d", "title": "TrustSec and MACsec" }
+    ]
+  },
+  {
+    "domain": "6.0 Automation and Artificial Intelligence (15%)",
+    "topics": [
+      { "id": "6.1", "title": "Interpret basic Python components and scripts" },
+      { "id": "6.2", "title": "Construct valid JSON-encoded files" },
+      { "id": "6.3", "title": "Describe the high-level principles and benefits of a data modeling language, such as YANG" },
+      { "id": "6.4", "title": "Describe APIs for Cisco Catalyst Center and SD-WAN Manager" },
+      { "id": "6.5", "title": "Interpret REST API response codes and results in payload using Cisco Catalyst Center and RESTCONF" },
+      { "id": "6.6", "title": "Construct an EEM applet to automate configuration, troubleshooting, or data collection" },
+      { "id": "6.7", "title": "Compare agent vs. agentless orchestration tools" }
+    ]
+  }
+]
