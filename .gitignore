@@ -1,0 +1,7 @@
+# Don't commit copyrighted book/exam PDFs
+*.pdf
+*.PDF
+
+# OS cruft
+.DS_Store
+Thumbs.db
