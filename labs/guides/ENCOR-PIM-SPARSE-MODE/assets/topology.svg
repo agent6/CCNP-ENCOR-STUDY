@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <style>
+      .rtr { fill:#07182d; stroke:#00a0d2; stroke-width:2; }
+      .host { fill:#ffffff; stroke:#5d6f7d; stroke-width:2; }
+      .lbl { fill:#ffffff; font-size:16px; font-weight:bold; text-anchor:middle; }
+      .sub { fill:#b7d9e8; font-size:11px; text-anchor:middle; }
+      .hostlbl { fill:#17232f; font-size:14px; font-weight:bold; text-anchor:middle; }
+      .port { fill:#5d6f7d; font-size:11px; }
+      .net { fill:#006da8; font-size:12px; font-weight:bold; text-anchor:middle; }
+      .defect { fill:#b42318; font-size:12px; font-weight:bold; text-anchor:middle; }
+      .link { stroke:#5d6f7d; stroke-width:2.5; }
+      .rpt { stroke:#9a6200; stroke-width:5; stroke-dasharray:10 6; fill:none; opacity:0.55; }
+      .spt { stroke:#14795f; stroke-width:5; stroke-dasharray:2 6; fill:none; opacity:0.55; }
+      .note { fill:#17232f; font-size:12px; }
+    </style>
+  </defs>
+  <text x="490" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#17232f">ENCOR-PIM-SPARSE-MODE — Static RP, RPT vs SPT</text>
+
+  <!-- square links -->
+  <line class="link" x1="320" y1="170" x2="660" y2="170"/>
+  <text class="net" x="490" y="160">10.0.12.0/24</text>
+  <text class="port" x="328" y="186">Et0/0</text><text class="port" x="612" y="186">Et0/0</text>
+
+  <line class="link" x1="740" y1="200" x2="740" y2="360"/>
+  <text class="net" x="822" y="282">10.0.23.0/24</text>
+  <text class="port" x="748" y="218">Et0/1</text><text class="port" x="748" y="352">Et0/0 (cost 20)</text>
+
+  <line class="link" x1="320" y1="390" x2="660" y2="390"/>
+  <text class="net" x="490" y="380">10.0.34.0/24</text>
+  <text class="port" x="328" y="406">Et0/0</text><text class="port" x="612" y="406">Et0/1</text>
+
+  <line class="link" x1="240" y1="200" x2="240" y2="360"/>
+  <text class="net" x="158" y="275">10.0.14.0/24</text>
+  <text class="port" x="248" y="218">Et0/1</text><text class="port" x="248" y="352">Et0/1</text>
+  <text class="defect" x="120" y="300">Defect: no PIM</text>
+  <text class="defect" x="120" y="316">on R4 Et0/1</text>
+
+  <!-- RPT path: R1 -> R2 -> R3 -->
+  <path class="rpt" d="M 320 150 L 660 150 M 760 200 L 760 360"/>
+  <text x="490" y="135" text-anchor="middle" font-size="12" font-weight="bold" fill="#9a6200">Shared tree (RPT) — source → RP → receiver</text>
+
+  <!-- SPT path: R1 -> R4 -> R3 -->
+  <path class="spt" d="M 220 200 L 220 360 M 320 410 L 660 410"/>
+  <text x="490" y="432" text-anchor="middle" font-size="12" font-weight="bold" fill="#14795f">Shortest-path tree (SPT) — after switchover, via R4</text>
+
+  <!-- routers -->
+  <rect class="rtr" x="180" y="140" width="140" height="60" rx="10"/>
+  <text class="lbl" x="250" y="166">R1 — FHR</text>
+  <text class="sub" x="250" y="186">Lo0 10.0.1.1</text>
+
+  <rect class="rtr" x="660" y="140" width="140" height="60" rx="10"/>
+  <text class="lbl" x="730" y="166">R2 — RP</text>
+  <text class="sub" x="730" y="186">Lo0 10.0.2.2 (static RP)</text>
+
+  <rect class="rtr" x="660" y="360" width="140" height="60" rx="10"/>
+  <text class="lbl" x="730" y="386">R3 — LHR</text>
+  <text class="sub" x="730" y="406">spt-threshold infinity</text>
+
+  <rect class="rtr" x="180" y="360" width="140" height="60" rx="10"/>
+  <text class="lbl" x="250" y="386">R4</text>
+  <text class="sub" x="250" y="406">Lo0 10.0.4.4</text>
+
+  <!-- hosts -->
+  <line class="link" x1="250" y1="140" x2="250" y2="80"/>
+  <text class="port" x="258" y="128">Et0/2</text>
+  <rect class="host" x="180" y="40" width="140" height="44" rx="8"/>
+  <text class="hostlbl" x="250" y="58">SRC (sender)</text>
+  <text class="net" x="250" y="76">10.1.1.10 → 239.1.1.1</text>
+
+  <line class="link" x1="730" y1="420" x2="730" y2="480"/>
+  <text class="port" x="738" y="444">Et0/2 (igmp join)</text>
+  <rect class="host" x="660" y="480" width="140" height="44" rx="8"/>
+  <text class="hostlbl" x="730" y="498">RCV (receiver)</text>
+  <text class="net" x="730" y="516">10.3.3.10 · VLAN-less LAN</text>
+
+  <text class="note" x="40" y="560">Group 239.1.1.1 · RP = 10.0.2.2 on every router · R3 Et0/0 OSPF cost 20 makes the unicast best path to 10.1.1.0/24 go via R4 — that is the SPT.</text>
+  <text class="note" x="40" y="580">Boot state: receiver joined, RPT working via RP, SPT switchover disabled (infinity) and broken (R4 defect). The lab walks you through both.</text>
+</svg>

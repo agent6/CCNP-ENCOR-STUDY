@@ -1,0 +1,1203 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR EtherChannel Engineering
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: |-
+    Bundles: Po1 DIST-1<->DIST-2 (LACP), Po11 DIST-1<->ACCESS-1 (PAgP), Po12 DIST-2<->ACCESS-2 (LACP)
+    Intentional defects: Po11 PAgP auto/auto never forms; Po12 mode on vs LACP active; DIST-2 Et0/1 allowed VLAN list mismatch suspends the member
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 2
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname DIST-1
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      vtp mode transparent
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      vlan 10
+       name USERS
+      vlan 30
+       name SERVERS
+      vlan 100
+       name NET-MGMT
+      vlan 999
+       name NATIVE-BLACKHOLE
+      !
+      interface Port-channel1
+       description LACP peer bundle to DIST-2
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,30,100,999
+      !
+      interface Port-channel11
+       description PAgP bundle to ACCESS-1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+      !
+      interface Ethernet0/0
+       description Po1 member to DIST-2 Ethernet0/0
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,30,100,999
+       channel-group 1 mode active
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Po1 member to DIST-2 Ethernet0/1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,30,100,999
+       channel-group 1 mode active
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Po11 member to ACCESS-1 Ethernet0/0
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 11 mode auto
+       no shutdown
+      !
+      interface Ethernet0/3
+       description Po11 member to ACCESS-1 Ethernet0/1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 11 mode auto
+       no shutdown
+      !
+      interface Vlan100
+       description NET-MGMT
+       ip address 10.100.0.11 255.255.255.0
+       no shutdown
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: ioll2-xe-17-16-01a
+  label: DIST-1
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - IOL-L2
+  x: -300
+  y: -200
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname DIST-2
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      vtp mode transparent
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      vlan 10
+       name USERS
+      vlan 30
+       name SERVERS
+      vlan 100
+       name NET-MGMT
+      vlan 999
+       name NATIVE-BLACKHOLE
+      !
+      interface Port-channel1
+       description LACP peer bundle to DIST-1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,30,100,999
+      !
+      interface Port-channel12
+       description Bundle to ACCESS-2
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+      !
+      interface Ethernet0/0
+       description Po1 member to DIST-1 Ethernet0/0
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,30,100,999
+       channel-group 1 mode active
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Po1 member to DIST-1 Ethernet0/1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 1 mode active
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Po12 member to ACCESS-2 Ethernet0/0
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 12 mode on
+       no shutdown
+      !
+      interface Ethernet0/3
+       description Po12 member to ACCESS-2 Ethernet0/1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 12 mode on
+       no shutdown
+      !
+      interface Vlan100
+       description NET-MGMT
+       ip address 10.100.0.12 255.255.255.0
+       no shutdown
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: ioll2-xe-17-16-01a
+  label: DIST-2
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - IOL-L2
+  x: 300
+  y: -200
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname ACCESS-1
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      vtp mode transparent
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      vlan 10
+       name USERS
+      vlan 30
+       name SERVERS
+      vlan 100
+       name NET-MGMT
+      vlan 999
+       name NATIVE-BLACKHOLE
+      !
+      interface Port-channel11
+       description PAgP bundle to DIST-1
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+      !
+      interface Ethernet0/0
+       description Po11 member to DIST-1 Ethernet0/2
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 11 mode auto
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Po11 member to DIST-1 Ethernet0/3
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 11 mode auto
+       no shutdown
+      !
+      interface Ethernet1/0
+       description USER-A endpoint
+       switchport mode access
+       switchport access vlan 10
+       spanning-tree portfast
+       no shutdown
+      !
+      interface Vlan100
+       description NET-MGMT
+       ip address 10.100.0.13 255.255.255.0
+       no shutdown
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: ioll2-xe-17-16-01a
+  label: ACCESS-1
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - IOL-L2
+  x: -300
+  y: 120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname ACCESS-2
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      vtp mode transparent
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      vlan 10
+       name USERS
+      vlan 30
+       name SERVERS
+      vlan 100
+       name NET-MGMT
+      vlan 999
+       name NATIVE-BLACKHOLE
+      !
+      interface Port-channel12
+       description LACP bundle to DIST-2
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+      !
+      interface Ethernet0/0
+       description Po12 member to DIST-2 Ethernet0/2
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 12 mode active
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Po12 member to DIST-2 Ethernet0/3
+       switchport mode trunk
+       switchport trunk native vlan 999
+       switchport trunk allowed vlan 10,100,999
+       channel-group 12 mode active
+       no shutdown
+      !
+      interface Ethernet1/0
+       description USER-B endpoint
+       switchport mode access
+       switchport access vlan 10
+       spanning-tree portfast
+       no shutdown
+      !
+      interface Vlan100
+       description NET-MGMT
+       ip address 10.100.0.14 255.255.255.0
+       no shutdown
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: ioll2-xe-17-16-01a
+  label: ACCESS-2
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - IOL-L2
+  x: 300
+  y: 120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname user-a
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.0.10/24 dev eth0
+      ip link set dev eth0 up
+
+      echo "user-a" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       user-a localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: alpine-base-3-21-3
+  label: USER-A
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - endpoint
+  x: -300
+  y: 360
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname user-b
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.0.20/24 dev eth0
+      ip link set dev eth0 up
+
+      echo "user-b" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       user-b localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n5
+  image_definition: alpine-base-3-21-3
+  label: USER-B
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-ETHERCHANNEL
+  - endpoint
+  x: 300
+  y: 360
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n1
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: DIST-1-Ethernet0/0<->DIST-2-Ethernet0/0
+- id: l1
+  n1: n0
+  n2: n1
+  i1: i2
+  i2: i2
+  conditioning: {}
+  label: DIST-1-Ethernet0/1<->DIST-2-Ethernet0/1
+- id: l2
+  n1: n0
+  n2: n2
+  i1: i3
+  i2: i1
+  conditioning: {}
+  label: DIST-1-Ethernet0/2<->ACCESS-1-Ethernet0/0
+- id: l3
+  n1: n0
+  n2: n2
+  i1: i4
+  i2: i2
+  conditioning: {}
+  label: DIST-1-Ethernet0/3<->ACCESS-1-Ethernet0/1
+- id: l4
+  n1: n1
+  n2: n3
+  i1: i3
+  i2: i1
+  conditioning: {}
+  label: DIST-2-Ethernet0/2<->ACCESS-2-Ethernet0/0
+- id: l5
+  n1: n1
+  n2: n3
+  i1: i4
+  i2: i2
+  conditioning: {}
+  label: DIST-2-Ethernet0/3<->ACCESS-2-Ethernet0/1
+- id: l6
+  n1: n4
+  n2: n2
+  i1: i0
+  i2: i5
+  conditioning: {}
+  label: USER-A-eth0<->ACCESS-1-Ethernet1/0
+- id: l7
+  n1: n5
+  n2: n3
+  i1: i0
+  i2: i5
+  conditioning: {}
+  label: USER-B-eth0<->ACCESS-2-Ethernet1/0
+lab:
+  description: CCNP ENCOR custom lab for LACP and PAgP EtherChannel configuration,
+    negotiation-mode troubleshooting, member-consistency defects, and load-balancing
+    verification using CML IOL-L2 switches.
+  notes: Switches use CML IOL-L2 (node definition ioll2-xe). No routers are used in
+    this lab. Alpine hosts provide endpoint MAC and ping targets across the bundles.
+  title: ENCOR-ETHERCHANNEL
+  version: 0.1.0

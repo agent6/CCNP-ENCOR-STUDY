@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: EtherChannel Engineering</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f9;
+      --surface: #ffffff;
+      --ink: #17232f;
+      --muted: #5d6f7d;
+      --line: #d8e2e8;
+      --navy: #07182d;
+      --cisco: #00a0d2;
+      --green: #14795f;
+      --red: #b42318;
+      --amber: #9a6200;
+      --code: #0f1720;
+      --shadow: 0 12px 30px rgba(7, 24, 45, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: #006da8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      border-bottom: 5px solid var(--cisco);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar .wrap {
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .logo {
+      width: 58px;
+      height: auto;
+      display: block;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: #b7d9e8;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px 0 48px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .toc h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: #244558;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .toc a:hover,
+    .toc a:focus {
+      background: #e9f6fb;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .panel,
+    .task,
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel,
+    .task {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .task {
+      border-left: 5px solid var(--cisco);
+    }
+
+    .callout {
+      box-shadow: none;
+      padding: 14px 16px;
+      margin: 16px 0;
+      background: #f9fbfc;
+    }
+
+    .callout.warning {
+      border-color: #f1d39d;
+      background: #fff8ea;
+    }
+
+    .callout.success {
+      border-color: #b8e4d6;
+      background: #edf9f4;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 14px 22px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdfe;
+    }
+
+    .metric b {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 20px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .topology {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      margin: 14px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      background: #eaf4f8;
+      color: #1b3d51;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: "Roboto Mono", Consolas, Menlo, monospace;
+      font-size: 0.95em;
+      background: #eef3f6;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    pre {
+      margin: 12px 0 16px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: var(--code);
+      color: #f4f7fa;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 14px 0;
+      background: #fbfdfe;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #0c527a;
+    }
+
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .check {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .check b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .check span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .meta-grid,
+      .grade {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar .wrap {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px 0;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
+      <div>
+        <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
+        <h1>EtherChannel Engineering: LACP, PAgP, and Bundle Troubleshooting</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#plan">Bundle and VLAN Plan</a>
+      <a href="#task1">Task 1: Baseline Audit</a>
+      <a href="#task2">Task 2: LACP Bundles</a>
+      <a href="#task3">Task 3: PAgP Bundle</a>
+      <a href="#task4">Task 4: Troubleshooting</a>
+      <a href="#task5">Task 5: Load Balancing and Validation</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#solutions">Solutions</a>
+    </nav>
+
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab is focused on EtherChannel behavior at a CCNP ENCOR level. You will audit broken bundles, repair LACP and PAgP negotiation, fix a member-port consistency defect, tune the load-balancing hash, and prove the result with <code>show etherchannel</code> output interpretation — the exact skill the exam tests with exhibit questions.</p>
+        <p>The startup configuration is intentionally defective: none of the three bundles is fully healthy when the lab boots. Your job is to read the flags, explain the cause, and fix each one with minimal changes.</p>
+
+        <div class="meta-grid">
+          <div class="metric">
+            <b>60-75 min</b>
+            <span>Estimated time</span>
+          </div>
+          <div class="metric">
+            <b>ENCOR</b>
+            <span>Difficulty level</span>
+          </div>
+          <div class="metric">
+            <b>4 switches</b>
+            <span>IOL-L2 distribution and access</span>
+          </div>
+          <div class="metric">
+            <b>5 tasks</b>
+            <span>Audit, configure, troubleshoot</span>
+          </div>
+        </div>
+
+        <h3>Learning Objectives</h3>
+        <ul>
+          <li>Interpret <code>show etherchannel summary</code> flags: SU, SD, P, I, s, w, D.</li>
+          <li>Explain which mode combinations form a bundle: LACP active/active, active/passive (not passive/passive); PAgP desirable/desirable, desirable/auto (not auto/auto); static on/on only with on/on.</li>
+          <li>Repair a bundle where one side runs mode <code>on</code> against an LACP peer.</li>
+          <li>Identify a member port suspended by an allowed-VLAN consistency mismatch.</li>
+          <li>Configure and verify the EtherChannel load-balancing hash.</li>
+        </ul>
+
+        <h3>Platform Standard</h3>
+        <ul>
+          <li>Use Cisco Modeling Labs IOL-L2 nodes for every switch in this lab.</li>
+          <li>All bundle member links are 802.1Q trunks with native VLAN 999; the trunk design is already correct except where a defect says otherwise.</li>
+          <li>Changing a channel-group mode usually requires <code>no channel-group</code> on the member first — removing and re-adding is expected, not a failure.</li>
+          <li>Use <code>write memory</code> only after the verification tasks pass.</li>
+        </ul>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>Two distribution switches connect over a two-link LACP peer bundle (Po1). ACCESS-1 uplinks to DIST-1 over a two-link PAgP bundle (Po11). ACCESS-2 uplinks to DIST-2 over a two-link LACP bundle (Po12). One Alpine host per access switch provides end-to-end ping targets in VLAN 10.</p>
+        <img class="topology" src="assets/topology.svg" alt="EtherChannel topology">
+      </section>
+
+      <section id="plan" class="panel">
+        <h2>Bundle and VLAN Plan</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Bundle</th>
+                <th>Members</th>
+                <th>Protocol and Target Modes</th>
+                <th>Allowed VLANs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Po1</td>
+                <td>DIST-1 Et0/0-1 ↔ DIST-2 Et0/0-1</td>
+                <td>LACP — active / active</td>
+                <td>10,30,100,999</td>
+              </tr>
+              <tr>
+                <td>Po11</td>
+                <td>DIST-1 Et0/2-3 ↔ ACCESS-1 Et0/0-1</td>
+                <td>PAgP — desirable (DIST-1) / auto (ACCESS-1)</td>
+                <td>10,100,999</td>
+              </tr>
+              <tr>
+                <td>Po12</td>
+                <td>DIST-2 Et0/2-3 ↔ ACCESS-2 Et0/0-1</td>
+                <td>LACP — active / active</td>
+                <td>10,100,999</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>VLAN</th>
+                <th>Name</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>10</td><td>USERS</td><td>USER-A and USER-B endpoints (10.10.0.0/24)</td></tr>
+              <tr><td>30</td><td>SERVERS</td><td>Carried on Po1 only</td></tr>
+              <tr><td>100</td><td>NET-MGMT</td><td>Switch SVIs 10.100.0.11-.14</td></tr>
+              <tr><td>999</td><td>NATIVE-BLACKHOLE</td><td>Native VLAN on every trunk</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Audit</h2>
+        <p>Before changing anything, determine the true state of all three bundles. Every flag in <code>show etherchannel summary</code> is a fact — read them, do not guess.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Record the state of Po1, Po11, and Po12 on all four switches.</li>
+          <li>For each bundle that is not healthy (SU with all members P), name the defect class: negotiation-mode incompatibility, protocol mismatch, or member-consistency violation.</li>
+          <li>Find all three defects before configuring anything.</li>
+        </ol>
+
+        <h3>Commands</h3>
+        <pre><code>show etherchannel summary
+show etherchannel 1 detail
+show lacp neighbor
+show pagp neighbor
+show interfaces port-channel 1
+show spanning-tree summary</code></pre>
+
+        <h3>Expected Findings</h3>
+        <ul>
+          <li>Po1 is up (SU) but one DIST-2 member shows <code>s</code> — suspended for a config inconsistency.</li>
+          <li>Po11 never forms: both PAgP sides are <code>auto</code>, so neither side initiates negotiation; members show <code>I</code> (stand-alone) or the Po stays down (SD).</li>
+          <li>Po12: DIST-2 runs mode <code>on</code> while ACCESS-2 runs LACP <code>active</code> — ACCESS-2 receives no LACPDUs and suspends its members; watch for the channel-misconfig STP guard.</li>
+        </ul>
+
+        <div class="callout warning">
+          <p><strong>Flag key (memorize this):</strong> <code>S</code> Layer 2, <code>U</code> in use, <code>P</code> bundled in port-channel, <code>I</code> stand-alone, <code>s</code> suspended, <code>w</code> waiting to be aggregated, <code>D</code> down. A healthy two-member bundle reads <code>Po1(SU)</code> with <code>Et0/0(P) Et0/1(P)</code>.</p>
+        </div>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Repair the LACP Bundles (Po1 and Po12)</h2>
+        <p>Both LACP bundles must negotiate with LACP on both sides — mode <code>on</code> is not acceptable anywhere in this design.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Convert the DIST-2 side of Po12 from mode <code>on</code> to LACP <code>active</code>. Remember: remove the channel-group from the members first, then re-add with the correct mode.</li>
+          <li>Leave ACCESS-2 as LACP <code>active</code> (active/active is the most robust pairing).</li>
+          <li>Do not touch the Po1 suspended member yet — that is Task 4.</li>
+          <li>Verify both bundles with LACP neighbor output, not just the summary.</li>
+        </ol>
+
+        <h3>Conversion Template (DIST-2)</h3>
+        <pre><code>configure terminal
+interface range Ethernet0/2-3
+ no channel-group 12
+ channel-group 12 mode active
+end</code></pre>
+
+        <h3>Verification</h3>
+        <pre><code>show etherchannel summary
+show lacp neighbor
+show lacp internal
+show interfaces port-channel 12</code></pre>
+
+        <h3>Expected Output</h3>
+        <pre><code>DIST-2#show etherchannel summary | include Po12
+12     Po12(SU)        LACP      Et0/2(P)    Et0/3(P)
+
+DIST-2#show lacp neighbor
+...
+Channel group 12 neighbors
+Port      Flags   Priority  Dev ID          Age  key  Number
+Et0/2     SA      32768     aabb.cc00.xxxx  ...
+Et0/3     SA      32768     aabb.cc00.xxxx  ...</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Form the PAgP Bundle (Po11)</h2>
+        <p>Po11 must use PAgP. Both sides currently run <code>auto</code>, and auto/auto never forms because neither side initiates.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Change the DIST-1 side to PAgP <code>desirable</code>; leave ACCESS-1 as <code>auto</code> (desirable/auto forms a bundle and proves you know the matrix).</li>
+          <li>Do not convert Po11 to LACP — the design requires PAgP here.</li>
+          <li>Verify with PAgP neighbor output and confirm both members show <code>P</code>.</li>
+        </ol>
+
+        <h3>Configuration (DIST-1)</h3>
+        <pre><code>configure terminal
+interface range Ethernet0/2-3
+ no channel-group 11
+ channel-group 11 mode desirable
+end</code></pre>
+
+        <h3>Verification</h3>
+        <pre><code>show etherchannel summary
+show pagp neighbor
+show pagp internal</code></pre>
+
+        <h3>Expected Output</h3>
+        <pre><code>DIST-1#show etherchannel summary | include Po11
+11     Po11(SU)        PAgP      Et0/2(P)    Et0/3(P)
+
+DIST-1#show pagp neighbor
+Channel group 11 neighbors
+Port      Flags  Partner Name  Partner Device ID  Partner Port
+Et0/2     SC     ACCESS-1      aabb.cc00.xxxx     Et0/0
+Et0/3     SC     ACCESS-1      aabb.cc00.xxxx     Et0/1</code></pre>
+
+        <div class="callout warning">
+          <p><strong>Mode matrix (exam favorite):</strong> LACP — active+active ✓, active+passive ✓, passive+passive ✗. PAgP — desirable+desirable ✓, desirable+auto ✓, auto+auto ✗. Static — on+on only; <code>on</code> never negotiates with LACP or PAgP.</p>
+        </div>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Troubleshoot the Suspended Member (Po1)</h2>
+        <p>Po1 is operational but only one member is forwarding. EtherChannel requires member ports to match the bundle configuration — speed, duplex, switchport mode, native VLAN, and allowed VLAN list.</p>
+
+        <h3>Symptom</h3>
+        <pre><code>DIST-2#show etherchannel summary | include Po1(
+1      Po1(SU)         LACP      Et0/0(P)    Et0/1(s)
+
+DIST-2#show interfaces ethernet0/1 trunk
+Port        Vlans allowed on trunk
+Et0/1      10,100,999</code></pre>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Identify why Et0/1 on DIST-2 is suspended by comparing its switchport config against Et0/0 and Port-channel1.</li>
+          <li>Correct only the mismatched attribute — do not rebuild the bundle.</li>
+          <li>Confirm both members return to <code>P</code> and traffic can hash over both links.</li>
+        </ol>
+
+        <h3>Verification</h3>
+        <pre><code>show etherchannel summary
+show etherchannel 1 detail | include Probable|suspend
+show interfaces port-channel 1 trunk</code></pre>
+
+        <div class="callout warning">
+          <p><strong>Design note:</strong> A suspended member does not bring the bundle down — Po1 stays up on the surviving member, which makes this defect easy to miss until the "redundant" link fails. Always compare member configs, not just bundle state.</p>
+        </div>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Load Balancing and End-to-End Validation</h2>
+        <p>Finish by tuning the hash and proving the data plane works across all three bundles.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Set the EtherChannel load-balancing method to <code>src-dst-ip</code> on all four switches.</li>
+          <li>Verify the configured method and explain why a single flow never exceeds one member link's bandwidth.</li>
+          <li>From USER-A (10.10.0.10), ping USER-B (10.10.0.20) — the path crosses Po11, Po1, and Po12.</li>
+          <li>Confirm MAC learning lands on the port-channel interfaces, not the physical members.</li>
+        </ol>
+
+        <h3>Configuration</h3>
+        <pre><code>configure terminal
+port-channel load-balance src-dst-ip
+end</code></pre>
+
+        <h3>Validation Commands</h3>
+        <pre><code>show etherchannel load-balance
+show etherchannel summary
+show mac address-table dynamic vlan 10
+show spanning-tree vlan 10</code></pre>
+
+        <h3>Completion Criteria</h3>
+        <ul>
+          <li>Po1, Po11, Po12 all show (SU) with every member (P).</li>
+          <li>LACP and PAgP neighbors are visible on the correct bundles.</li>
+          <li>Load balancing reports src-dst-ip on all switches.</li>
+          <li>USER-A pings USER-B; MAC entries for both hosts point at Po interfaces.</li>
+          <li>Spanning tree sees one logical link per bundle (no blocked members inside a bundle).</li>
+        </ul>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <p>Use these checks to evaluate whether the lab is complete.</p>
+        <div class="grade">
+          <div class="check">
+            <b>Flag interpretation</b>
+            <span>You identified all three defects from show output before changing any configuration.</span>
+          </div>
+          <div class="check">
+            <b>LACP bundles</b>
+            <span>Po1 and Po12 run LACP on both sides with no mode-on members anywhere.</span>
+          </div>
+          <div class="check">
+            <b>PAgP bundle</b>
+            <span>Po11 forms with desirable/auto and shows PAgP neighbors on both members.</span>
+          </div>
+          <div class="check">
+            <b>Member consistency</b>
+            <span>The suspended Po1 member was fixed by correcting only the mismatched allowed-VLAN list.</span>
+          </div>
+          <div class="check">
+            <b>Load balancing</b>
+            <span>All switches report src-dst-ip and you can explain per-flow hashing.</span>
+          </div>
+          <div class="check">
+            <b>Data-plane proof</b>
+            <span>USER-A reaches USER-B across all three bundles; MACs learned on Po interfaces.</span>
+          </div>
+          <div class="check">
+            <b>STP view</b>
+            <span>Each bundle appears as one spanning-tree logical port with no inconsistencies.</span>
+          </div>
+          <div class="check">
+            <b>Mode matrix recall</b>
+            <span>You can state from memory which LACP/PAgP/static mode pairs form a channel.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="solutions" class="panel">
+        <h2>Solutions</h2>
+        <details>
+          <summary>Task 2 solution: convert Po12 to LACP active (DIST-2)</summary>
+          <pre><code>configure terminal
+interface range Ethernet0/2-3
+ no channel-group 12
+ channel-group 12 mode active
+end
+! ACCESS-2 already runs channel-group 12 mode active</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 3 solution: form Po11 with PAgP (DIST-1)</summary>
+          <pre><code>configure terminal
+interface range Ethernet0/2-3
+ no channel-group 11
+ channel-group 11 mode desirable
+end
+! ACCESS-1 stays channel-group 11 mode auto — desirable/auto forms</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 4 solution: un-suspend the Po1 member (DIST-2)</summary>
+          <pre><code>configure terminal
+interface Ethernet0/1
+ switchport trunk allowed vlan 10,30,100,999
+end
+! The member list now matches Et0/0 and Port-channel1, so Et0/1 returns to (P)</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 5 solution: load balancing</summary>
+          <pre><code>! On all four switches
+configure terminal
+port-channel load-balance src-dst-ip
+end</code></pre>
+        </details>
+
+        <details>
+          <summary>Expected final verification</summary>
+          <pre><code>DIST-2#show etherchannel summary
+Flags:  D - down        P - bundled in port-channel
+        I - stand-alone s - suspended
+        ...
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+1      Po1(SU)         LACP      Et0/0(P)    Et0/1(P)
+12     Po12(SU)        LACP      Et0/2(P)    Et0/3(P)
+
+DIST-1#show etherchannel summary | include Po
+1      Po1(SU)         LACP      Et0/0(P)    Et0/1(P)
+11     Po11(SU)        PAgP      Et0/2(P)    Et0/3(P)
+
+DIST-1#show etherchannel load-balance
+EtherChannel Load-Balancing Configuration:
+        src-dst-ip</code></pre>
+        </details>
+
+        <div class="callout success">
+          <p><strong>Lab complete:</strong> All three bundles negotiate correctly (no mode on), the suspended member is restored, load balancing is deterministic, and you can read every EtherChannel flag the exam can throw at you.</p>
+        </div>
+      </section>
+
+      <p class="footer">Custom local lab created for this project. This page does not depend on Cisco Live lab access, job aids, or external credentials.</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: PIM Sparse Mode</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f9;
+      --surface: #ffffff;
+      --ink: #17232f;
+      --muted: #5d6f7d;
+      --line: #d8e2e8;
+      --navy: #07182d;
+      --cisco: #00a0d2;
+      --green: #14795f;
+      --red: #b42318;
+      --amber: #9a6200;
+      --code: #0f1720;
+      --shadow: 0 12px 30px rgba(7, 24, 45, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: #006da8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      border-bottom: 5px solid var(--cisco);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar .wrap {
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .logo {
+      width: 58px;
+      height: auto;
+      display: block;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: #b7d9e8;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px 0 48px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .toc h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: #244558;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .toc a:hover,
+    .toc a:focus {
+      background: #e9f6fb;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .panel,
+    .task,
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel,
+    .task {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .task {
+      border-left: 5px solid var(--cisco);
+    }
+
+    .callout {
+      box-shadow: none;
+      padding: 14px 16px;
+      margin: 16px 0;
+      background: #f9fbfc;
+    }
+
+    .callout.warning {
+      border-color: #f1d39d;
+      background: #fff8ea;
+    }
+
+    .callout.success {
+      border-color: #b8e4d6;
+      background: #edf9f4;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 14px 22px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdfe;
+    }
+
+    .metric b {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 20px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .topology {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      margin: 14px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      background: #eaf4f8;
+      color: #1b3d51;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: "Roboto Mono", Consolas, Menlo, monospace;
+      font-size: 0.95em;
+      background: #eef3f6;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    pre {
+      margin: 12px 0 16px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: var(--code);
+      color: #f4f7fa;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 14px 0;
+      background: #fbfdfe;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #0c527a;
+    }
+
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .check {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .check b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .check span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .meta-grid,
+      .grade {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar .wrap {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px 0;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
+      <div>
+        <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
+        <h1>PIM Sparse Mode: Shared Tree, Register, and SPT Switchover</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#plan">Addressing and Multicast Plan</a>
+      <a href="#task1">Task 1: Baseline Audit</a>
+      <a href="#task2">Task 2: Shared Tree</a>
+      <a href="#task3">Task 3: Source Registration</a>
+      <a href="#task4">Task 4: SPT Switchover</a>
+      <a href="#task5">Task 5: Flag Interpretation</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#solutions">Solutions</a>
+    </nav>
+
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab makes PIM sparse mode visible. Four routers form a square: the source sits behind R1, the receiver behind R3, and R2 is the statically configured rendezvous point. You will watch <code>show ip mroute</code> change state through the three defining moments of PIM-SM: the receiver's (*,G) join up the shared tree, the source's unicast register to the RP, and the last-hop router's switchover from the shared tree (RPT) to the shortest-path tree (SPT).</p>
+        <p>The topology is rigged so the two trees take different physical paths: OSPF cost 20 on the R3–R2 link means R3 reaches the RP directly through R2, but its best unicast path to the <em>source</em> is via R4. One defect is baked in: the R4–R1 link is missing PIM, so the SPT switchover fails until you find and fix it.</p>
+
+        <div class="meta-grid">
+          <div class="metric">
+            <b>60-75 min</b>
+            <span>Estimated time</span>
+          </div>
+          <div class="metric">
+            <b>ENCOR</b>
+            <span>Difficulty level</span>
+          </div>
+          <div class="metric">
+            <b>4 routers</b>
+            <span>IOL FHR, RP, LHR, transit</span>
+          </div>
+          <div class="metric">
+            <b>5 tasks</b>
+            <span>Observe, verify, troubleshoot</span>
+          </div>
+        </div>
+
+        <h3>Learning Objectives</h3>
+        <ul>
+          <li>Configure and verify a static RP and PIM sparse-mode interfaces.</li>
+          <li>Read (*,G) and (S,G) entries: incoming interface, RPF neighbor, and outgoing interface list.</li>
+          <li>Explain the register process between the first-hop router and the RP.</li>
+          <li>Trigger and observe the SPT switchover, including the RP-bit prune on the shared tree.</li>
+          <li>Decode mroute flags: D, S, C, L, P, R, F, T, J.</li>
+          <li>Troubleshoot a broken SPT with <code>show ip rpf</code> and <code>show ip pim neighbor</code>.</li>
+        </ul>
+
+        <h3>Platform Standard</h3>
+        <ul>
+          <li>Use Cisco Modeling Labs IOL nodes (iol-xe) for every router in this lab.</li>
+          <li><code>ip multicast-routing distributed</code> is preconfigured; if your image rejects the <code>distributed</code> keyword, use <code>ip multicast-routing</code>.</li>
+          <li>R3 boots with <code>ip pim spt-threshold infinity</code> so the shared tree stays in use until Task 4 — do not remove it early.</li>
+          <li>R3's receiver interface uses <code>ip igmp join-group 239.1.1.1</code>, so R3 itself answers pings to the group — this makes verification deterministic.</li>
+          <li>Use <code>write memory</code> only after the verification tasks pass.</li>
+        </ul>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1–R2–R3–R4 form a square. The shared tree (RPT) runs source → R1 → R2 (RP) → R3. The shortest-path tree (SPT) runs R1 → R4 → R3 because of the OSPF cost on the R3–R2 link. The Alpine SRC host sends pings to 239.1.1.1; the Alpine RCV host is a capture point on the receiver LAN.</p>
+        <img class="topology" src="assets/topology.svg" alt="PIM sparse mode topology">
+      </section>
+
+      <section id="plan" class="panel">
+        <h2>Addressing and Multicast Plan</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Value</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Group</td><td>239.1.1.1</td><td>Joined by R3 Et0/2 via <code>ip igmp join-group</code></td></tr>
+              <tr><td>RP</td><td>10.0.2.2 (R2 Loopback0)</td><td><code>ip pim rp-address 10.0.2.2</code> on all four routers</td></tr>
+              <tr><td>Source</td><td>SRC 10.1.1.10 (R1 Et0/2 LAN)</td><td>R1 is the first-hop router (FHR)</td></tr>
+              <tr><td>Receiver</td><td>RCV 10.3.3.10 (R3 Et0/2 LAN)</td><td>R3 is the last-hop router (LHR)</td></tr>
+              <tr><td>R1–R2</td><td>10.0.12.0/24</td><td>RPT leg</td></tr>
+              <tr><td>R2–R3</td><td>10.0.23.0/24</td><td>RPT leg — R3 side has OSPF cost 20</td></tr>
+              <tr><td>R3–R4</td><td>10.0.34.0/24</td><td>SPT leg</td></tr>
+              <tr><td>R4–R1</td><td>10.0.14.0/24</td><td>SPT leg — <strong>PIM missing on R4 Et0/1 (defect)</strong></td></tr>
+              <tr><td>Loopbacks</td><td>10.0.1.1 / 10.0.2.2 / 10.0.3.3 / 10.0.4.4</td><td>/32s, OSPF area 0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Audit</h2>
+        <p>Confirm the unicast and multicast control planes before generating any traffic. One PIM adjacency in the square is missing — find it now, but do not fix it until Task 4.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Verify full OSPF reachability: every router sees all four loopbacks and both LANs.</li>
+          <li>Verify on R3 that the unicast best path to 10.1.1.0/24 (the source LAN) points at R4, while the best path to 10.0.2.2 (the RP) points at R2.</li>
+          <li>List the PIM neighbors on every router and identify the link with no adjacency.</li>
+          <li>Confirm every router agrees the RP for 239.1.1.1 is 10.0.2.2 (static).</li>
+        </ol>
+
+        <h3>Commands</h3>
+        <pre><code>show ip route ospf
+show ip route 10.1.1.0
+show ip route 10.0.2.2
+show ip pim interface
+show ip pim neighbor
+show ip pim rp mapping</code></pre>
+
+        <h3>Expected Findings</h3>
+        <ul>
+          <li>R3's route to 10.1.1.0/24 exits Et0/1 toward R4 (total cost via R4 is lower than via the cost-20 link).</li>
+          <li>R3's route to 10.0.2.2/32 exits Et0/0 toward R2.</li>
+          <li>R4 and R1 have <strong>no PIM adjacency</strong> on the 10.0.14.0/24 link — <code>show ip pim interface</code> on R4 does not list Et0/1.</li>
+          <li>All routers report <code>Group(s) 224.0.0.0/4, Static</code> with RP 10.0.2.2.</li>
+        </ul>
+
+        <div class="callout warning">
+          <p><strong>Design note:</strong> RPF is computed from the unicast routing table, but PIM joins only propagate across PIM adjacencies. A perfect unicast path is useless to multicast if PIM is not enabled on it — that is exactly the trap waiting in Task 4.</p>
+        </div>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Watch the Shared Tree Build — (*,G)</h2>
+        <p>R3's receiver interface already joined 239.1.1.1, so the (*,G) state exists at boot. Read it carefully on the LHR and the RP — this is the shared tree with no traffic on it yet.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>On R3, confirm the IGMP membership for 239.1.1.1 on Et0/2.</li>
+          <li>On R3, read the (*,G) entry: the incoming interface must be Et0/0 with RPF neighbor 10.0.23.2 (toward the RP), and the OIL must contain Et0/2.</li>
+          <li>On R2 (the RP), confirm the (*,G) entry created by R3's PIM join: incoming Null (the RP is the root of the shared tree), OIL Et0/1.</li>
+          <li>On R1 and R4, confirm there is no state for 239.1.1.1 yet — no receiver-driven state exists off the shared tree.</li>
+        </ol>
+
+        <h3>Commands</h3>
+        <pre><code>show ip igmp groups 239.1.1.1
+show ip mroute 239.1.1.1
+show ip pim rp mapping 239.1.1.1</code></pre>
+
+        <h3>Expected Output (R3)</h3>
+        <pre><code>(*, 239.1.1.1), 00:12:44/00:02:31, RP 10.0.2.2, flags: SJCL
+  Incoming interface: Ethernet0/0, RPF nbr 10.0.23.2
+  Outgoing interface list:
+    Ethernet0/2, Forward/Sparse, 00:12:44/00:02:31</code></pre>
+
+        <h3>Expected Output (R2, the RP)</h3>
+        <pre><code>(*, 239.1.1.1), 00:12:40/00:03:21, RP 10.0.2.2, flags: S
+  Incoming interface: Null, RPF nbr 0.0.0.0
+  Outgoing interface list:
+    Ethernet0/1, Forward/Sparse, 00:12:40/00:03:21</code></pre>
+
+        <div class="callout warning">
+          <p><strong>Read the flags:</strong> on R3, <code>S</code> = sparse, <code>J</code> = join SPT on next packet (suppressed for now by spt-threshold infinity), <code>C</code> = connected member, <code>L</code> = the router itself joined (the igmp join-group). On R2, incoming Null is normal — the RP is the root of the shared tree.</p>
+        </div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Source Registration and First Packets</h2>
+        <p>Start the source and watch the register process create (S,G) state. With spt-threshold infinity still set on R3, traffic must flow source → R1 → R2 (RP) → R3, even though a shorter path exists.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>From SRC, send a continuous ping to the group: <code>ping -t 32 239.1.1.1</code> (the TTL flag matters — the Linux default multicast TTL of 1 dies at R1). Replies come from 10.3.3.1 (R3 joined the group).</li>
+          <li>On R1 (FHR), confirm the (S,G) entry with the <code>F</code> (register) and <code>T</code> flags.</li>
+          <li>On R2 (RP), confirm the (S,G) entry and that the RP joined toward the source (incoming Et0/0 from R1).</li>
+          <li>On R3, confirm traffic arrives on the <strong>shared tree</strong>: the (S,G) entry should NOT exist or shows the RPT path — incoming Et0/0 via the RP.</li>
+          <li>Optional: on RCV, run <code>tcpdump -i eth0 host 239.1.1.1</code> and watch the data arrive on the LAN.</li>
+        </ol>
+
+        <h3>Commands</h3>
+        <pre><code>show ip mroute 239.1.1.1
+show ip mroute 239.1.1.1 count
+show ip pim rp mapping
+debug ip pim 239.1.1.1   ! optional, watch Register / Register-Stop on R1 and R2</code></pre>
+
+        <h3>Expected Output (R1, the FHR)</h3>
+        <pre><code>(10.1.1.10, 239.1.1.1), 00:01:02/00:02:57, flags: FT
+  Incoming interface: Ethernet0/2, RPF nbr 0.0.0.0
+  Outgoing interface list:
+    Ethernet0/0, Forward/Sparse, 00:01:02/00:03:11</code></pre>
+
+        <h3>Expected Output (R2, the RP)</h3>
+        <pre><code>(10.1.1.10, 239.1.1.1), 00:01:05/00:02:54, flags: T
+  Incoming interface: Ethernet0/0, RPF nbr 10.0.12.1
+  Outgoing interface list:
+    Ethernet0/1, Forward/Sparse, 00:01:05/00:03:18</code></pre>
+
+        <div class="callout warning">
+          <p><strong>What just happened:</strong> R1 encapsulated the first packets in unicast PIM Register messages to 10.0.2.2. The RP decapsulated them, forwarded down the shared tree, sent an (S,G) join toward R1, and finally a Register-Stop once native traffic arrived. That whole exchange is exam material.</p>
+        </div>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: SPT Switchover — and the Broken Path</h2>
+        <p>Allow R3 to switch to the shortest-path tree. The switchover will <em>fail</em> first — receiver traffic stops — because the SPT path crosses the link with no PIM. Diagnose it, fix it, and watch the switchover complete.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>On R3, remove <code>ip pim spt-threshold infinity</code>. R3 immediately attempts an (S,G) join toward the source via R4.</li>
+          <li>Observe the failure: the SRC ping stops getting replies, and R3's (S,G) entry shows incoming Et0/1 (toward R4) but no traffic arrives.</li>
+          <li>Diagnose with RPF and PIM neighbor checks on R4: the RPF interface toward 10.1.1.10 is Et0/1, but there is no PIM neighbor on it, so R4 cannot send the join to R1.</li>
+          <li>Fix the defect: enable <code>ip pim sparse-mode</code> on R4 Et0/1.</li>
+          <li>Confirm the switchover: R3's (S,G) shows incoming Et0/1 via 10.0.34.4 with flags <code>JT</code>, traffic flows again, and the RP's path is pruned.</li>
+          <li>On R2, observe the RP-bit prune result: the (S,G) OIL toward R3 empties or the entry shows <code>P</code> — the shared-tree leg for this source is no longer used.</li>
+        </ol>
+
+        <h3>Diagnostic Commands</h3>
+        <pre><code>show ip rpf 10.1.1.10
+show ip pim neighbor
+show ip mroute 239.1.1.1
+show ip mroute 239.1.1.1 count   ! run twice; counters must increase</code></pre>
+
+        <h3>Expected Output After the Fix (R3)</h3>
+        <pre><code>(10.1.1.10, 239.1.1.1), 00:00:31/00:02:58, flags: JT
+  Incoming interface: Ethernet0/1, RPF nbr 10.0.34.4
+  Outgoing interface list:
+    Ethernet0/2, Forward/Sparse, 00:00:31/00:03:12</code></pre>
+
+        <div class="callout warning">
+          <p><strong>The exhibit-question version of this moment:</strong> (*,G) incoming Et0/0 toward the RP, (S,G) incoming Et0/1 toward the source, both on the same router. That difference — RPF to the RP vs RPF to the source — IS the shared tree vs shortest-path tree distinction.</p>
+        </div>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Flag Interpretation and Final Validation</h2>
+        <p>Close the loop by proving you can read every line of the final mroute state — this is precisely what the exam shows in exhibits.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Capture <code>show ip mroute</code> on all four routers and explain every flag that appears: S, C, L, J, T, F, P, R, D.</li>
+          <li>Explain why R4 now carries (S,G) state but no (*,G) OIL entries.</li>
+          <li>Stop the SRC ping, wait for the entries to age (3 minutes), and confirm the (S,G) state expires while the (*,G) shared-tree state remains.</li>
+          <li>Restart the ping and watch registration + immediate SPT join happen together this time (no spt-threshold infinity).</li>
+        </ol>
+
+        <h3>Validation Commands</h3>
+        <pre><code>show ip mroute
+show ip mroute summary
+show ip mroute 239.1.1.1 count
+show ip pim neighbor
+show ip igmp groups</code></pre>
+
+        <h3>Completion Criteria</h3>
+        <ul>
+          <li>SRC pings 239.1.1.1 and gets replies from 10.3.3.1 over the SPT (R1 → R4 → R3).</li>
+          <li>R3: (*,G) incoming via R2; (S,G) incoming via R4 with JT flags.</li>
+          <li>R1: (S,G) with FT flags; R4: (S,G) transit state with T flag.</li>
+          <li>R2: shared-tree (*,G) intact; (S,G) pruned or absent from the data path.</li>
+          <li>All four PIM adjacencies are up, including R4–R1.</li>
+        </ul>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <p>Use these checks to evaluate whether the lab is complete.</p>
+        <div class="grade">
+          <div class="check">
+            <b>Control plane</b>
+            <span>OSPF full reachability and all four PIM adjacencies up, static RP agreed by every router.</span>
+          </div>
+          <div class="check">
+            <b>Shared tree reading</b>
+            <span>You can point at the (*,G) entries on R3 and R2 and name the root, RPF neighbor, and OIL.</span>
+          </div>
+          <div class="check">
+            <b>Register process</b>
+            <span>You observed FT flags on the FHR and can narrate Register / Register-Stop.</span>
+          </div>
+          <div class="check">
+            <b>SPT switchover</b>
+            <span>R3's (S,G) moved from the RP path to the R4 path and you saw the flags change to JT.</span>
+          </div>
+          <div class="check">
+            <b>RPF troubleshooting</b>
+            <span>You found the missing PIM adjacency with show ip rpf / show ip pim neighbor, not by rereading configs.</span>
+          </div>
+          <div class="check">
+            <b>Flag fluency</b>
+            <span>You can decode S, C, L, J, T, F, P, R, D without notes.</span>
+          </div>
+          <div class="check">
+            <b>State lifecycle</b>
+            <span>You watched (S,G) expire after the source stopped and rebuild when it returned.</span>
+          </div>
+          <div class="check">
+            <b>Data-plane proof</b>
+            <span>Pings to 239.1.1.1 succeed end-to-end and tcpdump on RCV shows group traffic on the LAN.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="solutions" class="panel">
+        <h2>Solutions</h2>
+        <details>
+          <summary>Task 4 solution: enable the SPT switchover on R3</summary>
+          <pre><code>configure terminal
+no ip pim spt-threshold infinity
+end</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 4 solution: repair the SPT path (R4)</summary>
+          <pre><code>configure terminal
+interface Ethernet0/1
+ ip pim sparse-mode
+end
+! Verify the new adjacency:
+! R4#show ip pim neighbor
+! 10.0.14.1  Ethernet0/1  ...</code></pre>
+        </details>
+
+        <details>
+          <summary>Flag reference (memorize)</summary>
+          <pre><code>S - Sparse mode            C - Connected member on this router
+L - Local: router itself joined (igmp join-group)
+J - Join SPT: switch to source tree on next packet
+T - SPT bit: traffic received on the source tree
+F - Register flag: FHR registering this source to the RP
+P - Pruned: OIL is empty / Null
+R - RP-bit: (S,G) entry applies to the shared tree
+D - Dense mode (should never appear in this lab)</code></pre>
+        </details>
+
+        <details>
+          <summary>Expected final verification</summary>
+          <pre><code>R3#show ip mroute 239.1.1.1
+(*, 239.1.1.1), 01:02:10/stopped, RP 10.0.2.2, flags: SJCL
+  Incoming interface: Ethernet0/0, RPF nbr 10.0.23.2
+  Outgoing interface list:
+    Ethernet0/2, Forward/Sparse, 01:02:10/00:02:44
+
+(10.1.1.10, 239.1.1.1), 00:04:18/00:02:51, flags: JT
+  Incoming interface: Ethernet0/1, RPF nbr 10.0.34.4
+  Outgoing interface list:
+    Ethernet0/2, Forward/Sparse, 00:04:18/00:02:44
+
+R1#show ip mroute 239.1.1.1 | include flags
+(*, 239.1.1.1), ... flags: SP
+(10.1.1.10, 239.1.1.1), ... flags: FT</code></pre>
+        </details>
+
+        <div class="callout success">
+          <p><strong>Lab complete:</strong> You watched a multicast flow live through its whole PIM-SM lifecycle — (*,G) join, unicast register, RP forwarding, SPT switchover, RP-bit prune — and repaired a broken source tree using RPF logic instead of guesswork.</p>
+        </div>
+      </section>
+
+      <p class="footer">Custom local lab created for this project. This page does not depend on Cisco Live lab access, job aids, or external credentials.</p>
+    </div>
+  </main>
+</body>
+</html>

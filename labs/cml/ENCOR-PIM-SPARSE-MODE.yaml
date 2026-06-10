@@ -1,0 +1,1086 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR PIM Sparse Mode - Shared Tree, Register, SPT Switchover
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: |-
+    RP = R2 Loopback0 (10.0.2.2, static on all routers). Group 239.1.1.1. R3 starts with spt-threshold infinity (RPT via R2); SPT path is via R4.
+    Intentional defect: R4 Ethernet0/1 toward R1 has no ip pim sparse-mode - SPT switchover fails until it is enabled.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 2
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R1
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      !
+      ip multicast-routing distributed
+      !
+      interface Loopback0
+       ip address 10.0.1.1 255.255.255.255
+       ip pim sparse-mode
+      !
+      interface Ethernet0/0
+       description Link to R2 (RP)
+       ip address 10.0.12.1 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Link to R4
+       ip address 10.0.14.1 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Source LAN (SRC 10.1.1.10)
+       ip address 10.1.1.1 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      router ospf 1
+       router-id 10.0.1.1
+       network 10.0.0.0 0.255.255.255 area 0
+      !
+      ip pim rp-address 10.0.2.2
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: R1
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - IOL
+  x: -300
+  y: -200
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R2
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      !
+      ip multicast-routing distributed
+      !
+      interface Loopback0
+       description RENDEZVOUS POINT address
+       ip address 10.0.2.2 255.255.255.255
+       ip pim sparse-mode
+      !
+      interface Ethernet0/0
+       description Link to R1
+       ip address 10.0.12.2 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Link to R3
+       ip address 10.0.23.2 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      router ospf 1
+       router-id 10.0.2.2
+       network 10.0.0.0 0.255.255.255 area 0
+      !
+      ip pim rp-address 10.0.2.2
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: iol-xe-17-16-01a
+  label: R2
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - IOL
+  x: 300
+  y: -200
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R3
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      !
+      ip multicast-routing distributed
+      !
+      interface Loopback0
+       ip address 10.0.3.3 255.255.255.255
+       ip pim sparse-mode
+      !
+      interface Ethernet0/0
+       description Link to R2 (RP) - higher OSPF cost so the SPT prefers R4
+       ip address 10.0.23.3 255.255.255.0
+       ip ospf cost 20
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Link to R4
+       ip address 10.0.34.3 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Receiver LAN (RCV 10.3.3.10)
+       ip address 10.3.3.1 255.255.255.0
+       ip pim sparse-mode
+       ip igmp join-group 239.1.1.1
+       no shutdown
+      !
+      router ospf 1
+       router-id 10.0.3.3
+       network 10.0.0.0 0.255.255.255 area 0
+      !
+      ip pim spt-threshold infinity
+      !
+      ip pim rp-address 10.0.2.2
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: iol-xe-17-16-01a
+  label: R3
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - IOL
+  x: 300
+  y: 120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R4
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      !
+      ip multicast-routing distributed
+      !
+      interface Loopback0
+       ip address 10.0.4.4 255.255.255.255
+       ip pim sparse-mode
+      !
+      interface Ethernet0/0
+       description Link to R3
+       ip address 10.0.34.4 255.255.255.0
+       ip pim sparse-mode
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Link to R1 (NOTE: PIM intentionally not enabled here)
+       ip address 10.0.14.4 255.255.255.0
+       no shutdown
+      !
+      router ospf 1
+       router-id 10.0.4.4
+       network 10.0.0.0 0.255.255.255 area 0
+      !
+      ip pim rp-address 10.0.2.2
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: iol-xe-17-16-01a
+  label: R4
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - IOL
+  x: -300
+  y: 120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname src
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.1.1.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.1.1.1
+
+      echo "src" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       src localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: alpine-base-3-21-3
+  label: SRC
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - endpoint
+  x: -300
+  y: -420
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname rcv
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.3.3.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.3.3.1
+
+      echo "rcv" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       rcv localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n5
+  image_definition: alpine-base-3-21-3
+  label: RCV
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-PIM-SPARSE-MODE
+  - endpoint
+  x: 300
+  y: 340
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n1
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: R1-Ethernet0/0<->R2-Ethernet0/0
+- id: l1
+  n1: n1
+  n2: n2
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R2-Ethernet0/1<->R3-Ethernet0/0
+- id: l2
+  n1: n2
+  n2: n3
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R3-Ethernet0/1<->R4-Ethernet0/0
+- id: l3
+  n1: n3
+  n2: n0
+  i1: i2
+  i2: i2
+  conditioning: {}
+  label: R4-Ethernet0/1<->R1-Ethernet0/1
+- id: l4
+  n1: n4
+  n2: n0
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: SRC-eth0<->R1-Ethernet0/2
+- id: l5
+  n1: n5
+  n2: n2
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: RCV-eth0<->R3-Ethernet0/2
+lab:
+  description: CCNP ENCOR custom lab for PIM sparse mode with a static RP. Observe
+    the shared tree build, source registration, and the SPT switchover in show ip
+    mroute, then troubleshoot a missing PIM adjacency on the SPT path.
+  notes: Routers use CML IOL (node definition iol-xe). Alpine hosts provide the
+    multicast source and a receiver-side capture point. R3 also joins 239.1.1.1
+    via ip igmp join-group so ping replies are deterministic.
+  title: ENCOR-PIM-SPARSE-MODE
+  version: 0.1.0
