@@ -1,0 +1,14 @@
+[
+  {
+    "topic": "3.1.a",
+    "title": "Troubleshoot static and dynamic 802.1Q trunking protocols",
+    "subtitle": "VLAN, access, and trunk port fundamentals · frame structure · native VLAN mismatch · pruning",
+    "file": "infographics/3.1.a-troubleshoot-8021q-trunking.png"
+  },
+  {
+    "topic": "3.1.c",
+    "title": "Configure and verify common Spanning Tree Protocols (RSTP, MST) and enhancements",
+    "subtitle": "RSTP rapid convergence · MST instances and region consistency · BPDU guard, root guard, PortFast",
+    "file": "infographics/3.1.c-spanning-tree-protocols-protection.png"
+  }
+]
