@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: VRF with GRE and IPsec</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>VRF, GRE, and IPsec Integrated Data Path</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Front-Door VRF</a>
+      <a href="#task2">Task 2: GRE in VRF</a>
+      <a href="#task3">Task 3: IPsec Protection</a>
+      <a href="#task4">Task 4: Overlay VRFs</a>
+      <a href="#task5">Task 5: Failure Analysis</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This capstone lab combines ENCOR 2.2.a and 2.2.b. You will place the public transport link in a front-door VRF, build an encrypted GRE tunnel over that transport, and carry segmented CORP routes across the overlay.</p>
+        <p>The main skill is reasoning about three routing contexts at the same time: the global table, the transport VRF, and the overlay/customer VRF.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 2.2</b><span>VRF plus tunnels</span></div>
+          <div class="metric"><b>IOL routers</b><span>HQ, Internet, Branch</span></div>
+          <div class="metric"><b>5 tasks</b><span>Integrate and troubleshoot</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <img class="topology" src="../ENCOR-VIRT/assets/wan-topology.svg" alt="WAN virtualization topology">
+        <div class="callout"><p><strong>Pattern:</strong> The front-door VRF isolates the WAN underlay. The tunnel interface carries customer routes. IPsec encrypts the GRE packets between the public peer addresses.</p></div>
+      </section>
+      <section id="task1" class="task">
+        <h2>Task 1: Build the Front-Door VRF</h2>
+        <p>Move the Internet-facing interface into a TRANSPORT VRF. Reapply the IP address after the VRF assignment.</p>
+        <pre><code>configure terminal
+vrf definition TRANSPORT
+ description Internet underlay for encrypted tunnels
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/0
+ description WAN underlay to INET-RTR
+ vrf forwarding TRANSPORT
+ ip address 198.51.100.2 255.255.255.252
+ no shutdown
+!
+ip route vrf TRANSPORT 0.0.0.0 0.0.0.0 198.51.100.1
+end
+show ip route vrf TRANSPORT
+ping vrf TRANSPORT 198.51.100.6 source 198.51.100.2</code></pre>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Build GRE Over the Transport VRF</h2>
+        <p>Bind the tunnel source lookup to the front-door VRF while keeping the tunnel interface itself available for overlay routing.</p>
+        <pre><code>configure terminal
+interface tunnel10
+ description GRE overlay over TRANSPORT VRF
+ ip address 172.16.10.1 255.255.255.252
+ tunnel source ethernet0/0
+ tunnel destination 198.51.100.6
+ tunnel vrf TRANSPORT
+ tunnel mode gre ip
+ no shutdown
+end
+show interface tunnel10
+show ip route vrf TRANSPORT 198.51.100.6</code></pre>
+        <p>If the platform uses a different syntax, look for the same behavior: the tunnel destination must be resolved in the transport VRF, not the global routing table.</p>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Protect the GRE Tunnel with IPsec</h2>
+        <p>Apply an IPsec profile to Tunnel10. The peer address is still reached through TRANSPORT.</p>
+        <pre><code>crypto ikev2 keyring ENCOR-KEYS
+ peer BR-RTR
+  address 198.51.100.6
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.6 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile GRE-PROTECT
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface tunnel10
+ tunnel protection ipsec profile GRE-PROTECT</code></pre>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Carry CORP Routes Across the Overlay</h2>
+        <p>Place the customer-facing LAN in VRF CORP and route it through the encrypted GRE tunnel. Do not leak TRANSPORT routes into CORP.</p>
+        <pre><code>vrf definition CORP
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/1
+ description CORP LAN
+ vrf forwarding CORP
+ ip address 10.10.0.1 255.255.255.0
+ no shutdown
+!
+interface tunnel10
+ vrf forwarding CORP
+ ip address 172.16.10.1 255.255.255.252
+!
+ip route vrf CORP 10.60.0.0 255.255.255.0 tunnel10
+end
+show ip route vrf CORP
+show ip route vrf TRANSPORT
+ping vrf CORP 10.60.0.10 source 10.10.0.1</code></pre>
+        <div class="callout warning"><p><strong>Ordering trap:</strong> Applying <code>vrf forwarding CORP</code> to Tunnel10 removes its IP address. Reapply the tunnel IP after assigning the overlay VRF.</p></div>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Failure Analysis</h2>
+        <p>Investigate these failures and identify which routing context is broken:</p>
+        <ol>
+          <li>Transport ping fails because the default route was added to the global table instead of TRANSPORT.</li>
+          <li>Tunnel10 is down because the tunnel destination is resolved in the wrong VRF.</li>
+          <li>IKEv2 is up but CORP traffic fails because Tunnel10 was protected but not placed in the CORP VRF.</li>
+          <li>IPsec counters increment one way only because the branch peer uses a different source address.</li>
+        </ol>
+        <pre><code>show ip route vrf TRANSPORT 198.51.100.6
+show ip cef vrf TRANSPORT 198.51.100.6 detail
+show interface tunnel10
+show ip route vrf CORP 10.60.0.0
+show crypto ikev2 sa detailed
+show crypto ipsec sa peer 198.51.100.6</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Underlay VRF</b><span>TRANSPORT owns WAN reachability and default route.</span></div>
+          <div class="check"><b>Overlay tunnel</b><span>Tunnel10 resolves its destination through TRANSPORT.</span></div>
+          <div class="check"><b>Encryption</b><span>IPsec SAs protect GRE traffic and counters increment.</span></div>
+          <div class="check"><b>Customer isolation</b><span>CORP routes cross the tunnel without learning transport routes.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/ip-routing/13788-3.html">Cisco VRF-lite technology support reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/security-vpn/ipsec-negotiation-ike-protocols/217432-configure-ios-xe-site-to-site-vpn-conn.html">Cisco IOS XE site-to-site VPN configuration example</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/generic-routing-encapsulation-gre/118361-technote-gre-00.html">Cisco GRE technical support reference</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

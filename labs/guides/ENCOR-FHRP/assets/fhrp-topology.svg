@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR FHRP lab topology</title>
+  <desc id="desc">Two distribution routers, one access switch, two user VLANs, an upstream core router, and an application server for HSRP and VRRP testing.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.switch{fill:#14795f}.host{fill:#00a0d2}.link{stroke:#667b8a;stroke-width:4;fill:none}.fhrp{stroke:#00a0d2}.wan{stroke:#9a6200}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 3.3.c: Configure first hop redundancy with HSRP and VRRP</text>
+
+  <path class="link fhrp" d="M330 210 L520 300"/>
+  <path class="link fhrp" d="M330 390 L520 300"/>
+  <path class="link" d="M520 300 L790 210"/>
+  <path class="link" d="M520 300 L790 390"/>
+  <path class="link wan" d="M870 210 L1010 300"/>
+  <path class="link wan" d="M870 390 L1010 300"/>
+  <path class="link" d="M1050 340 L1050 430"/>
+
+  <g transform="translate(250 170)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">USER-HSRP</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">VLAN 10</text>
+    <text class="txt small" x="45" y="126" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(250 350)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">USER-VRRP</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">VLAN 20</text>
+    <text class="txt small" x="45" y="126" text-anchor="middle">10.20.20.10</text>
+  </g>
+  <g transform="translate(520 260)">
+    <rect class="switch" width="90" height="80" rx="8"/>
+    <text class="txt label" x="45" y="108" text-anchor="middle">ACCESS-SW</text>
+    <text class="txt small" x="45" y="128" text-anchor="middle">IOL-L2</text>
+  </g>
+  <g transform="translate(790 170)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-DIST-A</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">HSRP active</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">VRRP backup</text>
+  </g>
+  <g transform="translate(790 350)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-DIST-B</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">HSRP standby</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">VRRP master</text>
+  </g>
+  <g transform="translate(1010 260)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R3-CORE</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">Upstream</text>
+  </g>
+  <g transform="translate(1010 430)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.99.99.10</text>
+  </g>
+
+  <rect class="pill" x="365" y="204" width="130" height="30" rx="15"/>
+  <text class="txt small" x="430" y="224" text-anchor="middle">HSRP VIP .1</text>
+  <rect class="pill" x="365" y="386" width="130" height="30" rx="15"/>
+  <text class="txt small" x="430" y="406" text-anchor="middle">VRRP VIP .1</text>
+  <rect class="pill" x="646" y="208" width="118" height="30" rx="15"/>
+  <text class="txt small" x="705" y="228" text-anchor="middle">802.1Q trunk</text>
+  <rect class="pill" x="646" y="386" width="118" height="30" rx="15"/>
+  <text class="txt small" x="705" y="406" text-anchor="middle">802.1Q trunk</text>
+  <rect class="pill" x="892" y="194" width="96" height="30" rx="15"/>
+  <text class="txt small" x="940" y="214" text-anchor="middle">10.0.13/30</text>
+  <rect class="pill" x="892" y="386" width="96" height="30" rx="15"/>
+  <text class="txt small" x="940" y="406" text-anchor="middle">10.0.23/30</text>
+
+  <text class="txt small" x="58" y="522">Configure HSRP for VLAN 10 and VRRP for VLAN 20. Test failover with interface tracking and preemption.</text>
+  <text class="txt small" x="58" y="546">Verify active/master roles, virtual MACs, host default-gateway behavior, and upstream reachability during failures.</text>
+</svg>

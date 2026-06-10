@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR QoS interpretation lab topology</title>
+  <desc id="desc">HQ router, WAN router, and branch router with voice, data, and server endpoints and QoS policy locations.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f9fb; }
+      .zone { fill: #fff; stroke: #d3e0e8; stroke-width: 2; rx: 10; }
+      .router { fill: #0b243b; stroke: #00a0d2; stroke-width: 3; rx: 8; }
+      .host { fill: #ffffff; stroke: #537286; stroke-width: 2; rx: 8; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #ffffff; font-size: 17px; font-weight: 700; text-anchor: middle; }
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #263946; font-size: 13px; text-anchor: middle; }
+      .zone-label { font-family: Arial, Helvetica, sans-serif; fill: #40586a; font-size: 18px; font-weight: 700; }
+      .link { stroke: #8296a4; stroke-width: 4; fill: none; }
+      .policy { stroke: #0096c7; stroke-width: 5; stroke-dasharray: 12 8; fill: none; }
+      .police { stroke: #b42318; stroke-width: 5; stroke-dasharray: 4 8; fill: none; }
+      .tag { fill: #e7f6fb; stroke: #99d7ec; rx: 6; }
+      .tagtext { font-family: Arial, Helvetica, sans-serif; fill: #075979; font-size: 13px; text-anchor: middle; font-weight: 700; }
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="zone" x="40" y="50" width="300" height="500"/>
+  <rect class="zone" x="440" y="50" width="300" height="500"/>
+  <rect class="zone" x="840" y="50" width="300" height="500"/>
+  <text class="zone-label" x="65" y="85">HQ Campus</text>
+  <text class="zone-label" x="465" y="85">WAN Edge</text>
+  <text class="zone-label" x="865" y="85">Branch</text>
+
+  <path class="link" d="M270 260 L500 260"/>
+  <path class="link" d="M680 260 L910 260"/>
+  <path class="policy" d="M270 245 L500 245"/>
+  <path class="police" d="M680 275 L910 275"/>
+
+  <rect class="router" x="150" y="210" width="120" height="80"/>
+  <text class="label" x="210" y="245">HQ-RTR</text>
+  <text class="label" x="210" y="268">IOL</text>
+  <rect class="router" x="500" y="210" width="180" height="80"/>
+  <text class="label" x="590" y="245">WAN-RTR</text>
+  <text class="label" x="590" y="268">IOL Transit</text>
+  <rect class="router" x="910" y="210" width="120" height="80"/>
+  <text class="label" x="970" y="245">BR-RTR</text>
+  <text class="label" x="970" y="268">IOL</text>
+
+  <rect class="host" x="80" y="120" width="125" height="46"/>
+  <text class="small" x="142" y="148">HQ-VOICE</text>
+  <rect class="host" x="80" y="390" width="125" height="46"/>
+  <text class="small" x="142" y="418">HQ-DATA</text>
+  <rect class="host" x="1020" y="120" width="120" height="46"/>
+  <text class="small" x="1080" y="148">BR-USER</text>
+  <rect class="host" x="1020" y="390" width="120" height="46"/>
+  <text class="small" x="1080" y="418">BR-SERVER</text>
+
+  <path class="link" d="M180 166 L205 210"/>
+  <path class="link" d="M180 390 L205 290"/>
+  <path class="link" d="M1020 166 L985 210"/>
+  <path class="link" d="M1020 390 L985 290"/>
+
+  <rect class="tag" x="350" y="150" width="480" height="34"/>
+  <text class="tagtext" x="590" y="172">HQ outbound policy: classify EF, AF41, AF21, CS1, default</text>
+  <rect class="tag" x="352" y="322" width="476" height="34"/>
+  <text class="tagtext" x="590" y="344">Branch policy contains intentional direction and class-map defects</text>
+  <rect class="tag" x="170" y="565" width="840" height="34"/>
+  <text class="tagtext" x="590" y="587">Student goal: interpret class maps, policy maps, service-policy direction, and counters</text>
+</svg>

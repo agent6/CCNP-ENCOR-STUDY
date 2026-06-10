@@ -1,0 +1,302 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR-NETCONF-RESTCONF
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#F6F9FB"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -260.0
+  x2: 620.0
+  y2: -40.0
+  z_index: 2
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#FFFFFF"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: 20.0
+  x2: 620.0
+  y2: 280.0
+  z_index: 3
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: Starting state has addressing, routing, a local automation user, and
+    API payload examples only. Students enable AAA, SSH keys, NETCONF, HTTPS, RESTCONF,
+    and model-driven configuration during the lab.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 4
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R1-MANAGED
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      username automation privilege 15 secret Cisco123!
+      enable secret Cisco123!
+      ip domain-name encor.local
+      ip ssh version 2
+      !
+      interface Ethernet0/0
+       description Management network to AUTOMATION
+       ip address 10.60.60.1 255.255.255.0
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Application server LAN
+       ip address 10.70.70.1 255.255.255.0
+       no shutdown
+      !
+      interface Loopback0
+       description Device identity
+       ip address 1.1.1.1 255.255.255.255
+       no shutdown
+      !
+      ! NETCONF, RESTCONF, HTTPS, AAA new-model, and RSA keys are intentionally absent.
+      ! Configure model-driven management during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login local
+       transport input ssh
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: R1-MANAGED
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-NETCONF-RESTCONF
+  - IOL
+  x: 0
+  y: -100
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname automation
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.60.60.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.60.60.1
+      mkdir -p /root/encor-api
+      cat > /root/encor-api/loopback100-native.json <<'EOF'
+      {
+        "Cisco-IOS-XE-native:Loopback": {
+          "name": 100,
+          "description": "Created by RESTCONF for ENCOR 4.6",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "100.100.100.1",
+                "mask": "255.255.255.255"
+              }
+            }
+          }
+        }
+      }
+      EOF
+      cat > /root/encor-api/netconf-close-session.xml <<'EOF'
+      <rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <close-session/>
+      </rpc>]]>]]>
+      EOF
+      cat > /root/encor-api/notes.txt <<'EOF'
+      R1-MANAGED: 10.60.60.1
+      User: automation
+      Password: Cisco123!
+      NETCONF: TCP/830 after netconf-yang is enabled
+      RESTCONF: HTTPS/443 after ip http secure-server and restconf are enabled
+      EOF
+
+      echo "automation" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       automation localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: alpine-base-3-21-3
+  label: AUTOMATION
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-NETCONF-RESTCONF
+  - endpoint
+  x: -360
+  y: -100
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname app-server
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.70.70.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.70.70.1
+      mkdir -p /www
+      echo "netconf-restconf-app-server" > /www/index.html
+      busybox httpd -h /www -p 80
+
+      echo "app-server" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       app-server localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: alpine-base-3-21-3
+  label: APP-SERVER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-NETCONF-RESTCONF
+  - endpoint
+  x: 360
+  y: -100
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n1
+  n2: n0
+  i1: i0
+  i2: i1
+  conditioning: {}
+  label: AUTOMATION-eth0<->R1-MANAGED-Ethernet0/0
+- id: l1
+  n1: n2
+  n2: n0
+  i1: i0
+  i2: i2
+  conditioning: {}
+  label: APP-SERVER-eth0<->R1-MANAGED-Ethernet0/1
+lab:
+  description: CCNP ENCOR NETCONF and RESTCONF configuration and verification lab
+    using an IOL IOS XE router and Alpine endpoints.
+  notes: Starting state has management reachability and a local automation user only.
+    Configure NETCONF, RESTCONF, and YANG-modeled access during the lab.
+  title: ENCOR-NETCONF-RESTCONF
+  version: 0.3.0

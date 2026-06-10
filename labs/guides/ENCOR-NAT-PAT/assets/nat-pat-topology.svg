@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR NAT/PAT lab topology</title>
+  <desc id="desc">NAT edge router with three inside networks and an outside Internet router with an outside client.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.host{fill:#14795f}.edge{fill:#00a0d2}.link{stroke:#667b8a;stroke-width:4;fill:none}.nat{stroke:#00a0d2}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 3.3.b: Configure NAT/PAT, verify translations, and interpret defects</text>
+
+  <path class="link" d="M180 180 L340 260"/>
+  <path class="link" d="M180 300 L340 300"/>
+  <path class="link" d="M180 420 L340 340"/>
+  <path class="link nat" d="M420 300 L670 300"/>
+  <path class="link" d="M750 300 L940 300"/>
+
+  <g transform="translate(340 260)">
+    <rect class="router edge" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-NAT</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">inside/outside edge</text>
+  </g>
+  <g transform="translate(670 260)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-INET</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">outside network</text>
+  </g>
+
+  <g transform="translate(90 150)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">HQ-USER</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.10.10</text>
+    <text class="txt small" x="45" y="126" text-anchor="middle">PAT</text>
+  </g>
+  <g transform="translate(90 270)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">HQ-WEB</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.20.10</text>
+    <text class="txt small" x="45" y="126" text-anchor="middle">static NAT</text>
+  </g>
+  <g transform="translate(90 390)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">HQ-APP</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.30.10</text>
+    <text class="txt small" x="45" y="126" text-anchor="middle">static PAT</text>
+  </g>
+  <g transform="translate(940 270)">
+    <rect class="host" width="110" height="60" rx="8"/>
+    <text class="txt label" x="55" y="88" text-anchor="middle">OUTSIDE-CLIENT</text>
+    <text class="txt small" x="55" y="108" text-anchor="middle">198.51.100.10</text>
+  </g>
+
+  <rect class="pill" x="206" y="190" width="120" height="30" rx="15"/>
+  <text class="txt small" x="266" y="210" text-anchor="middle">10.10.10.0/24</text>
+  <rect class="pill" x="206" y="294" width="120" height="30" rx="15"/>
+  <text class="txt small" x="266" y="314" text-anchor="middle">10.10.20.0/24</text>
+  <rect class="pill" x="206" y="390" width="120" height="30" rx="15"/>
+  <text class="txt small" x="266" y="410" text-anchor="middle">10.10.30.0/24</text>
+  <rect class="pill" x="480" y="276" width="140" height="30" rx="15"/>
+  <text class="txt small" x="550" y="296" text-anchor="middle">203.0.113.0/24</text>
+  <rect class="pill" x="790" y="276" width="132" height="30" rx="15"/>
+  <text class="txt small" x="856" y="296" text-anchor="middle">198.51.100.0/24</text>
+
+  <text class="txt small" x="58" y="522">Configure interface PAT, static one-to-one NAT, static PAT port forwarding, and pool-based PAT.</text>
+  <text class="txt small" x="58" y="546">Verify with translations, statistics, route/CEF lookups, ACL hit counts, and outside-to-inside tests.</text>
+</svg>

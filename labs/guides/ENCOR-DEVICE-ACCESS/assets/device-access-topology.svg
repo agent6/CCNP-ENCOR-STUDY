@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR device access control lab topology</title>
+  <desc id="desc">Admin workstation and jump router connected to a managed IOS XE router with a routed server LAN.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.secure{fill:#14795f}.host{fill:#00a0d2}.server{fill:#9a6200}.mgmt{stroke:#00a0d2;stroke-width:5;fill:none}.link{stroke:#667b8a;stroke-width:4;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 5.1.a: Configure and verify device access control using lines and local user authentication</text>
+
+  <path class="link" d="M210 245 L460 305"/>
+  <path class="link" d="M210 385 L460 330"/>
+  <path class="link" d="M620 318 L910 318"/>
+  <path class="mgmt" d="M250 220 C360 120 510 120 540 250"/>
+  <path class="mgmt" d="M250 410 C360 500 510 500 540 370"/>
+
+  <g transform="translate(100 210)">
+    <rect class="host" width="110" height="70" rx="8"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">ADMIN-PC</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">10.80.80.10</text>
+  </g>
+  <g transform="translate(100 350)">
+    <rect class="router" width="110" height="70" rx="10"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">R2-JUMP</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">SSH test source</text>
+  </g>
+  <g transform="translate(460 258)">
+    <rect class="secure" width="160" height="120" rx="12"/>
+    <text class="txt label" x="80" y="148" text-anchor="middle">R1-SECURE</text>
+    <text class="txt small" x="80" y="168" text-anchor="middle">Console and VTY target</text>
+  </g>
+  <g transform="translate(910 283)">
+    <rect class="server" width="115" height="70" rx="8"/>
+    <text class="txt label" x="58" y="98" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="58" y="118" text-anchor="middle">10.90.90.10</text>
+  </g>
+
+  <rect class="pill" x="285" y="281" width="116" height="30" rx="15"/>
+  <text class="txt small" x="343" y="301" text-anchor="middle">10.80.80/24</text>
+  <rect class="pill" x="698" y="294" width="116" height="30" rx="15"/>
+  <text class="txt small" x="756" y="314" text-anchor="middle">10.90.90/24</text>
+  <rect class="pill" x="324" y="150" width="132" height="30" rx="15"/>
+  <text class="txt small" x="390" y="170" text-anchor="middle">SSH + login local</text>
+  <rect class="pill" x="324" y="450" width="132" height="30" rx="15"/>
+  <text class="txt small" x="390" y="470" text-anchor="middle">console + VTY lines</text>
+
+  <text class="txt small" x="58" y="522">Students configure local usernames, privilege boundaries, console and VTY line authentication, SSH-only access, exec timeouts, and login hardening.</text>
+  <text class="txt small" x="58" y="546">Verification uses CLI show commands, successful and failed SSH attempts, line state, privilege level behavior, and management-source restrictions.</text>
+</svg>

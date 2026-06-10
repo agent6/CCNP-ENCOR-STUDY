@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: 802.1Q Trunk Engineering</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f9;
+      --surface: #ffffff;
+      --ink: #17232f;
+      --muted: #5d6f7d;
+      --line: #d8e2e8;
+      --navy: #07182d;
+      --cisco: #00a0d2;
+      --green: #14795f;
+      --red: #b42318;
+      --amber: #9a6200;
+      --code: #0f1720;
+      --shadow: 0 12px 30px rgba(7, 24, 45, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: #006da8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    a:hover,
+    a:focus {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      border-bottom: 5px solid var(--cisco);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar .wrap {
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .logo {
+      width: 58px;
+      height: auto;
+      display: block;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: #b7d9e8;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 24px;
+      padding: 24px 0 48px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .toc h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 7px 8px;
+      border-radius: 6px;
+      color: #244558;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .toc a:hover,
+    .toc a:focus {
+      background: #e9f6fb;
+      text-decoration: none;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .panel,
+    .task,
+    .callout {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel,
+    .task {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .task {
+      border-left: 5px solid var(--cisco);
+    }
+
+    .callout {
+      box-shadow: none;
+      padding: 14px 16px;
+      margin: 16px 0;
+      background: #f9fbfc;
+    }
+
+    .callout.warning {
+      border-color: #f1d39d;
+      background: #fff8ea;
+    }
+
+    .callout.success {
+      border-color: #b8e4d6;
+      background: #edf9f4;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 14px 22px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdfe;
+    }
+
+    .metric b {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 20px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .topology {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      margin: 14px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 12px 0 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 720px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      background: #eaf4f8;
+      color: #1b3d51;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: "Roboto Mono", Consolas, Menlo, monospace;
+      font-size: 0.95em;
+      background: #eef3f6;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    pre {
+      margin: 12px 0 16px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: var(--code);
+      color: #f4f7fa;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 14px 0;
+      background: #fbfdfe;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: #0c527a;
+    }
+
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .check {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdfe;
+    }
+
+    .check b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .check span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .meta-grid,
+      .grade {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar .wrap {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px 0;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
+      <div>
+        <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
+        <h1>802.1Q Trunk Engineering and Verification</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#addressing">VLAN and Trunk Plan</a>
+      <a href="#task1">Task 1: Baseline Audit</a>
+      <a href="#task2">Task 2: Deterministic Trunks</a>
+      <a href="#task3">Task 3: VLAN Pruning</a>
+      <a href="#task4">Task 4: Troubleshooting</a>
+      <a href="#task5">Task 5: Validation</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#solutions">Solutions</a>
+    </nav>
+
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab is focused on 802.1Q trunk behavior at a CCNP ENCOR level. You will configure deterministic trunks, remove unsafe dynamic negotiation, prune VLANs to match design intent, troubleshoot trunk defects, and verify the operational control-plane and data-plane state.</p>
+        <p>The lab is designed to feel like a Cisco Live walk-in lab: the configuration tasks are concise, but the verification requires careful interpretation of Cisco IOL-L2 output.</p>
+
+        <div class="meta-grid">
+          <div class="metric">
+            <b>60-75 min</b>
+            <span>Estimated time</span>
+          </div>
+          <div class="metric">
+            <b>ENCOR</b>
+            <span>Difficulty level</span>
+          </div>
+          <div class="metric">
+            <b>9 switches</b>
+            <span>IOL-L2 core, distribution, access</span>
+          </div>
+          <div class="metric">
+            <b>5 tasks</b>
+            <span>Configure, verify, troubleshoot</span>
+          </div>
+        </div>
+
+        <h3>Learning Objectives</h3>
+        <ul>
+          <li>Explain how 802.1Q tags, native VLANs, and allowed VLAN lists affect frame forwarding.</li>
+          <li>Configure trunks explicitly instead of relying on Dynamic Trunking Protocol behavior.</li>
+          <li>Apply VLAN pruning based on traffic requirements and failure-domain boundaries.</li>
+          <li>Identify native VLAN mismatch, missing VLAN, and negotiation-state defects from show commands.</li>
+          <li>Validate trunk state using `show interfaces trunk`, spanning-tree output, MAC tables, and endpoint tests.</li>
+        </ul>
+
+        <h3>Platform Standard</h3>
+        <ul>
+          <li>Use Cisco Modeling Labs IOL-L2 nodes for every switch in this lab.</li>
+          <li>Use Cisco Modeling Labs IOL nodes for routers if this topology is extended later. This 802.1Q lab does not require routers.</li>
+          <li>IOL-L2 uses 802.1Q trunking for switch trunks; do not use Catalyst hardware-specific assumptions or images.</li>
+          <li>Layer 3 gateways already exist elsewhere; this lab focuses only on Layer 2 trunk transport.</li>
+          <li>Do not use EtherChannel in this lab. Each link is intentionally evaluated as an individual trunk.</li>
+          <li>Use `write memory` or `copy running-config startup-config` only after the verification tasks pass.</li>
+        </ul>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>The topology represents a small enterprise campus with two core switches, four distribution switches, two user access switches, and one server access switch. Trunk links are intentionally not uniform; each trunk should carry only the VLANs required by its role.</p>
+        <img class="topology" src="assets/topology.svg" alt="802.1Q trunk topology">
+      </section>
+
+      <section id="addressing" class="panel">
+        <h2>VLAN and Trunk Plan</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>VLAN</th>
+                <th>Name</th>
+                <th>Purpose</th>
+                <th>Where It Must Be Carried</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>10</td>
+                <td>ENG-USERS</td>
+                <td>Engineering client VLAN</td>
+                <td>Core, distribution, ACCESS-1, ACCESS-2 trunks</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td>FIN-USERS</td>
+                <td>Finance client VLAN</td>
+                <td>Core, distribution, ACCESS-1, ACCESS-2 trunks</td>
+              </tr>
+              <tr>
+                <td>30</td>
+                <td>APP-SERVERS</td>
+                <td>Application server VLAN</td>
+                <td>Core, distribution, SRV-ACCESS trunks</td>
+              </tr>
+              <tr>
+                <td>40</td>
+                <td>DB-SERVERS</td>
+                <td>Database server VLAN</td>
+                <td>Core, distribution, SRV-ACCESS trunks</td>
+              </tr>
+              <tr>
+                <td>100</td>
+                <td>NET-MGMT</td>
+                <td>Infrastructure management VLAN</td>
+                <td>Core, distribution, SRV-ACCESS trunks</td>
+              </tr>
+              <tr>
+                <td>999</td>
+                <td>NATIVE-BLACKHOLE</td>
+                <td>Unused native VLAN for trunks</td>
+                <td>All trunk links</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Link Role</th>
+                <th>Interfaces</th>
+                <th>Allowed VLANs</th>
+                <th>Native VLAN</th>
+                <th>Negotiation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Core to distribution</td>
+                <td>CORE-1/2 to DIST-1/2/3/4</td>
+                <td>10,20,30,40,100,999</td>
+                <td>999</td>
+                <td>Off</td>
+              </tr>
+              <tr>
+                <td>Distribution peer links</td>
+                <td>DIST-1 to DIST-2, DIST-3 to DIST-4</td>
+                <td>10,20,30,40,100,999</td>
+                <td>999</td>
+                <td>Off</td>
+              </tr>
+              <tr>
+                <td>User access uplinks</td>
+                <td>DIST-1/2 to ACCESS-1, DIST-3/4 to ACCESS-2</td>
+                <td>10,20,999</td>
+                <td>999</td>
+                <td>Off</td>
+              </tr>
+              <tr>
+                <td>Server access uplinks</td>
+                <td>DIST-2/3 to SRV-ACCESS</td>
+                <td>30,40,100,999</td>
+                <td>999</td>
+                <td>Off</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Audit</h2>
+        <p>Before changing any interfaces, identify how the trunks are currently operating. Some links are already forwarding traffic, but not all of them match the target design.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>On each switch, collect the current VLAN database.</li>
+          <li>Identify interfaces that are operational trunks, static access ports, or still relying on DTP.</li>
+          <li>Find at least two defects before configuring anything.</li>
+        </ol>
+
+        <h3>Commands</h3>
+        <pre><code>show vlan brief
+show interfaces trunk
+show interfaces switchport
+show spanning-tree inconsistentports
+show cdp neighbors detail</code></pre>
+
+        <h3>Expected Findings</h3>
+        <ul>
+          <li>`DIST-2` to `SRV-ACCESS` is missing VLAN 40 from one allowed VLAN list.</li>
+          <li>`DIST-3` to `SRV-ACCESS` has native VLAN 1 on one side and native VLAN 999 on the other.</li>
+          <li>At least one access uplink is operating as a trunk because one side is `dynamic desirable`.</li>
+        </ul>
+
+        <div class="callout warning">
+          <p><strong>Design note:</strong> A trunk can appear up while still being wrong. The operational trunk state only proves that the link negotiated or was forced into trunking; it does not prove native VLAN, allowed VLAN, STP forwarding, or end-to-end VLAN reachability are correct.</p>
+        </div>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Deterministic 802.1Q Trunks</h2>
+        <p>Configure the required trunk interfaces explicitly. Do not rely on default negotiation or dynamic trunk formation.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Create VLANs 10, 20, 30, 40, 100, and 999 on every switch that must transport them.</li>
+          <li>Use IOL-L2 trunk commands. Do not configure hardware-specific trunk encapsulation commands.</li>
+          <li>Force trunk mode on all inter-switch links.</li>
+          <li>Set native VLAN 999 on every trunk.</li>
+          <li>Disable DTP negotiation with `switchport nonegotiate` on all trunks that support the command.</li>
+        </ol>
+
+        <h3>Core-to-Distribution Template</h3>
+        <pre><code>configure terminal
+vlan 10
+ name ENG-USERS
+vlan 20
+ name FIN-USERS
+vlan 30
+ name APP-SERVERS
+vlan 40
+ name DB-SERVERS
+vlan 100
+ name NET-MGMT
+vlan 999
+ name NATIVE-BLACKHOLE
+!
+interface range Ethernet0/0-1
+ description 802.1Q trunks to distribution layer
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ no shutdown
+end</code></pre>
+
+        <h3>Verification</h3>
+        <pre><code>show interfaces trunk
+show interfaces ethernet0/0 switchport | include Administrative Mode|Operational Mode|Negotiation|Trunking Native
+show dtp interface ethernet0/0</code></pre>
+
+        <h3>Expected Output</h3>
+        <pre><code>CORE-1#show interfaces ethernet0/0 switchport | include Mode|Negotiation|Native
+Administrative Mode: trunk
+Operational Mode: trunk
+Negotiation of Trunking: Off
+Trunking Native Mode VLAN: 999 (NATIVE-BLACKHOLE)</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Apply VLAN Pruning by Link Role</h2>
+        <p>After the trunks are deterministic, prune VLANs so that each trunk carries only the VLANs required by the design.</p>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Core and distribution peer trunks must carry VLANs 10,20,30,40,100,999.</li>
+          <li>User access trunks must carry only VLANs 10,20,999.</li>
+          <li>Server access trunks must carry only VLANs 30,40,100,999.</li>
+          <li>Do not remove VLAN 999 from any trunk allowed list.</li>
+        </ol>
+
+        <h3>User Access Uplink Template</h3>
+        <pre><code>configure terminal
+interface range Ethernet0/0-1
+ description 802.1Q trunks to user access layer
+ switchport trunk allowed vlan 10,20,999
+end</code></pre>
+
+        <h3>Server Access Uplink Template</h3>
+        <pre><code>configure terminal
+interface range Ethernet0/0-1
+ description 802.1Q trunks to server access layer
+ switchport trunk allowed vlan 30,40,100,999
+end</code></pre>
+
+        <h3>Verification</h3>
+        <pre><code>show interfaces trunk
+show spanning-tree vlan 10,20,30,40,100
+show mac address-table vlan 40 dynamic</code></pre>
+
+        <h3>Expected Output</h3>
+        <pre><code>DIST-2#show interfaces trunk
+Port        Mode             Encapsulation  Status        Native vlan
+Et1/1      on               802.1q         trunking      999
+
+Port        Vlans allowed on trunk
+Et1/1      30,40,100,999</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Troubleshoot Trunk Defects</h2>
+        <p>Three defects remain in the network. Use show commands to locate and correct them without replacing the entire interface configuration.</p>
+
+        <h3>Defect A: Native VLAN Mismatch</h3>
+        <p>`SRV-ACCESS` reports a native VLAN inconsistency on one uplink. The link is up, but STP blocks the affected VLANs.</p>
+        <pre><code>SRV-ACCESS#show spanning-tree inconsistentports
+Name                 Interface              Inconsistency
+-------------------- ---------------------- ------------------
+VLAN0999             Et0/1                  PVID_Inc
+
+SRV-ACCESS#show interfaces ethernet0/1 trunk
+Port        Mode             Encapsulation  Status        Native vlan
+Et0/1      on               802.1q         trunking      1</code></pre>
+
+        <h3>Defect B: Missing VLAN</h3>
+        <p>Users can reach the application server in VLAN 30, but database access in VLAN 40 fails through `DIST-2`.</p>
+        <pre><code>DIST-2#show interfaces ethernet1/1 trunk
+Port        Vlans allowed on trunk
+Et1/1      30,100,999</code></pre>
+
+        <h3>Defect C: Dynamic Negotiation</h3>
+        <p>One access uplink forms a trunk because the distribution side is statically trunking and the access side is still `dynamic desirable`.</p>
+        <pre><code>ACCESS-2#show interfaces ethernet0/1 switchport | include Administrative Mode|Operational Mode|Negotiation
+Administrative Mode: dynamic desirable
+Operational Mode: trunk
+Negotiation of Trunking: On</code></pre>
+
+        <h3>Requirements</h3>
+        <ol>
+          <li>Correct the native VLAN mismatch without changing the native VLAN standard.</li>
+          <li>Add only the missing VLAN to the affected trunk; do not broaden all trunks to all VLANs.</li>
+          <li>Remove dynamic negotiation from the access uplink.</li>
+          <li>Verify no inconsistent ports remain.</li>
+        </ol>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Validate Data-Plane and Control-Plane State</h2>
+        <p>Complete the lab by proving that the trunk design works and that unsafe trunk negotiation has been removed.</p>
+
+        <h3>Validation Commands</h3>
+        <pre><code>show interfaces trunk
+show interfaces switchport | include Name:|Administrative Mode|Operational Mode|Negotiation
+show spanning-tree inconsistentports
+show spanning-tree vlan 10,20,30,40,100
+show mac address-table dynamic vlan 10
+show mac address-table dynamic vlan 40
+ping 10.30.0.10 source vlan 10
+traceroute 10.40.0.10 source vlan 20</code></pre>
+
+        <h3>Completion Criteria</h3>
+        <ul>
+          <li>Every inter-switch link is operationally trunking with native VLAN 999.</li>
+          <li>DTP negotiation is off on all configured trunks.</li>
+          <li>User access trunks carry VLANs 10,20,999 only.</li>
+          <li>Server access trunks carry VLANs 30,40,100,999 only.</li>
+          <li>No STP inconsistent ports remain.</li>
+          <li>MAC addresses appear on expected trunks for VLANs 10, 20, 30, and 40.</li>
+        </ul>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <p>Use these checks to evaluate whether the lab is complete.</p>
+        <div class="grade">
+          <div class="check">
+            <b>VLAN database</b>
+            <span>Required VLANs exist with the correct names on all switches that transport them.</span>
+          </div>
+          <div class="check">
+            <b>Static trunking</b>
+            <span>All inter-switch links show administrative and operational trunk mode.</span>
+          </div>
+          <div class="check">
+            <b>Native VLAN</b>
+            <span>Every trunk uses VLAN 999 as the native VLAN.</span>
+          </div>
+          <div class="check">
+            <b>DTP disabled</b>
+            <span>Trunk negotiation is off on all trunk links that support `switchport nonegotiate`.</span>
+          </div>
+          <div class="check">
+            <b>Allowed VLAN pruning</b>
+            <span>Allowed VLAN lists match the link-role table and do not overcarry unrelated VLANs.</span>
+          </div>
+          <div class="check">
+            <b>No STP inconsistency</b>
+            <span>`show spanning-tree inconsistentports` returns no inconsistent ports.</span>
+          </div>
+          <div class="check">
+            <b>Data-plane proof</b>
+            <span>MAC learning and endpoint tests confirm VLAN transport across the intended trunks.</span>
+          </div>
+          <div class="check">
+            <b>Operational explanation</b>
+            <span>You can explain why a trunk can be up while still failing for one VLAN.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="solutions" class="panel">
+        <h2>Solutions</h2>
+        <details>
+          <summary>Task 2 baseline trunk solution</summary>
+          <pre><code>configure terminal
+vlan 10
+ name ENG-USERS
+vlan 20
+ name FIN-USERS
+vlan 30
+ name APP-SERVERS
+vlan 40
+ name DB-SERVERS
+vlan 100
+ name NET-MGMT
+vlan 999
+ name NATIVE-BLACKHOLE
+!
+interface range Ethernet0/0-1
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ no shutdown
+end</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 3 pruning solution</summary>
+          <pre><code>! Core and distribution peer trunks
+interface range Ethernet0/0-1
+ switchport trunk allowed vlan 10,20,30,40,100,999
+!
+! User access uplinks
+interface range Ethernet0/0-1
+ switchport trunk allowed vlan 10,20,999
+!
+! Server access uplinks
+interface range Ethernet0/0-1
+ switchport trunk allowed vlan 30,40,100,999
+end</code></pre>
+        </details>
+
+        <details>
+          <summary>Task 4 defect repair solution</summary>
+          <pre><code>! Defect A: native VLAN mismatch on SRV-ACCESS
+configure terminal
+interface Ethernet0/1
+ switchport trunk native vlan 999
+end
+
+! Defect B: VLAN 40 missing on DIST-2 server trunk
+configure terminal
+interface Ethernet1/1
+ switchport trunk allowed vlan add 40
+end
+
+! Defect C: dynamic negotiation on ACCESS-2
+configure terminal
+interface Ethernet0/1
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,999
+ switchport nonegotiate
+end</code></pre>
+        </details>
+
+        <details>
+          <summary>Expected final verification</summary>
+          <pre><code>DIST-2#show interfaces trunk
+Port        Mode             Encapsulation  Status        Native vlan
+Et0/0      on               802.1q         trunking      999
+Et0/1      on               802.1q         trunking      999
+Et1/0      on               802.1q         trunking      999
+Et1/1      on               802.1q         trunking      999
+
+Port        Vlans allowed on trunk
+Et0/0      10,20,30,40,100,999
+Et0/1      10,20,30,40,100,999
+Et1/0      10,20,999
+Et1/1      30,40,100,999
+
+DIST-2#show spanning-tree inconsistentports
+
+Name                 Interface              Inconsistency
+-------------------- ---------------------- ------------------
+
+Number of inconsistent ports (segments) in the system : 0</code></pre>
+        </details>
+
+        <div class="callout success">
+          <p><strong>Lab complete:</strong> The network now uses explicit 802.1Q trunks, a non-user native VLAN, role-based VLAN pruning, no DTP negotiation, and clean STP consistency checks.</p>
+        </div>
+      </section>
+
+      <p class="footer">Custom local lab created for this project. This page does not depend on Cisco Live lab access, job aids, or external credentials.</p>
+    </div>
+  </main>
+</body>
+</html>

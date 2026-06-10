@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure NAT/PAT</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure NAT/PAT</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: PAT</a>
+      <a href="#task3">Task 3: Static NAT</a>
+      <a href="#task4">Task 4: Static PAT</a>
+      <a href="#task5">Task 5: NAT Pool</a>
+      <a href="#task6">Task 6: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 3.3.b: configure NAT/PAT. You will configure outbound PAT for users, one-to-one static NAT for an inside server, static PAT port forwarding for another inside service, and a pool-based PAT variant. The point is not just to paste commands; you must prove how inside local, inside global, outside local, and outside global addresses appear in the translation table.</p>
+        <p>The starting CML topology has addressing and routing only. NAT is intentionally absent so you can see the failure mode first, then configure and verify each NAT behavior.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.3.b</b><span>NAT/PAT</span></div>
+          <div class="metric"><b>IOL edge</b><span>Inside/outside boundary</span></div>
+          <div class="metric"><b>6 tasks</b><span>Configure, verify, repair</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-NAT is the enterprise edge. HQ-USER uses outbound PAT. HQ-WEB receives a one-to-one static NAT. HQ-APP receives a TCP static PAT mapping. R2-INET represents the outside network and OUTSIDE-CLIENT tests inbound and outbound reachability.</p>
+        <img class="topology" src="assets/nat-pat-topology.svg" alt="NAT and PAT topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Without NAT</h2>
+        <p>Confirm the underlay before configuring NAT. The inside hosts should reach R1-NAT, and R1-NAT should reach R2-INET. Inside hosts should not have successful outside connectivity yet because their private addresses are not translated.</p>
+        <pre><code>show ip interface brief
+show ip route
+show ip cef 198.51.100.10
+ping 203.0.113.1
+ping 198.51.100.10 source 203.0.113.2
+show running-config | include ip nat</code></pre>
+        <p>From HQ-USER, test toward the outside client:</p>
+        <pre><code>ping -c 3 198.51.100.10
+traceroute 198.51.100.10</code></pre>
+        <p>Expected interpretation: routing exists at the edge, but traffic sourced from 10.10.10.10 needs NAT before it can return from the outside network.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Interface PAT for Inside Users</h2>
+        <p>Configure R1-NAT so HQ-USER traffic overloads on the outside interface address. Verify the interface roles and the translation table.</p>
+        <pre><code>ip access-list standard NAT-USERS
+ permit 10.10.10.0 0.0.0.255
+!
+interface Ethernet0/0
+ ip nat inside
+interface Ethernet0/1
+ ip nat inside
+interface Ethernet0/2
+ ip nat outside
+interface Ethernet0/3
+ ip nat inside
+!
+ip nat inside source list NAT-USERS interface Ethernet0/2 overload</code></pre>
+        <p>Generate traffic and verify:</p>
+        <pre><code>clear ip nat translation *
+clear ip nat statistics
+show access-lists NAT-USERS
+show ip nat statistics
+show ip nat translations
+ping 198.51.100.10 repeat 5
+show ip nat translations verbose
+show ip cef 198.51.100.10</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> PAT translates many inside local addresses to one inside global address by using transport identifiers such as TCP/UDP ports, or ICMP identifiers for ping traffic.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure One-to-One Static NAT</h2>
+        <p>Publish HQ-WEB with a dedicated inside global address. Outside clients should target the global address, not the private address.</p>
+        <pre><code>ip nat inside source static 10.10.20.10 203.0.113.20
+show ip nat translations
+show ip nat statistics
+show ip route 203.0.113.20</code></pre>
+        <p>From OUTSIDE-CLIENT, test the global address:</p>
+        <pre><code>ping -c 3 203.0.113.20
+traceroute 203.0.113.20</code></pre>
+        <p>Interpret the translation row. Static NAT creates a persistent mapping even before traffic passes, while dynamic PAT entries appear after matching traffic is generated.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure Static PAT Port Forwarding</h2>
+        <p>Publish only TCP port 80 on HQ-APP by mapping outside TCP port 8080 to the inside server. This is different from one-to-one static NAT because only a specific protocol and port are exposed.</p>
+        <pre><code>ip nat inside source static tcp 10.10.30.10 80 203.0.113.30 8080
+show ip nat translations | include 203.0.113.30
+show ip nat statistics</code></pre>
+        <p>On HQ-APP, start a simple web listener if it is not already running:</p>
+        <pre><code>mkdir -p /www
+echo "hq-app" > /www/index.html
+busybox httpd -h /www -p 80</code></pre>
+        <p>From OUTSIDE-CLIENT, test the port mapping:</p>
+        <pre><code>wget -O- http://203.0.113.30:8080
+nc -vz 203.0.113.30 8080</code></pre>
+        <p>If HTTP tools are unavailable, use the router outputs to verify the static TCP translation and then attempt a TCP connection with whatever client is available in the Alpine image.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Compare Interface PAT and Pool-Based PAT</h2>
+        <p>Replace interface PAT with a small inside global pool. This shows a second common PAT style and makes it obvious which global address was allocated.</p>
+        <pre><code>no ip nat inside source list NAT-USERS interface Ethernet0/2 overload
+clear ip nat translation *
+ip nat pool NAT-POOL 203.0.113.40 203.0.113.45 netmask 255.255.255.0
+ip nat inside source list NAT-USERS pool NAT-POOL overload
+show running-config | include ip nat inside source|ip nat pool
+show ip nat statistics</code></pre>
+        <p>Generate new traffic from HQ-USER and compare the table:</p>
+        <pre><code>ping 198.51.100.10 repeat 5
+show ip nat translations
+show ip nat statistics</code></pre>
+        <p>Interpretation: both methods perform PAT, but interface PAT uses the outside interface address while pool PAT allocates from the configured inside global pool.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Troubleshoot NAT/PAT Defects</h2>
+        <p>Use symptoms and outputs to prove the defect before repairing it. These are the failure patterns you should be able to recognize at CCNP level:</p>
+        <ol>
+          <li>The ACL does not match the real inside local subnet, so no dynamic translations are created.</li>
+          <li><code>ip nat inside</code> and <code>ip nat outside</code> are missing or applied to the wrong interfaces.</li>
+          <li>The outside network has no route back to the inside global address or pool.</li>
+          <li>A static NAT and static PAT use the same global IP and protocol/port, creating a conflict.</li>
+          <li>A route-map or ACL is too broad and translates traffic that should remain private.</li>
+          <li>Existing translations remain after a config change, so verification is using stale state.</li>
+        </ol>
+        <pre><code>show ip nat translations
+show ip nat translations verbose
+show ip nat statistics
+show running-config | include ip nat
+show running-config interface Ethernet0/0
+show running-config interface Ethernet0/2
+show access-lists
+show ip route 203.0.113.20
+clear ip nat translation *</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> NAT is not routing. NAT can change packet addresses, but the translated address still needs a valid route in both directions. Always validate NAT policy, interface role, route table, and actual translations.</p></div>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>PAT</b><span>Inside user traffic overloads to an inside global address and creates dynamic translations.</span></div>
+          <div class="check"><b>Static NAT</b><span>HQ-WEB is reachable from outside through a one-to-one static mapping.</span></div>
+          <div class="check"><b>Static PAT</b><span>HQ-APP is published through a specific global TCP port mapping.</span></div>
+          <div class="check"><b>Interpretation</b><span>You can explain every inside local/global and outside local/global field in the NAT table.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/network-address-translation-nat/13772-12.html">Cisco NAT address conservation reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/network-address-translation-nat/6209-5.html">Cisco NAT order of operations reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 3.3.b asks candidates to configure NAT/PAT. This lab includes multiple common IOS XE styles and emphasizes verification because a syntactically valid NAT rule can still fail due to interface roles, ACL matching, stale translations, or missing return routing.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

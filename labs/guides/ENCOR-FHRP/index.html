@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure First Hop Redundancy</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure First Hop Redundancy</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: HSRP</a>
+      <a href="#task3">Task 3: VRRP</a>
+      <a href="#task4">Task 4: Tracking</a>
+      <a href="#task5">Task 5: Failure Testing</a>
+      <a href="#task6">Task 6: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 3.3.c: configure first hop redundancy protocols, such as HSRP and VRRP. You will configure HSRP for VLAN 10 and VRRP for VLAN 20 across two distribution routers, verify the active/master gateway roles, and test failover with tracking and preemption.</p>
+        <p>The starting CML topology includes VLAN trunks, access ports, routed uplinks, host addressing, and upstream routing. FHRP is intentionally absent so the hosts initially point to a gateway address that does not exist until you configure the virtual gateways.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.3.c</b><span>HSRP and VRRP</span></div>
+          <div class="metric"><b>IOL/IOL-L2</b><span>Router gateways, switch access</span></div>
+          <div class="metric"><b>6 tasks</b><span>Configure, verify, fail over</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-DIST-A and R2-DIST-B are redundant default gateways on VLANs 10 and 20. ACCESS-SW provides Layer 2 access and trunks both VLANs to the routers. R3-CORE and APP-SERVER provide an upstream destination for end-to-end failover tests.</p>
+        <img class="topology" src="assets/fhrp-topology.svg" alt="First hop redundancy topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline VLANs, Routing, and Host Failure</h2>
+        <p>Confirm the Layer 2 and routed underlay first. The user hosts should fail to reach their default gateway virtual IPs before FHRP is configured.</p>
+        <pre><code>show vlan brief
+show interfaces trunk
+show ip interface brief
+show ip route
+show cdp neighbors detail
+show standby brief
+show vrrp brief</code></pre>
+        <p>From the hosts:</p>
+        <pre><code># USER-HSRP
+ping -c 3 10.10.10.1
+ping -c 3 10.99.99.10
+
+# USER-VRRP
+ping -c 3 10.20.20.1
+ping -c 3 10.99.99.10</code></pre>
+        <p>Expected interpretation: host-to-gateway fails because 10.10.10.1 and 10.20.20.1 are virtual gateway addresses that have not been created yet.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure HSRP for VLAN 10</h2>
+        <p>Configure R1-DIST-A as the preferred HSRP active router for VLAN 10 and R2-DIST-B as standby. Use preempt so the preferred gateway can resume active role after recovering.</p>
+        <pre><code>! R1-DIST-A
+interface Ethernet0/0.10
+ standby version 2
+ standby 10 ip 10.10.10.1
+ standby 10 priority 120
+ standby 10 preempt
+ standby 10 authentication md5 key-string ENCOR-HSRP
+!
+! R2-DIST-B
+interface Ethernet0/0.10
+ standby version 2
+ standby 10 ip 10.10.10.1
+ standby 10 priority 100
+ standby 10 preempt
+ standby 10 authentication md5 key-string ENCOR-HSRP</code></pre>
+        <p>Verify both sides:</p>
+        <pre><code>show standby brief
+show standby Ethernet0/0.10
+show standby neighbors
+show arp | include 10.10.10.1
+show mac address-table dynamic vlan 10</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> HSRP has an active and standby router. The host default gateway points to the virtual IP, while the active router answers ARP for that virtual IP using an HSRP virtual MAC.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure VRRP for VLAN 20</h2>
+        <p>Configure R2-DIST-B as the preferred VRRP master for VLAN 20 and R1-DIST-A as backup. This gives you both protocol behaviors and avoids making a single router primary for every VLAN.</p>
+        <pre><code>! R1-DIST-A
+interface Ethernet0/0.20
+ vrrp 20 ip 10.20.20.1
+ vrrp 20 priority 100
+ vrrp 20 preempt
+!
+! R2-DIST-B
+interface Ethernet0/0.20
+ vrrp 20 ip 10.20.20.1
+ vrrp 20 priority 120
+ vrrp 20 preempt</code></pre>
+        <p>Verify:</p>
+        <pre><code>show vrrp brief
+show vrrp
+show arp | include 10.20.20.1
+show mac address-table dynamic vlan 20</code></pre>
+        <p>Interpretation focus: VRRP uses master/backup terminology and a VRRP virtual MAC. HSRP and VRRP solve the same first-hop problem, but their states, defaults, and protocol details differ.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Add Tracking and Preemption</h2>
+        <p>A gateway should not stay active or master if its upstream path is down. Track the routed uplink on each preferred router and reduce priority enough for the peer to take over.</p>
+        <pre><code>! R1-DIST-A tracks its upstream link for HSRP VLAN 10
+track 10 interface Ethernet0/1 line-protocol
+interface Ethernet0/0.10
+ standby 10 track 10 decrement 40
+!
+! R2-DIST-B tracks its upstream link for VRRP VLAN 20
+track 20 interface Ethernet0/1 line-protocol
+interface Ethernet0/0.20
+ vrrp 20 track 20 decrement 40</code></pre>
+        <p>Verify tracked object state and FHRP priority:</p>
+        <pre><code>show track
+show standby Ethernet0/0.10
+show vrrp
+show logging | include HSRP|VRRP|TRACK</code></pre>
+        <p>Depth check: preempt controls whether a higher-priority router takes back the role after it recovers. Tracking changes the effective priority; it does not directly shut down the FHRP group.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Test Failover and Recovery</h2>
+        <p>Run continuous pings from hosts to APP-SERVER, then fail the preferred gateway uplink. Observe the FHRP role change, packet loss, and recovery behavior.</p>
+        <pre><code># USER-HSRP
+ping 10.99.99.10
+
+# USER-VRRP
+ping 10.99.99.10</code></pre>
+        <p>On R1-DIST-A, fail the HSRP-preferred uplink:</p>
+        <pre><code>interface Ethernet0/1
+ shutdown
+!
+show track
+show standby brief
+show ip route 10.99.99.0</code></pre>
+        <p>On R2-DIST-B, fail the VRRP-preferred uplink:</p>
+        <pre><code>interface Ethernet0/1
+ shutdown
+!
+show track
+show vrrp brief
+show ip route 10.99.99.0</code></pre>
+        <p>Recover both links and confirm preemption behavior:</p>
+        <pre><code>interface Ethernet0/1
+ no shutdown
+!
+show standby brief
+show vrrp brief</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Troubleshoot FHRP Defects</h2>
+        <p>Use show output to prove each problem before changing configuration.</p>
+        <ol>
+          <li>HSRP peers do not see each other because one side uses a different group or version.</li>
+          <li>HSRP stays in Speak/Standby mismatch because authentication differs.</li>
+          <li>A host can ARP for the virtual gateway but cannot reach upstream because the active router lost its routed uplink and tracking is missing.</li>
+          <li>VRRP preemption does not occur as expected because the recovered router has lower effective priority.</li>
+          <li>The virtual IP is configured outside the subnet or conflicts with a real interface address.</li>
+        </ol>
+        <pre><code>show standby brief
+show standby all
+show vrrp brief
+show vrrp
+show track
+show ip interface brief
+show running-config interface Ethernet0/0.10
+show running-config interface Ethernet0/0.20
+debug standby terse
+debug vrrp events</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>HSRP</b><span>VLAN 10 has a working virtual gateway with R1 preferred active and R2 standby.</span></div>
+          <div class="check"><b>VRRP</b><span>VLAN 20 has a working virtual gateway with R2 preferred master and R1 backup.</span></div>
+          <div class="check"><b>Tracking</b><span>Uplink failure reduces priority and moves the gateway role to the healthy peer.</span></div>
+          <div class="check"><b>Host proof</b><span>User hosts can reach APP-SERVER before and after failover with only brief interruption.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/hot-standby-router-protocol-hsrp/9234-hsrpguidetoc.html">Cisco HSRP guide and configuration examples</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/hot-standby-router-protocol-hsrp/13780-6.html">Cisco HSRP troubleshooting reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/virtual-router-redundancy-protocol-vrrp/213381-understand-the-virtual-router-redundanc.html">Cisco VRRP technical reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 3.3.c asks candidates to configure first-hop redundancy protocols such as HSRP and VRRP. This lab covers both protocols and adds tracking/preemption because gateway redundancy is incomplete if the active gateway keeps forwarding users into a failed uplink.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

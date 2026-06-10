@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPF Route Summarization</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>OSPF Route Summarization</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: ASBR Summary</a>
+      <a href="#task3">Task 3: Verify External Summary</a>
+      <a href="#task4">Task 4: ABR Summary</a>
+      <a href="#task5">Task 5: Verify Inter-Area Summary</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab demonstrates two OSPF summarization mechanisms. R3 redistributes EIGRP routes into OSPF and uses <code>summary-address</code> to summarize external routes. R2 is an ABR between area 0 and area 1 and uses <code>area range</code> to summarize inter-area routes.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>45-60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>OSPF summarization</span></div>
+          <div class="metric"><b>3 routers</b><span>R1, R2, R3</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R2 is the ABR between area 0 and area 1. R2 owns four area 1 loopback networks in 172.17.0.0/16. R3 owns four EIGRP loopback networks in 172.18.0.0/16 and redistributes them into OSPF as external routes.</p>
+        <img class="topology" src="assets/topology.svg" alt="OSPF Route Summarization topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify Unsummarized Routes on R1</h2>
+        <p>Confirm that R1 sees individual 172.17 routes as inter-area OSPF routes and individual 172.18 routes as external OSPF routes.</p>
+        <pre><code>! R1
+show ip ospf neighbor
+show ip route ospf
+show ip route 172.17.0.0
+show ip route 172.18.0.0
+show ip ospf database summary
+show ip ospf database external</code></pre>
+        <p>The four 172.17 networks and four 172.18 networks can both be summarized as /22 ranges because their first 22 bits match.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Summarize R3's Redistributed EIGRP Routes</h2>
+        <p>On R3, summarize the 172.18.0.0/24 through 172.18.3.0/24 routes as one external OSPF route.</p>
+        <pre><code>! R3
+conf t
+router ospf 1
+ summary-address 172.18.0.0 255.255.252.0
+end
+
+show running-config | section router ospf
+show ip ospf database external</code></pre>
+        <p><code>summary-address</code> is used on an ASBR to summarize routes redistributed into OSPF.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Verify the External Summary on R1</h2>
+        <p>Return to R1 and confirm the four external 172.18 routes were replaced by a single 172.18.0.0/22 route.</p>
+        <pre><code>! R1
+show ip route ospf
+show ip route 172.18.0.0
+show ip ospf database external 172.18.0.0</code></pre>
+        <p>Expected result: R1 should see one OSPF external route for 172.18.0.0/22 through R2.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Summarize R2's Area 1 Loopbacks into Area 0</h2>
+        <p>On R2, summarize the 172.17.0.0/24 through 172.17.3.0/24 area 1 routes as they are advertised into area 0.</p>
+        <pre><code>! R2
+conf t
+router ospf 1
+ area 1 range 172.17.0.0 255.255.252.0
+end
+
+show running-config | section router ospf
+show ip ospf database summary</code></pre>
+        <p><code>area range</code> is configured on an ABR. The area number is the area the routes are summarized from.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Verify the Inter-Area Summary on R1</h2>
+        <p>Confirm that R1 now sees one inter-area route for 172.17.0.0/22 instead of the four individual 172.17 routes.</p>
+        <pre><code>! R1
+show ip route ospf
+show ip route 172.17.0.0
+show ip ospf database summary 172.17.0.0</code></pre>
+        <p>Expected result: R1 should have one <code>O IA</code> route for 172.17.0.0/22 and one <code>O E2</code> route for 172.18.0.0/22.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

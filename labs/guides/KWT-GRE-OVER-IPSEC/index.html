@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: GRE over IPsec Crypto Map</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>GRE over IPsec Crypto Map</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Underlay</a>
+      <a href="#task2">Task 2: GRE Tunnel</a>
+      <a href="#task3">Task 3: R1 IPsec</a>
+      <a href="#task4">Task 4: R4 IPsec</a>
+      <a href="#task5">Task 5: Verification</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab builds GRE over IPsec using classic IKEv1, a transform set, a crypto ACL that matches GRE, and a crypto map on the WAN-facing interfaces. The CML topology starts with R1 through R4 underlay links, loopbacks, and OSPF already configured. GRE and IPsec are intentionally absent.</p>
+        <p>All commands in this guide use the CML interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>60-75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 2.2.b</b><span>GRE and IPsec tunneling</span></div>
+          <div class="metric"><b>4 routers</b><span>R1, R2, R3, R4</span></div>
+          <div class="metric"><b>IOL-XE</b><span>Ethernet interfaces</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 and R4 build Tunnel1 across an OSPF-routed underlay through R2 and R3. IPsec protects GRE packets between the public-facing addresses 192.0.2.1 and 198.51.100.2.</p>
+        <img class="topology" src="assets/topology.svg" alt="GRE over IPsec four-router topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Underlay</h2>
+        <p>Start by confirming the underlay is ready before adding GRE or crypto.</p>
+        <pre><code>! R1
+show ip interface brief
+show ip ospf neighbor
+show ip route ospf
+ping 198.51.100.2 source 192.0.2.1
+
+! R4
+show ip interface brief
+show ip ospf neighbor
+show ip route ospf
+ping 192.0.2.1 source 198.51.100.2</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Build the GRE Tunnel</h2>
+        <p>Create Tunnel1 from R1 to R4. The tunnel endpoints are the underlay-facing Ethernet0/0 addresses on R1 and R4.</p>
+        <pre><code>! R1
+conf t
+interface Tunnel1
+ ip address 192.168.0.1 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 198.51.100.2
+ no shutdown
+end
+
+! R4
+conf t
+interface Tunnel1
+ ip address 192.168.0.2 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 192.0.2.1
+ no shutdown
+end</code></pre>
+        <p>Verify the tunnel and OSPF adjacency over the tunnel:</p>
+        <pre><code>show ip interface brief
+show interface Tunnel1
+show ip ospf neighbor
+ping 192.168.0.2 source 192.168.0.1</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure IKEv1 and IPsec on R1</h2>
+        <p>Configure ISAKMP phase 1, the pre-shared key, the transform set, the GRE crypto ACL, and the crypto map on R1.</p>
+        <pre><code>! R1
+conf t
+crypto isakmp policy 10
+ encryption aes
+ authentication pre-share
+ group 2
+exit
+crypto isakmp key kevinskey address 0.0.0.0 0.0.0.0
+!
+crypto ipsec transform-set KWTRAIN esp-aes esp-sha-hmac
+ mode transport
+exit
+!
+ip access-list extended GRE-IN-IPSEC
+ permit gre any any
+exit
+!
+crypto map VPN 10 ipsec-isakmp
+ match address GRE-IN-IPSEC
+ set transform-set KWTRAIN
+ set peer 198.51.100.2
+exit
+!
+interface Ethernet0/0
+ crypto map VPN
+end</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure the Mirrored Policy on R4</h2>
+        <p>Configure the matching IPsec policy on R4 and attach the crypto map to Ethernet0/0.</p>
+        <pre><code>! R4
+conf t
+crypto isakmp policy 10
+ encryption aes
+ authentication pre-share
+ group 2
+exit
+crypto isakmp key kevinskey address 0.0.0.0 0.0.0.0
+!
+crypto ipsec transform-set KWTRAIN esp-aes esp-sha-hmac
+ mode transport
+exit
+!
+ip access-list extended GRE-IN-IPSEC
+ permit gre any any
+exit
+!
+crypto map VPN 10 ipsec-isakmp
+ match address GRE-IN-IPSEC
+ set transform-set KWTRAIN
+ set peer 192.0.2.1
+exit
+!
+interface Ethernet0/0
+ crypto map VPN
+end</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Verify GRE and IPsec</h2>
+        <p>Generate traffic over the GRE tunnel, then prove that GRE is the interesting traffic being encrypted by IPsec.</p>
+        <pre><code>! R4
+ping 1.1.1.1
+show crypto isakmp sa
+show crypto ipsec sa
+show access-lists GRE-IN-IPSEC
+show crypto map
+
+! R1
+show crypto isakmp sa
+show crypto ipsec sa
+show interface Tunnel1
+show ip ospf neighbor</code></pre>
+        <p>Expected result: ISAKMP reaches <code>QM_IDLE</code>, the IPsec SAs are active, and encapsulation/decapsulation counters increment when you send traffic through Tunnel1.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

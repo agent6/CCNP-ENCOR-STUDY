@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Custom Lab Guides</title>
+  <link rel="icon" href="guides/LABCRT-2452/template_assets/cisco_logo.png">
+  <style>
+    :root { color-scheme: light; --bg:#f4f7f9; --surface:#fff; --ink:#17232f; --muted:#5c6f7d; --line:#d9e2e8; --cisco:#00a0d2; --navy:#07182d; --green:#14866d; --shadow:0 14px 38px rgba(7,24,45,.12); }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Arial,Helvetica,sans-serif; line-height:1.45; }
+    a { color:#005f91; text-decoration:none; font-weight:700; }
+    a:hover, a:focus { text-decoration:underline; }
+    .topbar { background:var(--navy); color:#fff; border-bottom:5px solid var(--cisco); }
+    .wrap { width:min(1180px, calc(100% - 32px)); margin:0 auto; }
+    .topbar .wrap { display:flex; align-items:center; gap:18px; min-height:84px; }
+    .logo { height:38px; width:auto; display:block; }
+    .title { margin:0; font-size:26px; line-height:1.15; letter-spacing:0; }
+    main { padding:28px 0 46px; }
+    .lab-card { background:var(--surface); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); }
+    .toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:22px 0 16px; }
+    .search { width:min(460px,100%); height:42px; border:1px solid var(--line); border-radius:6px; padding:0 12px; font-size:15px; background:#fff; }
+    .show-completed { min-height:42px; display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:6px; background:#fff; padding:0 12px; color:#31495b; font-size:14px; font-weight:800; }
+    .show-completed input { width:16px; height:16px; margin:0; }
+    .section-title { margin:30px 0 14px; font-size:22px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .lab-card { padding:18px; display:flex; flex-direction:column; gap:14px; min-height:190px; }
+    .lab-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .lab-id { font-weight:800; color:#0b1f32; }
+    .tag { color:var(--green); background:#e9f8f3; border:1px solid #a6e5d3; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:800; white-space:nowrap; }
+    h3 { margin:0; font-size:19px; line-height:1.22; }
+    .links { display:flex; gap:10px; flex-wrap:wrap; margin-top:auto; }
+    .button { display:inline-flex; align-items:center; min-height:38px; padding:8px 12px; border:1px solid #cbdbe5; border-radius:6px; background:#f9fcfe; color:#004d76; font-size:14px; }
+    .button.primary { background:#ecfbff; border-color:#00a0d2; }
+    .progress-control { border:1px solid var(--line); border-radius:8px; background:#f8fbfd; padding:10px; }
+    .progress-label { margin:0 0 8px; font-size:12px; font-weight:800; text-transform:uppercase; color:#344756; }
+    .level-toggle { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#fff; }
+    .level-toggle label { min-height:42px; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px 8px; color:#496173; cursor:pointer; font-size:12px; font-weight:800; border-left:1px solid var(--line); }
+    .level-toggle label:first-child { border-left:0; }
+    .level-toggle input { position:absolute; opacity:0; pointer-events:none; }
+    .level-toggle label:has(input:checked) { background:#e7f8fd; color:#005f82; box-shadow:inset 0 0 0 2px var(--cisco); }
+    .hidden { display:none !important; }
+    @media (max-width:760px) { .grid { grid-template-columns:1fr; } .topbar .wrap { align-items:flex-start; flex-direction:column; padding:18px 0; } .title { font-size:23px; } .level-toggle { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="guides/LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><h1 class="title">CCNP ENCOR Custom Lab Guides</h1></div></header>
+  <main class="wrap">
+    <div class="toolbar">
+      <input id="filter" class="search" type="search" placeholder="Filter by lab ID, topic, or title" aria-label="Filter labs">
+      <label class="show-completed"><input id="show-completed" type="checkbox"> Show all, including Done</label>
+    </div>
+    <h2 class="section-title">Architecture</h2>
+    <section class="grid" aria-label="Architecture labs">
+      <article class="lab-card" data-filter="encor-qos-interpret ccnp encor: interpret qos configurations and counters architecture qos quality service mqc dscp class-map policy-map service-policy policing shaping queueing">
+        <div class="lab-meta"><span class="lab-id">ENCOR-QOS-INTERPRET</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Interpret QoS Configurations and Counters</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-QOS-INTERPRET/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-QOS-INTERPRET.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-cisco-express-forwarding ccnp encor architecture cef cisco express forwarding fib adjacency table route forwarding information base">
+        <div class="lab-meta"><span class="lab-id">KWT-CISCO-EXPRESS-FORWARDING</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: Cisco Express Forwarding</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-CISCO-EXPRESS-FORWARDING/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-CISCO-EXPRESS-FORWARDING.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">Layer 2</h2>
+    <section class="grid" aria-label="Layer 2 labs">
+      <article class="lab-card" data-filter="encor-8021q ccnp encor: 802.1q trunk engineering and verification layer 2 802.1q trunks dot1q trunking vlan pruning dtp native vlan">
+        <div class="lab-meta"><span class="lab-id">ENCOR-8021Q</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: 802.1Q Trunk Engineering and Verification</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-8021Q/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-8021Q.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-spanning-tree-protocol ccnp encor layer 2 stp spanning tree protocol root bridge root port designated port alternate blocking rapid-pvst">
+        <div class="lab-meta"><span class="lab-id">KWT-SPANNING-TREE-PROTOCOL</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: Spanning Tree Protocol</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-SPANNING-TREE-PROTOCOL/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-SPANNING-TREE-PROTOCOL.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-bpdu-guard ccnp encor layer 2 bpdu guard portfast edge errdisable err-disabled spanning tree stp protection">
+        <div class="lab-meta"><span class="lab-id">KWT-BPDU-GUARD</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: BPDU Guard</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-BPDU-GUARD/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-BPDU-GUARD.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">Layer 3</h2>
+    <section class="grid" aria-label="Layer 3 labs">
+      <article class="lab-card" data-filter="encor-ospf-foundation ccnp encor: ospfv2 and ospfv3 foundations layer 3 ospf ospfv2 ospfv3 ipv4 ipv6 router id passive interface adjacency neighbors">
+        <div class="lab-meta"><span class="lab-id">ENCOR-OSPF-FOUNDATION</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: OSPFv2 and OSPFv3 Foundations</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-OSPF-FOUNDATION/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-OSPF-FOUNDATION.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ospfv2-basic ccnp encor layer 3 ospfv2 basic configuration ospf area 0 area 1 abr passive interface wildcard network statement">
+        <div class="lab-meta"><span class="lab-id">KWT-OSPFV2-BASIC</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: OSPFv2 Basic Configuration</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-OSPFV2-BASIC/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-OSPFV2-BASIC.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ospfv3-traditional ccnp encor ospfv3 traditional configuration ospfv2 ipv6 unicast-routing ipv6 cef router-id area abr database">
+        <div class="lab-meta"><span class="lab-id">KWT-OSPFV3-TRADITIONAL</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: OSPFv3 Traditional Configuration</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-OSPFV3-TRADITIONAL/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-OSPFV3-TRADITIONAL.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-ospf-multiarea ccnp encor: multi-area ospf summarization and filtering layer 3 ospf multi-area normal area abr summarization area range filtering prefix-list filter-list">
+        <div class="lab-meta"><span class="lab-id">ENCOR-OSPF-MULTIAREA</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Multi-Area OSPF Summarization and Filtering</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-OSPF-MULTIAREA/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-OSPF-MULTIAREA.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ospf-route-summarization ccnp encor layer 3 ospf route summarization abr asbr area range summary-address eigrp redistribution type 5 lsa">
+        <div class="lab-meta"><span class="lab-id">KWT-OSPF-ROUTE-SUMMARIZATION</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: OSPF Route Summarization</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-OSPF-ROUTE-SUMMARIZATION/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-OSPF-ROUTE-SUMMARIZATION.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ospf-route-filtering ccnp encor layer 3 ospf route filtering abr area filter-list prefix distribute-list type 3 lsa database rib">
+        <div class="lab-meta"><span class="lab-id">KWT-OSPF-ROUTE-FILTERING</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: OSPF Route Filtering</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-OSPF-ROUTE-FILTERING/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-OSPF-ROUTE-FILTERING.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-ospf-network-types ccnp encor: ospf network types and passive-interface troubleshooting layer 3 ospf network type broadcast point-to-point dr bdr passive interface timers troubleshooting">
+        <div class="lab-meta"><span class="lab-id">ENCOR-OSPF-NETWORK-TYPES</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: OSPF Network Types and Passive-Interface Troubleshooting</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-OSPF-NETWORK-TYPES/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-OSPF-NETWORK-TYPES.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-ebgp ccnp encor: configure and verify ebgp layer 3 bgp ebgp directly connected neighbors best path selection remote-as local preference weight med as-path">
+        <div class="lab-meta"><span class="lab-id">ENCOR-EBGP</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify eBGP</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-EBGP/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-EBGP.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-bgp-ipv4 ccnp encor layer 3 bgp ipv4 ebgp directly connected neighbor remote-as network statement autonomous system as path">
+        <div class="lab-meta"><span class="lab-id">KWT-BGP-IPV4</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: BGP for IPv4</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-BGP-IPV4/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-BGP-IPV4.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">Virtualization</h2>
+    <section class="grid" aria-label="Virtualization labs">
+      <article class="lab-card" data-filter="encor-vrf ccnp encor: vrf-lite segmentation and route leaking virtualization vrf vrf-lite route leaking segmentation">
+        <div class="lab-meta"><span class="lab-id">ENCOR-VRF</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: VRF-Lite Segmentation and Route Leaking</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-VRF/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-VRF.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-gre ccnp encor: gre overlay tunnels and path verification virtualization gre tunnel overlay mtu mss">
+        <div class="lab-meta"><span class="lab-id">ENCOR-GRE</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: GRE Overlay Tunnels and Path Verification</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-GRE/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-GRE.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-ipsec ccnp encor: ipsec tunnel policy and verification virtualization ipsec ikev2 vpn crypto map vti">
+        <div class="lab-meta"><span class="lab-id">ENCOR-IPSEC</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: IPsec Tunnel Policy and Verification</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-IPSEC/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-IPSEC.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-gre-ipsec ccnp encor: gre over ipsec transport protection virtualization gre ipsec tunnel protection overlay encrypted">
+        <div class="lab-meta"><span class="lab-id">ENCOR-GRE-IPSEC</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: GRE over IPsec Transport Protection</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-GRE-IPSEC/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-GRE-IPSEC.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-gre-over-ipsec ccnp encor gre over ipsec ikev1 isakmp crypto map transform-set transport mode gre-in-ipsec">
+        <div class="lab-meta"><span class="lab-id">KWT-GRE-OVER-IPSEC</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: GRE over IPsec Crypto Map</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-GRE-OVER-IPSEC/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-GRE-OVER-IPSEC.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-vrf-gre-ipsec ccnp encor: vrf, gre, and ipsec integrated data path virtualization vrf gre ipsec front-door vrf encrypted overlay">
+        <div class="lab-meta"><span class="lab-id">ENCOR-VRF-GRE-IPSEC</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: VRF, GRE, and IPsec Integrated Data Path</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-VRF-GRE-IPSEC/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-VRF-GRE-IPSEC.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">IP Services</h2>
+    <section class="grid" aria-label="IP Services labs">
+      <article class="lab-card" data-filter="encor-network-time ccnp encor: interpret network time ip services network time ntp ptp precision time protocol stratum authentication source interface">
+        <div class="lab-meta"><span class="lab-id">ENCOR-NETWORK-TIME</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Interpret Network Time</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-NETWORK-TIME/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-NETWORK-TIME.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ntp-security ccnp encor ip services ntp security authentication md5 trusted-key access-group serve-only peer stratum">
+        <div class="lab-meta"><span class="lab-id">KWT-NTP-SECURITY</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: NTP Security</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-NTP-SECURITY/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-NTP-SECURITY.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-nat-pat ccnp encor: configure nat/pat ip services nat pat overload static nat static pat port forwarding pool translations">
+        <div class="lab-meta"><span class="lab-id">ENCOR-NAT-PAT</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure NAT/PAT</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-NAT-PAT/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-NAT-PAT.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-fhrp ccnp encor: configure first hop redundancy ip services fhrp first hop redundancy hsrp vrrp tracking preempt virtual gateway">
+        <div class="lab-meta"><span class="lab-id">ENCOR-FHRP</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure First Hop Redundancy</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-FHRP/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-FHRP.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">Network Assurance</h2>
+    <section class="grid" aria-label="Network Assurance labs">
+      <article class="lab-card" data-filter="encor-flexible-netflow ccnp encor: configure and verify flexible netflow network assurance flexible netflow flow record exporter monitor cache collector telemetry">
+        <div class="lab-meta"><span class="lab-id">ENCOR-FLEXIBLE-NETFLOW</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify Flexible NetFlow</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-FLEXIBLE-NETFLOW/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-FLEXIBLE-NETFLOW.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-span-rspan-erspan ccnp encor: configure span/rspan/erspan network assurance span rspan erspan monitor session remote-span analyzer packet capture">
+        <div class="lab-meta"><span class="lab-id">ENCOR-SPAN-RSPAN-ERSPAN</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure SPAN/RSPAN/ERSPAN</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-SPAN-RSPAN-ERSPAN/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-SPAN-RSPAN-ERSPAN.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-ipsla ccnp encor: configure and verify ip sla network assurance ip sla ipsla icmp echo udp jitter responder object tracking tracked static route tcp connect">
+        <div class="lab-meta"><span class="lab-id">ENCOR-IPSLA</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify IP SLA</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-IPSLA/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-IPSLA.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ip-sla-path-selection ccnp encor network assurance ip sla path selection object tracking tracked static route floating static threshold latency icmp echo">
+        <div class="lab-meta"><span class="lab-id">KWT-IP-SLA-PATH-SELECTION</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: IP SLA Path Selection</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-IP-SLA-PATH-SELECTION/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-IP-SLA-PATH-SELECTION.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="kwt-ip-sla-rtr ccnp encor network assurance ip sla response time reporter rtr udp jitter responder g729a tos mos icpif">
+        <div class="lab-meta"><span class="lab-id">KWT-IP-SLA-RTR</span><span class="tag">CML-ready lab</span></div>
+        <h3>CCNP ENCOR: IP SLA Response Time Reporter</h3>
+        <div class="links">
+          <a class="button primary" href="guides/KWT-IP-SLA-RTR/index.html">Open local guide</a>
+          <a class="button" href="cml/KWT-IP-SLA-RTR.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-netconf-restconf ccnp encor: configure and verify netconf and restconf network assurance programmability netconf restconf yang model driven api ssh https datastore ietf interfaces cisco native">
+        <div class="lab-meta"><span class="lab-id">ENCOR-NETCONF-RESTCONF</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify NETCONF and RESTCONF</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-NETCONF-RESTCONF/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-NETCONF-RESTCONF.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+    <h2 class="section-title">Security</h2>
+    <section class="grid" aria-label="Security labs">
+      <article class="lab-card" data-filter="encor-device-access ccnp encor: configure and verify device access control security device access control console vty line local user authentication ssh login local privilege secret">
+        <div class="lab-meta"><span class="lab-id">ENCOR-DEVICE-ACCESS</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify Device Access Control</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-DEVICE-ACCESS/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-DEVICE-ACCESS.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-aaa ccnp encor: configure and verify aaa device access security aaa authentication authorization tacacs radius method list exec command local fallback vty console">
+        <div class="lab-meta"><span class="lab-id">ENCOR-AAA</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify AAA Device Access</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-AAA/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-AAA.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-acl ccnp encor: configure and verify acls security acl access list standard extended named object-group resequence wildcard access-group access-class">
+        <div class="lab-meta"><span class="lab-id">ENCOR-ACL</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify ACLs</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-ACL/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-ACL.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+      <article class="lab-card" data-filter="encor-copp ccnp encor: configure and verify copp security copp control plane policing qos class-map policy-map service-policy police cpu punt ospf ssh icmp">
+        <div class="lab-meta"><span class="lab-id">ENCOR-COPP</span><span class="tag">Custom local lab</span></div>
+        <h3>CCNP ENCOR: Configure and Verify CoPP</h3>
+        <div class="links">
+          <a class="button primary" href="guides/ENCOR-COPP/index.html">Open local guide</a>
+          <a class="button" href="cml/ENCOR-COPP.yaml" download>Download CML YAML</a>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script>
+    const filter = document.querySelector('#filter');
+    const showCompleted = document.querySelector('#show-completed');
+    const cards = Array.from(document.querySelectorAll('.lab-card'));
+    const sections = Array.from(document.querySelectorAll('.section-title'));
+    const levelOptions = [
+      ["new", "New"],
+      ["retry", "Retry"],
+      ["practice", "Practice"],
+      ["done", "Done"]
+    ];
+    const storagePrefix = "encor.custom.lab.level.";
+    const labIdFor = (card) => card.querySelector(".lab-id").textContent.trim();
+    const storageKeyFor = (card) => `${storagePrefix}${labIdFor(card)}`;
+    const readLevel = (card) => {
+      try {
+        return localStorage.getItem(storageKeyFor(card));
+      } catch {
+        return null;
+      }
+    };
+    const writeLevel = (card, value) => {
+      try {
+        localStorage.setItem(storageKeyFor(card), value);
+      } catch {
+      }
+    };
+    const applyLevel = (card, value) => {
+      const option = levelOptions.find(([level]) => level === value) || levelOptions[0];
+      card.dataset.level = option[0];
+      card.dataset.levelLabel = option[1];
+    };
+    cards.forEach((card) => {
+      card.dataset.baseFilter = card.dataset.filter || "";
+      applyLevel(card, readLevel(card));
+      const labId = labIdFor(card);
+      const control = document.createElement("div");
+      control.className = "progress-control";
+      control.innerHTML = `
+        <p class="progress-label">My level</p>
+        <div class="level-toggle" role="radiogroup" aria-label="My level for ${labId}">
+          ${levelOptions.map(([value, label]) => `
+            <label>
+              <input type="radio" name="level-${labId}" value="${value}"${card.dataset.level === value ? " checked" : ""}>
+              <span>${label}</span>
+            </label>
+          `).join("")}
+        </div>
+      `;
+      card.appendChild(control);
+      control.addEventListener("change", (event) => {
+        if (!event.target.matches("input[type='radio']")) return;
+        applyLevel(card, event.target.value);
+        writeLevel(card, card.dataset.level);
+        applyFilter();
+      });
+    });
+    function applyFilter() {
+      const term = filter.value.trim().toLowerCase();
+      cards.forEach(card => {
+        const searchable = `${card.dataset.baseFilter} ${card.dataset.levelLabel}`.toLowerCase();
+        const matchesFilter = !term || searchable.includes(term);
+        const hiddenByLevel = card.dataset.level === "done" && !showCompleted.checked;
+        card.classList.toggle('hidden', !matchesFilter || hiddenByLevel);
+      });
+      sections.forEach(title => {
+        const grid = title.nextElementSibling;
+        const visible = Array.from(grid.querySelectorAll('.lab-card')).some(card => !card.classList.contains('hidden'));
+        title.classList.toggle('hidden', !visible);
+        grid.classList.toggle('hidden', !visible);
+      });
+    }
+    filter.addEventListener('input', applyFilter);
+    showCompleted.addEventListener('change', applyFilter);
+    applyFilter();
+  </script>
+</body>
+</html>

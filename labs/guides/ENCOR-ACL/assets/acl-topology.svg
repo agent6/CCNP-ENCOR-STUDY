@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR ACL lab topology</title>
+  <desc id="desc">Inside user subnet, management subnet, DMZ host, and server subnet routed through an ACL enforcement router.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.switch{fill:#14795f}.host{fill:#00a0d2}.server{fill:#9a6200}.dmz{fill:#6f4aa8}.acl{stroke:#d43f2a;stroke-width:5;stroke-dasharray:10 8;fill:none}.link{stroke:#667b8a;stroke-width:4;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 5.2.a: Configure and verify ACLs for infrastructure security</text>
+
+  <path class="link" d="M170 220 L330 220"/>
+  <path class="link" d="M170 360 L330 360"/>
+  <path class="link" d="M410 290 L540 290"/>
+  <path class="link" d="M700 250 L900 220"/>
+  <path class="link" d="M700 330 L900 360"/>
+  <path class="acl" d="M515 225 C585 150 685 150 735 225"/>
+  <path class="acl" d="M515 365 C585 450 685 450 735 365"/>
+  <path class="acl" d="M585 200 L585 380"/>
+
+  <g transform="translate(70 185)">
+    <rect class="host" width="100" height="70" rx="8"/>
+    <text class="txt label" x="50" y="98" text-anchor="middle">USER-PC</text>
+    <text class="txt small" x="50" y="118" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(70 325)">
+    <rect class="host" width="100" height="70" rx="8"/>
+    <text class="txt label" x="50" y="98" text-anchor="middle">ADMIN-PC</text>
+    <text class="txt small" x="50" y="118" text-anchor="middle">10.10.20.10</text>
+  </g>
+  <g transform="translate(330 250)">
+    <rect class="switch" width="80" height="80" rx="8"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">SW-ACCESS</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">VLAN 10/20</text>
+  </g>
+  <g transform="translate(540 230)">
+    <rect class="router" width="160" height="120" rx="12"/>
+    <text class="txt label" x="80" y="148" text-anchor="middle">R1-EDGE</text>
+    <text class="txt small" x="80" y="168" text-anchor="middle">ACL enforcement</text>
+  </g>
+  <g transform="translate(900 185)">
+    <rect class="server" width="110" height="70" rx="8"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">10.30.30.10</text>
+  </g>
+  <g transform="translate(900 325)">
+    <rect class="dmz" width="110" height="70" rx="8"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">DMZ-HOST</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">10.40.40.10</text>
+  </g>
+
+  <rect class="pill" x="205" y="196" width="106" height="30" rx="15"/>
+  <text class="txt small" x="258" y="216" text-anchor="middle">VLAN 10</text>
+  <rect class="pill" x="205" y="336" width="106" height="30" rx="15"/>
+  <text class="txt small" x="258" y="356" text-anchor="middle">VLAN 20</text>
+  <rect class="pill" x="430" y="265" width="86" height="30" rx="15"/>
+  <text class="txt small" x="473" y="285" text-anchor="middle">802.1Q</text>
+  <rect class="pill" x="738" y="203" width="116" height="30" rx="15"/>
+  <text class="txt small" x="796" y="223" text-anchor="middle">server ACL</text>
+  <rect class="pill" x="738" y="343" width="116" height="30" rx="15"/>
+  <text class="txt small" x="796" y="363" text-anchor="middle">DMZ ACL</text>
+
+  <text class="txt small" x="58" y="522">Students configure standard, extended, named, resequenced, object-group, interface ACLs, and VTY access-class controls.</text>
+  <text class="txt small" x="58" y="546">Verification uses ping, HTTP, SSH attempts, traceroute, ACL counters, logs, direction checks, and hit-count interpretation.</text>
+</svg>

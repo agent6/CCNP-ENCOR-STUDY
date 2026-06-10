@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR virtualization WAN topology</title>
+  <desc id="desc">HQ, Internet, branch, and data center routers with underlay links, overlay tunnels, and user and server endpoints.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f9fb; }
+      .zone { fill: #fff; stroke: #d3e0e8; stroke-width: 2; rx: 10; }
+      .router { fill: #0b243b; stroke: #00a0d2; stroke-width: 3; rx: 8; }
+      .host { fill: #ffffff; stroke: #537286; stroke-width: 2; rx: 8; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #ffffff; font-size: 17px; font-weight: 700; text-anchor: middle; }
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #263946; font-size: 13px; text-anchor: middle; }
+      .zone-label { font-family: Arial, Helvetica, sans-serif; fill: #40586a; font-size: 18px; font-weight: 700; }
+      .underlay { stroke: #8296a4; stroke-width: 4; fill: none; }
+      .overlay { stroke: #0096c7; stroke-width: 5; stroke-dasharray: 12 8; fill: none; }
+      .ipsec { stroke: #14795f; stroke-width: 5; stroke-dasharray: 4 8; fill: none; }
+      .tag { fill: #e7f6fb; stroke: #99d7ec; rx: 6; }
+      .tagtext { font-family: Arial, Helvetica, sans-serif; fill: #075979; font-size: 13px; text-anchor: middle; font-weight: 700; }
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="zone" x="40" y="50" width="300" height="500"/>
+  <rect class="zone" x="440" y="50" width="300" height="500"/>
+  <rect class="zone" x="840" y="50" width="300" height="500"/>
+  <text class="zone-label" x="65" y="85">HQ Campus</text>
+  <text class="zone-label" x="465" y="85">Transport Core</text>
+  <text class="zone-label" x="865" y="85">Branch and DC</text>
+
+  <path class="underlay" d="M270 240 L500 240"/>
+  <path class="underlay" d="M680 240 L910 240"/>
+  <path class="underlay" d="M270 400 L500 400"/>
+  <path class="underlay" d="M680 400 L910 400"/>
+  <path class="overlay" d="M270 230 C430 120 750 120 910 230"/>
+  <path class="ipsec" d="M270 410 C430 560 750 560 910 410"/>
+
+  <rect class="router" x="150" y="190" width="120" height="80"/>
+  <text class="label" x="210" y="225">HQ-RTR</text>
+  <text class="label" x="210" y="248">IOL</text>
+  <rect class="router" x="500" y="190" width="180" height="80"/>
+  <text class="label" x="590" y="225">INET-RTR</text>
+  <text class="label" x="590" y="248">IOL Transit</text>
+  <rect class="router" x="910" y="190" width="120" height="80"/>
+  <text class="label" x="970" y="225">BR-RTR</text>
+  <text class="label" x="970" y="248">IOL</text>
+
+  <rect class="router" x="150" y="350" width="120" height="80"/>
+  <text class="label" x="210" y="385">EDGE-RTR</text>
+  <text class="label" x="210" y="408">IOL</text>
+  <rect class="router" x="910" y="350" width="120" height="80"/>
+  <text class="label" x="970" y="385">DC-RTR</text>
+  <text class="label" x="970" y="408">IOL</text>
+
+  <rect class="host" x="80" y="120" width="120" height="46"/>
+  <text class="small" x="140" y="148">HQ-USER</text>
+  <rect class="host" x="1020" y="120" width="120" height="46"/>
+  <text class="small" x="1080" y="148">BR-USER</text>
+  <rect class="host" x="1020" y="470" width="120" height="46"/>
+  <text class="small" x="1080" y="498">APP-SERVER</text>
+  <path class="underlay" d="M170 166 L205 190"/>
+  <path class="underlay" d="M1020 166 L985 190"/>
+  <path class="underlay" d="M1020 482 L985 430"/>
+
+  <rect class="tag" x="395" y="132" width="390" height="34"/>
+  <text class="tagtext" x="590" y="154">GRE overlay: Tunnel10 / routed reachability</text>
+  <rect class="tag" x="395" y="470" width="390" height="34"/>
+  <text class="tagtext" x="590" y="492">IPsec protection: crypto map, VTI, or tunnel protection</text>
+  <rect class="tag" x="70" y="565" width="1040" height="34"/>
+  <text class="tagtext" x="590" y="587">VRFs separate CORP, GUEST, and TRANSPORT routing tables where required</text>
+</svg>

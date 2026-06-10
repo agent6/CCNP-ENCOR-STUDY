@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: NTP Security</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>NTP Security</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Basic NTP</a>
+      <a href="#task3">Task 3: Authentication</a>
+      <a href="#task4">Task 4: Server Access Control</a>
+      <a href="#task5">Task 5: Client Access Control</a>
+      <a href="#task6">Task 6: Verify</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab secures a basic NTP relationship. The INTERNET router acts as an NTP master, and R1 synchronizes to the INTERNET loopback address. You will add MD5 NTP authentication, trusted keys, a keyed NTP server statement, and NTP access groups to restrict which devices can serve or peer for time.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>35-45 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.3.a</b><span>NTP interpretation and security</span></div>
+          <div class="metric"><b>2 routers</b><span>R1 and INTERNET</span></div>
+          <div class="metric"><b>IOL</b><span>Router-only topology</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 and INTERNET share 192.0.2.0/24. INTERNET advertises Loopback0 1.1.1.1/32 with OSPF so R1 can use 1.1.1.1 as the NTP server address.</p>
+        <img class="topology" src="assets/topology.svg" alt="NTP Security topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify IP Reachability</h2>
+        <p>Before configuring NTP, prove R1 can reach the server loopback and that both routers have OSPF reachability.</p>
+        <pre><code>! R1
+show ip interface brief
+show ip route ospf
+ping 1.1.1.1
+
+! INTERNET
+show ip interface brief
+show ip ospf neighbor</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Basic NTP</h2>
+        <p>Configure the INTERNET router as the lab time source and point R1 to the INTERNET loopback. The clock set command is an EXEC command, not a startup configuration line, so run it from privileged EXEC.</p>
+        <pre><code>! INTERNET
+clock set 12:00:00 June 28 2024
+conf t
+clock timezone UTC 0
+ntp master 3
+end
+
+! R1
+conf t
+ntp server 1.1.1.1
+clock timezone EST -5
+clock summer-time EDT recurring
+end</code></pre>
+        <p>NTP may take several minutes to fully synchronize. Use the association output while waiting.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Add NTP Authentication</h2>
+        <p>Configure key 1 with the same MD5 string on both routers. Then require authentication on the server and client, and update R1's server statement to use key 1.</p>
+        <pre><code>! INTERNET
+conf t
+ntp authentication-key 1 md5 $3creT
+ntp trusted-key 1
+ntp authenticate
+ntp master 3
+end
+
+! R1
+conf t
+ntp authentication-key 1 md5 $3creT
+ntp trusted-key 1
+ntp authenticate
+ntp server 1.1.1.1 key 1
+end</code></pre>
+        <p>Key numbers do not have to match between devices, but the server statement must reference a locally trusted key whose secret matches what the server uses.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Restrict Who the Server Serves</h2>
+        <p>On INTERNET, create a standard ACL that permits R1's outgoing source address and apply it as a serve-only NTP access group.</p>
+        <pre><code>! INTERNET
+conf t
+ip access-list standard NTP-CLIENT
+ permit 192.0.2.100
+exit
+ntp access-group serve-only NTP-CLIENT
+end
+
+show access-lists NTP-CLIENT
+show running-config | section ntp</code></pre>
+        <p>Expected behavior: INTERNET serves time only to the permitted NTP client source address.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Restrict the Client's NTP Peer</h2>
+        <p>On R1, permit only the NTP server address and apply it as an NTP peer access group.</p>
+        <pre><code>! R1
+conf t
+ip access-list standard NTP-SERVER
+ permit 1.1.1.1
+exit
+ntp access-group peer NTP-SERVER
+end
+
+show access-lists NTP-SERVER
+show running-config | section ntp</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify Secure NTP Operation</h2>
+        <p>Verify synchronization, stratum, selected reference, authentication, and access-group configuration. R1 should synchronize to 1.1.1.1 and show stratum 4 because INTERNET is configured as stratum 3.</p>
+        <pre><code>! R1
+show ntp status
+show ntp associations
+show ntp associations detail
+show running-config | section ntp
+
+! INTERNET
+show ntp status
+show ntp associations
+show running-config | section ntp</code></pre>
+        <p>If R1 does not synchronize, inspect reachability to 1.1.1.1, key trust, the key used in the server statement, and whether the server ACL permits R1's source address.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

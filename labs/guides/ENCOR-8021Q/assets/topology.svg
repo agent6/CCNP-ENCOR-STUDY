@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR 802.1Q trunk lab topology</title>
+  <desc id="desc">Two core switches, two distribution switches, two access switches, a server access switch, users, servers, and labeled 802.1Q trunk links.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f9fb; }
+      .zone { fill: #ffffff; stroke: #d3e0e8; stroke-width: 2; rx: 10; }
+      .device { fill: #0b243b; stroke: #00a0d2; stroke-width: 3; rx: 8; }
+      .endpoint { fill: #ffffff; stroke: #537286; stroke-width: 2; rx: 8; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #ffffff; font-size: 18px; font-weight: 700; text-anchor: middle; }
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #263946; font-size: 14px; text-anchor: middle; }
+      .zone-label { font-family: Arial, Helvetica, sans-serif; fill: #40586a; font-size: 18px; font-weight: 700; }
+      .trunk { stroke: #0096c7; stroke-width: 5; fill: none; }
+      .access { stroke: #8296a4; stroke-width: 3; fill: none; }
+      .broken { stroke: #c62828; stroke-width: 5; stroke-dasharray: 12 8; fill: none; }
+      .tag { fill: #e7f6fb; stroke: #99d7ec; rx: 6; }
+      .tagtext { font-family: Arial, Helvetica, sans-serif; fill: #075979; font-size: 13px; text-anchor: middle; font-weight: 700; }
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="720"/>
+  <rect class="zone" x="40" y="40" width="1100" height="160"/>
+  <rect class="zone" x="40" y="245" width="1100" height="170"/>
+  <rect class="zone" x="40" y="460" width="1100" height="210"/>
+  <text class="zone-label" x="65" y="75">Core Layer</text>
+  <text class="zone-label" x="65" y="280">Distribution Layer</text>
+  <text class="zone-label" x="65" y="495">Access and Services</text>
+
+  <path class="trunk" d="M390 140 L320 300"/>
+  <path class="trunk" d="M390 140 L530 300"/>
+  <path class="trunk" d="M790 140 L650 300"/>
+  <path class="trunk" d="M790 140 L860 300"/>
+  <path class="trunk" d="M320 340 L530 340"/>
+  <path class="trunk" d="M650 340 L860 340"/>
+  <path class="trunk" d="M320 365 L250 535"/>
+  <path class="trunk" d="M530 365 L250 535"/>
+  <path class="trunk" d="M650 365 L860 535"/>
+  <path class="trunk" d="M860 365 L860 535"/>
+  <path class="trunk" d="M530 365 L555 535"/>
+  <path class="trunk" d="M650 365 L555 535"/>
+  <path class="broken" d="M555 575 L555 630"/>
+
+  <rect class="device" x="300" y="105" width="180" height="70"/>
+  <text class="label" x="390" y="135">CORE-1</text>
+  <text class="label" x="390" y="158">IOL-L2</text>
+  <rect class="device" x="700" y="105" width="180" height="70"/>
+  <text class="label" x="790" y="135">CORE-2</text>
+  <text class="label" x="790" y="158">IOL-L2</text>
+
+  <rect class="device" x="230" y="300" width="180" height="70"/>
+  <text class="label" x="320" y="330">DIST-1</text>
+  <text class="label" x="320" y="353">IOL-L2</text>
+  <rect class="device" x="440" y="300" width="180" height="70"/>
+  <text class="label" x="530" y="330">DIST-2</text>
+  <text class="label" x="530" y="353">IOL-L2</text>
+  <rect class="device" x="560" y="300" width="180" height="70"/>
+  <text class="label" x="650" y="330">DIST-3</text>
+  <text class="label" x="650" y="353">IOL-L2</text>
+  <rect class="device" x="770" y="300" width="180" height="70"/>
+  <text class="label" x="860" y="330">DIST-4</text>
+  <text class="label" x="860" y="353">IOL-L2</text>
+
+  <rect class="device" x="160" y="535" width="180" height="70"/>
+  <text class="label" x="250" y="565">ACCESS-1</text>
+  <text class="label" x="250" y="588">IOL-L2</text>
+  <rect class="device" x="465" y="535" width="180" height="70"/>
+  <text class="label" x="555" y="565">SRV-ACCESS</text>
+  <text class="label" x="555" y="588">IOL-L2</text>
+  <rect class="device" x="770" y="535" width="180" height="70"/>
+  <text class="label" x="860" y="565">ACCESS-2</text>
+  <text class="label" x="860" y="588">IOL-L2</text>
+
+  <rect class="endpoint" x="125" y="635" width="110" height="45"/>
+  <text class="small" x="180" y="662">USER-A</text>
+  <rect class="endpoint" x="265" y="635" width="110" height="45"/>
+  <text class="small" x="320" y="662">USER-B</text>
+  <rect class="endpoint" x="480" y="635" width="150" height="45"/>
+  <text class="small" x="555" y="662">APP-SERVER</text>
+  <rect class="endpoint" x="760" y="635" width="110" height="45"/>
+  <text class="small" x="815" y="662">USER-C</text>
+  <rect class="endpoint" x="900" y="635" width="110" height="45"/>
+  <text class="small" x="955" y="662">USER-D</text>
+
+  <path class="access" d="M250 605 L180 635"/>
+  <path class="access" d="M250 605 L320 635"/>
+  <path class="access" d="M555 605 L555 635"/>
+  <path class="access" d="M860 605 L815 635"/>
+  <path class="access" d="M860 605 L955 635"/>
+
+  <rect class="tag" x="130" y="205" width="200" height="34"/>
+  <text class="tagtext" x="230" y="227">Core trunks: 10,20,30,40,100,999</text>
+  <rect class="tag" x="450" y="420" width="250" height="34"/>
+  <text class="tagtext" x="575" y="442">Server trunks: 30,40,100,999</text>
+  <rect class="tag" x="760" y="420" width="240" height="34"/>
+  <text class="tagtext" x="880" y="442">User trunks: 10,20,999</text>
+  <rect class="tag" x="438" y="675" width="235" height="34"/>
+  <text class="tagtext" x="555" y="697">Intentional defect: VLAN 40 missing</text>
+</svg>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify eBGP</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify eBGP</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Direct eBGP</a>
+      <a href="#task3">Task 3: Advertise Prefixes</a>
+      <a href="#task4">Task 4: Neighbor Verification</a>
+      <a href="#task5">Task 5: Best Path</a>
+      <a href="#task6">Task 6: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 3.2.c: configure and verify eBGP between directly connected neighbors, including neighbor relationships and the best-path selection algorithm. You will build four eBGP adjacencies, advertise enterprise and service prefixes, validate the BGP table versus the routing table, and change the selected path using multiple policy methods.</p>
+        <p>The focus is enterprise-edge BGP depth, not a full service-provider design. The topology intentionally avoids iBGP, route reflectors, confederations, MPLS, and loopback eBGP multihop so the core behavior stays aligned with the exam topic.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.c</b><span>Direct eBGP</span></div>
+          <div class="metric"><b>4 IOL routers</b><span>3 autonomous systems</span></div>
+          <div class="metric"><b>6 tasks</b><span>Configure, verify, influence</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-EDGE represents the enterprise edge in AS 65010. R2-ISP-A and R3-ISP-B are directly connected provider edge routers in AS 65020. R4-SVC is a service edge in AS 65040. The two provider paths carry the same service prefixes so R1 can compare BGP attributes and choose a best path.</p>
+        <img class="topology" src="assets/ebgp-topology.svg" alt="eBGP topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline the Underlay</h2>
+        <p>Confirm every physical link is up before starting BGP. eBGP does not fix a bad directly connected path; the TCP session depends on basic IP reachability to the neighbor address.</p>
+        <pre><code>show ip interface brief
+show cdp neighbors detail
+show ip route connected
+ping 10.12.0.2
+ping 10.13.0.2
+ping 10.24.0.2
+ping 10.34.0.2</code></pre>
+        <p>Document the AS plan:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Device</th><th>AS</th><th>Direct eBGP Neighbors</th><th>Prefixes to Advertise</th></tr></thead>
+            <tbody>
+              <tr><td>R1-EDGE</td><td>65010</td><td>R2 10.12.0.2, R3 10.13.0.2</td><td>10.10.10.0/24</td></tr>
+              <tr><td>R2-ISP-A</td><td>65020</td><td>R1 10.12.0.1, R4 10.24.0.2</td><td>Transit only</td></tr>
+              <tr><td>R3-ISP-B</td><td>65020</td><td>R1 10.13.0.1, R4 10.34.0.2</td><td>Transit only</td></tr>
+              <tr><td>R4-SVC</td><td>65040</td><td>R2 10.24.0.1, R3 10.34.0.1</td><td>10.40.40.0/24, 198.51.100.0/24</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Directly Connected eBGP Neighbors</h2>
+        <p>Build eBGP neighbor relationships using the directly connected interface addresses. Do not use loopback peering or <code>ebgp-multihop</code> for this lab.</p>
+        <pre><code>! R1-EDGE
+router bgp 65010
+ bgp log-neighbor-changes
+ neighbor 10.12.0.2 remote-as 65020
+ neighbor 10.13.0.2 remote-as 65020
+!
+! R2-ISP-A
+router bgp 65020
+ bgp log-neighbor-changes
+ neighbor 10.12.0.1 remote-as 65010
+ neighbor 10.24.0.2 remote-as 65040
+!
+! R3-ISP-B
+router bgp 65020
+ bgp log-neighbor-changes
+ neighbor 10.13.0.1 remote-as 65010
+ neighbor 10.34.0.2 remote-as 65040
+!
+! R4-SVC
+router bgp 65040
+ bgp log-neighbor-changes
+ neighbor 10.24.0.1 remote-as 65020
+ neighbor 10.34.0.1 remote-as 65020</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> IOS XE may show classic IPv4 unicast behavior by default, or it may require explicit activation under <code>address-family ipv4 unicast</code> depending on platform defaults and templates. If a neighbor is established but sends no IPv4 routes, check whether the neighbor is activated in the address family.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Advertise Enterprise and Service Prefixes</h2>
+        <p>Advertise only intentional prefixes. BGP <code>network</code> statements require an exact matching route in the local routing table; they do not enable BGP on an interface like OSPF network statements do.</p>
+        <pre><code>! R1-EDGE
+router bgp 65010
+ network 10.10.10.0 mask 255.255.255.0
+!
+! R4-SVC
+router bgp 65040
+ network 10.40.40.0 mask 255.255.255.0
+ network 198.51.100.0 mask 255.255.255.0</code></pre>
+        <p>Verify route propagation from both ends. The BGP table may contain more paths than the IP routing table because only the selected best path is installed for forwarding.</p>
+        <pre><code>show bgp ipv4 unicast summary
+show bgp ipv4 unicast
+show bgp ipv4 unicast 10.40.40.0/24
+show bgp ipv4 unicast 198.51.100.0/24
+show ip route bgp
+show ip route 198.51.100.0
+ping 10.40.40.10 source 10.10.10.1
+traceroute 10.40.40.10 source 10.10.10.1</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Verify Neighbor Relationships</h2>
+        <p>Use operational output to prove the session state, negotiated AS values, timers, prefixes received, and last reset reason. Do not stop at seeing <code>Established</code>.</p>
+        <pre><code>show bgp ipv4 unicast summary
+show bgp ipv4 unicast neighbors 10.12.0.2
+show bgp ipv4 unicast neighbors 10.13.0.2
+show tcp brief | include 179
+show logging | include BGP|ADJCHANGE
+show running-config | section router bgp</code></pre>
+        <p>Interpret common states: <code>Idle</code> points to disabled or reset logic, <code>Active</code> means TCP is not established, <code>OpenSent</code> and <code>OpenConfirm</code> mean the BGP OPEN negotiation is in progress, and <code>Established</code> means BGP can exchange UPDATE messages.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Compare Best-Path Controls</h2>
+        <p>R1 should learn the service prefixes through both R2 and R3. Use the BGP table to identify the current best path, then influence the selection with each method. Remove or neutralize one method before testing the next so you can explain which attribute is decisive.</p>
+        <h3>Method A: Local Weight</h3>
+        <pre><code>ip prefix-list SVC-PFX permit 198.51.100.0/24
+route-map PREFER-ISP-B-WEIGHT permit 10
+ match ip address prefix-list SVC-PFX
+ set weight 500
+!
+router bgp 65010
+ neighbor 10.13.0.2 route-map PREFER-ISP-B-WEIGHT in
+ clear ip bgp 10.13.0.2 soft in
+show bgp ipv4 unicast 198.51.100.0/24</code></pre>
+        <p>Weight is Cisco local-only. It does not leave R1 and it does not tell another AS what to do.</p>
+
+        <h3>Method B: Local Preference</h3>
+        <pre><code>route-map PREFER-ISP-A-LOCALPREF permit 10
+ match ip address prefix-list SVC-PFX
+ set local-preference 250
+!
+router bgp 65010
+ no neighbor 10.13.0.2 route-map PREFER-ISP-B-WEIGHT in
+ neighbor 10.12.0.2 route-map PREFER-ISP-A-LOCALPREF in
+ clear ip bgp 10.12.0.2 soft in
+ clear ip bgp 10.13.0.2 soft in
+show bgp ipv4 unicast 198.51.100.0/24</code></pre>
+        <p>Local preference is still an inbound policy decision from the enterprise perspective, but unlike weight it is designed to be carried within the local AS if iBGP exists.</p>
+
+        <h3>Method C: AS Path Length</h3>
+        <pre><code>! On R3-ISP-B, make its advertisement to R1 less preferred by path length.
+route-map PREPEND-TO-R1 permit 10
+ set as-path prepend 65020 65020
+router bgp 65020
+ neighbor 10.13.0.1 route-map PREPEND-TO-R1 out
+ clear ip bgp 10.13.0.1 soft out
+show bgp ipv4 unicast 198.51.100.0/24</code></pre>
+
+        <h3>Method D: MED From the Same Neighboring AS</h3>
+        <pre><code>! Neutralize earlier local attributes before testing MED.
+! R1-EDGE
+router bgp 65010
+ no neighbor 10.12.0.2 route-map PREFER-ISP-A-LOCALPREF in
+ clear ip bgp 10.12.0.2 soft in
+ clear ip bgp 10.13.0.2 soft in
+!
+! R3-ISP-B
+router bgp 65020
+ no neighbor 10.13.0.1 route-map PREPEND-TO-R1 out
+ clear ip bgp 10.13.0.1 soft out
+!
+! On R2 and R3, set different MED values because both paths come from AS 65020.
+! R2-ISP-A
+route-map MED-LOW permit 10
+ set metric 50
+router bgp 65020
+ neighbor 10.12.0.1 route-map MED-LOW out
+ clear ip bgp 10.12.0.1 soft out
+!
+! R3-ISP-B
+route-map MED-HIGH permit 10
+ set metric 200
+router bgp 65020
+ neighbor 10.13.0.1 route-map MED-HIGH out
+ clear ip bgp 10.13.0.1 soft out
+!
+! R1-EDGE
+show bgp ipv4 unicast 198.51.100.0/24</code></pre>
+        <p>Depth check: MED is normally compared when paths are received from the same neighboring AS. In this topology R2 and R3 both use AS 65020, which makes MED comparison meaningful. If they were different provider ASes, MED would usually not be the deciding attribute without additional policy.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Troubleshoot Without Guessing</h2>
+        <p>Repair these common faults if your output shows them. Make one change at a time and verify the symptom changed.</p>
+        <ol>
+          <li>A neighbor remains <code>Active</code>: prove whether the neighbor IP is reachable and whether TCP/179 is forming.</li>
+          <li>A neighbor resets with a bad peer AS message: compare <code>remote-as</code> on both sides.</li>
+          <li>The BGP session is established but no route appears: check address-family activation and whether the exact route exists for the <code>network</code> statement.</li>
+          <li>The BGP table has two paths but the route table has one: identify the best path marker and explain the deciding attribute.</li>
+          <li>Traffic takes the unexpected provider: inspect weight, local preference, AS path, origin, MED, and neighbor router ID before changing policy.</li>
+        </ol>
+        <pre><code>show bgp ipv4 unicast summary
+show bgp ipv4 unicast neighbors 10.12.0.2 | include BGP state|remote AS|Last reset|Prefixes
+show bgp ipv4 unicast 198.51.100.0/24
+show ip route 198.51.100.0
+show ip cef 198.51.100.10
+debug bgp ipv4 unicast updates</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Neighbor state</b><span>All four directly connected eBGP sessions reach Established and show expected remote AS values.</span></div>
+          <div class="check"><b>Route exchange</b><span>R1 learns service prefixes and R4 learns the enterprise LAN through BGP.</span></div>
+          <div class="check"><b>Forwarding proof</b><span>Ping, traceroute, BGP table, route table, and CEF output agree on the path.</span></div>
+          <div class="check"><b>Best-path reasoning</b><span>You can identify the deciding attribute and explain why another available path was not selected.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/13753-25.html">Cisco BGP best-path selection reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/26634-bgp-toc.html">Cisco BGP case studies and configuration examples</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 3.2.c focuses on direct eBGP neighbor relationships and best-path verification. This lab adds enough policy depth to compare the most common path attributes while avoiding advanced BGP topics outside the stated scope.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

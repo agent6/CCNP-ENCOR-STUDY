@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR IP SLA lab topology</title>
+  <desc id="desc">Branch router with primary and backup routed paths to a services router, app server, and client endpoint.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.host{fill:#00a0d2}.probe{fill:#14795f}.backup{stroke:#9a6200;stroke-width:4;stroke-dasharray:10 8;fill:none}.primary{stroke:#00a0d2;stroke-width:5;fill:none}.link{stroke:#667b8a;stroke-width:4;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 4.4: Configure and verify IP SLA operations, responders, object tracking, and route failover</text>
+
+  <path class="link" d="M175 305 L340 305"/>
+  <path class="primary" d="M420 255 C520 150 650 150 750 255"/>
+  <path class="backup" d="M420 355 C520 465 650 465 750 355"/>
+  <path class="link" d="M830 305 L1000 305"/>
+  <path class="link" d="M790 255 L790 355"/>
+
+  <g transform="translate(85 275)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">CLIENT</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(340 265)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-BRANCH</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">IP SLA source</text>
+  </g>
+  <g transform="translate(560 130)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-PRIMARY</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">preferred path</text>
+  </g>
+  <g transform="translate(560 410)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R3-BACKUP</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">floating path</text>
+  </g>
+  <g transform="translate(750 265)">
+    <rect class="probe" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R4-SERVICES</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">SLA responder</text>
+  </g>
+  <g transform="translate(1000 275)">
+    <rect class="host" width="95" height="60" rx="8"/>
+    <text class="txt label" x="48" y="88" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="48" y="108" text-anchor="middle">10.20.20.10</text>
+  </g>
+
+  <rect class="pill" x="218" y="281" width="96" height="30" rx="15"/>
+  <text class="txt small" x="266" y="301" text-anchor="middle">10.10.10/24</text>
+  <rect class="pill" x="470" y="177" width="98" height="30" rx="15"/>
+  <text class="txt small" x="519" y="197" text-anchor="middle">10.0.12/30</text>
+  <rect class="pill" x="654" y="177" width="98" height="30" rx="15"/>
+  <text class="txt small" x="703" y="197" text-anchor="middle">10.0.24/30</text>
+  <rect class="pill" x="470" y="422" width="98" height="30" rx="15"/>
+  <text class="txt small" x="519" y="442" text-anchor="middle">10.0.13/30</text>
+  <rect class="pill" x="654" y="422" width="98" height="30" rx="15"/>
+  <text class="txt small" x="703" y="442" text-anchor="middle">10.0.34/30</text>
+  <rect class="pill" x="878" y="281" width="104" height="30" rx="15"/>
+  <text class="txt small" x="930" y="301" text-anchor="middle">10.20.20/24</text>
+
+  <text class="txt small" x="58" y="522">Primary path: R1-BRANCH to R2-PRIMARY to R4-SERVICES. Backup path: R1-BRANCH to R3-BACKUP to R4-SERVICES.</text>
+  <text class="txt small" x="58" y="546">Students configure ICMP echo, UDP jitter responder tests, TCP connect, object tracking, and tracked static route failover.</text>
+</svg>

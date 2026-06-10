@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPF Network Types and Passive Interfaces</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>OSPF Network Types and Passive-Interface Troubleshooting</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Broadcast Segment</a>
+      <a href="#task2">Task 2: Point-to-Point</a>
+      <a href="#task3">Task 3: Passive Interfaces</a>
+      <a href="#task4">Task 4: Mismatch Defects</a>
+      <a href="#task5">Task 5: Verification</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab covers the ENCOR 3.2.b network-type and adjacency details: broadcast, point-to-point, DR/BDR election, passive-interface behavior, timer consistency, and OSPFv2/v3 verification.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>Network types</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>Broadcast segment</span></div>
+          <div class="metric"><b>5 tasks</b><span>Interpret and repair</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel"><h2>Topology</h2><img class="topology" src="../ENCOR-OSPF/assets/ospf-topology.svg" alt="OSPF topology"></section>
+      <section id="task1" class="task">
+        <h2>Task 1: Interpret Broadcast Network Behavior</h2>
+        <p>R1-HQ and R2-CORE share the IOL-L2 AREA0-SW segment. Verify DR/BDR election and neighbor state.</p>
+        <pre><code>show ip ospf interface ethernet0/0
+show ip ospf neighbor
+show ip ospf database network
+show ipv6 ospf interface ethernet0/0</code></pre>
+        <p>On broadcast networks, FULL adjacency is expected with the DR/BDR. 2-WAY can be normal between DROTHER routers on a larger segment.</p>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Convert Routed Links to Point-to-Point</h2>
+        <p>On true router-to-router links, use point-to-point network type to avoid unnecessary DR election.</p>
+        <pre><code>interface ethernet0/1
+ ip ospf network point-to-point
+ ipv6 ospf network point-to-point
+!
+show ip ospf interface ethernet0/1
+show ip ospf neighbor detail</code></pre>
+        <p>Alternative: on some platforms and OSPFv3 address-family style, use <code>ospfv3 network point-to-point</code> or the equivalent interface command shown by the parser.</p>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Passive Interfaces with Intent</h2>
+        <p>Enable <code>passive-interface default</code>, then disable passive mode only on real neighbor links. Verify LAN prefixes still advertise.</p>
+        <pre><code>router ospf 10
+ passive-interface default
+ no passive-interface ethernet0/0
+ no passive-interface ethernet0/1
+!
+show ip protocols
+show ip ospf interface brief
+show ip route ospf</code></pre>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Mismatch Defect Analysis</h2>
+        <p>Repair these without replacing the whole OSPF configuration:</p>
+        <ol>
+          <li>R1-HQ uses broadcast while R2-CORE uses point-to-point on the shared segment.</li>
+          <li>R3-DIST has an OSPF hello/dead timer mismatch on its point-to-point uplink.</li>
+          <li>R4-BR cannot form a neighbor because the transit interface is still passive.</li>
+          <li>OSPFv3 is configured, but the interface-level OSPFv3 network type does not match the neighbor.</li>
+        </ol>
+        <pre><code>show ip ospf interface
+show ip ospf neighbor detail
+show logging | include OSPF
+debug ip ospf hello
+show ipv6 protocols</code></pre>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Verification Across OSPFv2 and OSPFv3</h2>
+        <pre><code>show ip ospf neighbor
+show ipv6 ospf neighbor
+show ip ospf interface brief
+show ipv6 ospf interface brief
+show ip route ospf
+show ipv6 route ospf
+ping 10.20.20.10 source 10.10.10.1
+ping 2001:db8:20:20::10 source 2001:db8:10:10::1</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Broadcast interpretation</b><span>DR/BDR and neighbor states are explained correctly.</span></div>
+          <div class="check"><b>P2P links</b><span>Router-to-router links avoid unnecessary DR election.</span></div>
+          <div class="check"><b>Passive policy</b><span>Only transit links form neighbors.</span></div>
+          <div class="check"><b>Mismatch repair</b><span>Timers, area, network type, and passive defects are identified from show output.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/13697-10.html">Cisco OSPF neighbor states reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/7039-1.html">Cisco OSPF design and implementation reference</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

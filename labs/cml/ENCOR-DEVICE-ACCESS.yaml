@@ -1,0 +1,505 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR-DEVICE-ACCESS
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#F6F9FB"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -300.0
+  x2: 180.0
+  y2: -20.0
+  z_index: 2
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#FFFFFF"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: 220.0
+  y1: -300.0
+  x2: 620.0
+  y2: 60.0
+  z_index: 3
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: Starting state has management reachability and an unsecured R1-SECURE
+    access posture. Students configure local users, console and VTY login local, SSH-only
+    transport, privilege behavior, and login hardening.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 4
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R1-SECURE
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Management VLAN 80 via SW-MGMT
+       ip address 10.80.80.1 255.255.255.0
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Application server LAN
+       ip address 10.90.90.1 255.255.255.0
+       no shutdown
+      !
+      interface Loopback0
+       description Device identity
+       ip address 1.1.1.1 255.255.255.255
+       no shutdown
+      !
+      ! Local users, enable secret, SSH keys, login local, and line hardening are intentionally absent.
+      ! Configure device access control during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      line vty 5 15
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: R1-SECURE
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-DEVICE-ACCESS
+  - IOL
+  x: 0
+  y: -120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R2-JUMP
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Management VLAN 80 via SW-MGMT
+       ip address 10.80.80.2 255.255.255.0
+       no shutdown
+      !
+      interface Loopback0
+       description Jump host identity
+       ip address 2.2.2.2 255.255.255.255
+       no shutdown
+      !
+      ip route 10.90.90.0 255.255.255.0 10.80.80.1
+      !
+      username jump privilege 15 secret Jump123!
+      ip domain-name encor.local
+      ip ssh version 2
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      line vty 5 15
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: iol-xe-17-16-01a
+  label: R2-JUMP
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-DEVICE-ACCESS
+  - IOL
+  x: -360
+  y: 40
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname SW-MGMT
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      vlan 80
+       name MGMT-ACCESS
+      !
+      interface Ethernet0/0
+       description R1-SECURE management
+       switchport mode access
+       switchport access vlan 80
+       spanning-tree portfast
+       no shutdown
+      !
+      interface Ethernet0/1
+       description R2-JUMP management
+       switchport mode access
+       switchport access vlan 80
+       spanning-tree portfast
+       no shutdown
+      !
+      interface Ethernet0/2
+       description ADMIN-PC management
+       switchport mode access
+       switchport access vlan 80
+       spanning-tree portfast
+       no shutdown
+      !
+      interface Ethernet0/3
+       description Reserved
+       switchport mode access
+       switchport access vlan 80
+       shutdown
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: ioll2-xe-17-16-01a
+  label: SW-MGMT
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-DEVICE-ACCESS
+  - IOL-L2
+  x: -360
+  y: -160
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i4
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i5
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i6
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i7
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname admin-pc
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.80.80.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.80.80.1
+      mkdir -p /root/access-tests
+      cat > /root/access-tests/targets.txt <<'EOF'
+      R1-SECURE management: 10.80.80.1
+      R2-JUMP management: 10.80.80.2
+      netadmin password after lab config: EncorAdmin123!
+      operator password after lab config: EncorOps123!
+      EOF
+
+      echo "admin-pc" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       admin-pc localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: alpine-base-3-21-3
+  label: ADMIN-PC
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-DEVICE-ACCESS
+  - endpoint
+  x: -660
+  y: -160
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname app-server
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.90.90.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.90.90.1
+      mkdir -p /www
+      echo "device-access-app-server" > /www/index.html
+      busybox httpd -h /www -p 80
+
+      echo "app-server" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       app-server localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: alpine-base-3-21-3
+  label: APP-SERVER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-DEVICE-ACCESS
+  - endpoint
+  x: 360
+  y: -120
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n2
+  i1: i1
+  i2: i0
+  conditioning: {}
+  label: R1-SECURE-Ethernet0/0<->SW-MGMT-Ethernet0/0
+- id: l1
+  n1: n1
+  n2: n2
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: R2-JUMP-Ethernet0/0<->SW-MGMT-Ethernet0/1
+- id: l2
+  n1: n3
+  n2: n2
+  i1: i0
+  i2: i2
+  conditioning: {}
+  label: ADMIN-PC-eth0<->SW-MGMT-Ethernet0/2
+- id: l3
+  n1: n4
+  n2: n0
+  i1: i0
+  i2: i2
+  conditioning: {}
+  label: APP-SERVER-eth0<->R1-SECURE-Ethernet0/1
+lab:
+  description: CCNP ENCOR device access control lab for lines and local user authentication
+    using IOL routers, an IOL-L2 management switch, and Alpine endpoints.
+  notes: Starting state has addressing and management reachability only. Configure
+    local users, line authentication, SSH, VTY restrictions, and login hardening during
+    the lab.
+  title: ENCOR-DEVICE-ACCESS
+  version: 0.3.0

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Multi-Area OSPF Summarization and Filtering</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Multi-Area OSPF Summarization and Filtering</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Area Plan</a>
+      <a href="#task2">Task 2: Normal Areas</a>
+      <a href="#task3">Task 3: Summarization</a>
+      <a href="#task4">Task 4: Filtering</a>
+      <a href="#task5">Task 5: Validation</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab focuses on the ENCOR 3.2.b multi-area requirements: multiple normal areas, ABR behavior, inter-area summarization, and filtering. You will configure areas 0, 10, and 20, then reduce route table size without hiding required application prefixes.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>Multi-area OSPF</span></div>
+          <div class="metric"><b>Normal areas</b><span>No stub/NSSA shortcut</span></div>
+          <div class="metric"><b>5 tasks</b><span>Summarize and filter</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel"><h2>Topology</h2><img class="topology" src="../ENCOR-OSPF/assets/ospf-topology.svg" alt="OSPF topology"></section>
+      <section id="task1" class="task">
+        <h2>Task 1: Interpret the Area Plan</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Area</th><th>Routers</th><th>Prefixes</th><th>Policy</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>R1-HQ, R2-CORE</td><td>10.0.0.0/24 backbone</td><td>Must remain contiguous.</td></tr>
+              <tr><td>10</td><td>R1-HQ, R3-DIST, R5-SVC</td><td>10.10.0.0/16 campus</td><td>Summarize toward area 0.</td></tr>
+              <tr><td>20</td><td>R2-CORE, R4-BR, R5-SVC</td><td>10.20.0.0/16 branch</td><td>Summarize toward area 0 and filter a lab-only /32.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Multiple Normal Areas</h2>
+        <p>Place transit links and LANs in the correct areas. Do not use stub or NSSA area types; the exam topic calls out multiple normal areas.</p>
+        <pre><code>router ospf 10
+ router-id 1.1.1.1
+ passive-interface default
+ no passive-interface ethernet0/0
+ no passive-interface ethernet0/1
+ network 10.0.0.0 0.0.0.255 area 0
+ network 10.10.0.0 0.0.255.255 area 10</code></pre>
+        <pre><code>show ip ospf neighbor
+show ip ospf interface brief
+show ip ospf database summary
+show ip route ospf</code></pre>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Summarize at ABRs</h2>
+        <p>Summarize only on ABRs and only in the direction where the summary should be advertised. Use <code>area range</code> for inter-area summaries.</p>
+        <pre><code>router ospf 10
+ area 10 range 10.10.0.0 255.255.0.0
+ area 20 range 10.20.0.0 255.255.0.0
+!
+show ip ospf database summary 10.10.0.0
+show ip route 10.10.0.0 255.255.0.0</code></pre>
+        <p>Depth check: <code>area range</code> summarizes routes between OSPF areas. <code>summary-address</code> is for external routes redistributed into OSPF.</p>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Filter Inter-Area Routes</h2>
+        <p>Filter a lab-only service prefix from leaving area 20 while preserving the required branch summary. Use a prefix list and area filter-list.</p>
+        <pre><code>ip prefix-list BLOCK-LAB-ONLY seq 5 deny 10.20.99.99/32
+ip prefix-list BLOCK-LAB-ONLY seq 100 permit 0.0.0.0/0 le 32
+!
+router ospf 10
+ area 20 filter-list prefix BLOCK-LAB-ONLY out
+!
+show ip ospf database summary
+show ip route 10.20.99.99
+show ip protocols | section Routing for Networks</code></pre>
+        <p>Filtering inter-area routes affects Type-3 LSAs. It is not the same as distribute-list filtering of routes from the local RIB.</p>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Validation and Troubleshooting</h2>
+        <ol>
+          <li>R5-SVC is accidentally placed in area 0 on one side and area 10 on the other; identify the database symptom.</li>
+          <li>R1-HQ summarizes area 10 with a /15 and hides a branch aggregate; correct the range.</li>
+          <li>A prefix list denies all Type-3 LSAs because the final permit is missing.</li>
+        </ol>
+        <pre><code>show ip ospf border-routers
+show ip ospf database summary adv-router 1.1.1.1
+show ip route ospf | begin Gateway
+show ip prefix-list
+show ip ospf statistics</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Area adjacency</b><span>Neighbors form only in matching areas.</span></div>
+          <div class="check"><b>Summary LSAs</b><span>Area 10 and 20 summaries appear as Type-3 LSAs.</span></div>
+          <div class="check"><b>Filter scope</b><span>Only the lab-only /32 is blocked.</span></div>
+          <div class="check"><b>Route scale</b><span>Remote routers prefer aggregates where intended.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/7039-1.html">Cisco OSPF design and implementation reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/13692-1.html">Cisco OSPF route filtering reference</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

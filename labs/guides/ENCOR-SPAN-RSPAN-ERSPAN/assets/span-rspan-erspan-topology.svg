@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR SPAN RSPAN ERSPAN lab topology</title>
+  <desc id="desc">Two IOL-L2 switches, two IOL routers, traffic endpoints, separate local and RSPAN analyzers, and an ERSPAN collector.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.switch{fill:#14795f}.host{fill:#00a0d2}.tap{fill:#9a6200}.link{stroke:#667b8a;stroke-width:4;fill:none}.mirror{stroke:#00a0d2;stroke-width:4;stroke-dasharray:10 8;fill:none}.rspan{stroke:#9a6200;stroke-width:4;stroke-dasharray:8 7;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 4.3: Configure local SPAN, RSPAN over a trunk, and ERSPAN over routed IP</text>
+
+  <path class="link" d="M175 230 L340 230"/>
+  <path class="link" d="M420 230 L590 230"/>
+  <path class="link" d="M670 230 L835 230"/>
+  <path class="link" d="M380 305 L380 410"/>
+  <path class="link" d="M630 305 L630 410"/>
+  <path class="link" d="M875 270 L875 410"/>
+  <path class="link" d="M915 230 L1030 230"/>
+  <path class="mirror" d="M220 205 C280 130 410 130 470 205"/>
+  <path class="rspan" d="M420 260 C500 335 560 345 640 260"/>
+  <path class="mirror" d="M670 250 C760 350 810 395 875 410"/>
+
+  <g transform="translate(85 200)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">CLIENT</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(340 190)">
+    <rect class="switch" width="80" height="80" rx="8"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">SW1-ACCESS</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">SPAN source</text>
+  </g>
+  <g transform="translate(590 190)">
+    <rect class="switch" width="80" height="80" rx="8"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">SW2-ANALYZER</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">RSPAN dest</text>
+  </g>
+  <g transform="translate(835 190)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-EDGE</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">ERSPAN source</text>
+  </g>
+  <g transform="translate(1030 200)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-CORE</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">Transit</text>
+  </g>
+  <g transform="translate(330 410)">
+    <rect class="tap" width="100" height="60" rx="8"/>
+    <text class="txt label" x="50" y="88" text-anchor="middle">LOCAL-ANALYZER</text>
+    <text class="txt small" x="50" y="108" text-anchor="middle">10.10.10.20</text>
+  </g>
+  <g transform="translate(580 410)">
+    <rect class="tap" width="110" height="60" rx="8"/>
+    <text class="txt label" x="55" y="88" text-anchor="middle">RSPAN-ANALYZER</text>
+    <text class="txt small" x="55" y="108" text-anchor="middle">10.10.10.30</text>
+  </g>
+  <g transform="translate(830 410)">
+    <rect class="tap" width="110" height="60" rx="8"/>
+    <text class="txt label" x="55" y="88" text-anchor="middle">ERSPAN-COL</text>
+    <text class="txt small" x="55" y="108" text-anchor="middle">10.50.50.10</text>
+  </g>
+
+  <rect class="pill" x="218" y="206" width="96" height="30" rx="15"/>
+  <text class="txt small" x="266" y="226" text-anchor="middle">VLAN 10</text>
+  <rect class="pill" x="455" y="206" width="96" height="30" rx="15"/>
+  <text class="txt small" x="503" y="226" text-anchor="middle">RSPAN 999</text>
+  <rect class="pill" x="700" y="206" width="105" height="30" rx="15"/>
+  <text class="txt small" x="752" y="226" text-anchor="middle">VLAN 10 GW</text>
+  <rect class="pill" x="940" y="206" width="86" height="30" rx="15"/>
+  <text class="txt small" x="983" y="226" text-anchor="middle">10.0.12/30</text>
+
+  <text class="txt small" x="58" y="522">SPAN: mirror CLIENT port to LOCAL-ANALYZER on the same switch. RSPAN: carry mirrored frames across VLAN 999 to SW2.</text>
+  <text class="txt small" x="58" y="546">ERSPAN: encapsulate mirrored R1-EDGE traffic over IP to ERSPAN-COLLECTOR across R2-CORE.</text>
+</svg>

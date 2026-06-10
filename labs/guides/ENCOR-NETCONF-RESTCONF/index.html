@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify NETCONF and RESTCONF</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify NETCONF and RESTCONF</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Management Plane</a>
+      <a href="#task3">Task 3: NETCONF</a>
+      <a href="#task4">Task 4: RESTCONF</a>
+      <a href="#task5">Task 5: Configure with Models</a>
+      <a href="#task6">Task 6: Operational Data</a>
+      <a href="#task7">Task 7: Defects</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 4.6: configure and verify NETCONF and RESTCONF. You will enable the IOS XE management plane, expose model-driven interfaces, retrieve YANG-modeled configuration and operational data, and make controlled configuration changes through NETCONF and RESTCONF.</p>
+        <p>CCNP-level value is in knowing where failures occur: SSH versus NETCONF subsystem, HTTPS versus RESTCONF URI, authentication versus authorization, candidate/running datastore behavior, XML versus JSON encoding, and config versus operational state.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.6</b><span>NETCONF / RESTCONF</span></div>
+          <div class="metric"><b>IOL router</b><span>IOS XE programmable target</span></div>
+          <div class="metric"><b>7 tasks</b><span>Enable, query, change, verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>AUTOMATION is the management workstation. R1-MANAGED is the IOS XE device under test. APP-SERVER gives you a routed endpoint so configuration changes can be verified with both API output and data-plane tests. The starting CML topology has addressing, a local user, and payload examples; NETCONF and RESTCONF are intentionally disabled.</p>
+        <img class="topology" src="assets/netconf-restconf-topology.svg" alt="NETCONF RESTCONF topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Connectivity and Management State</h2>
+        <p>Start by proving ordinary reachability and identifying what model-driven interfaces are not yet enabled.</p>
+        <pre><code>! R1-MANAGED
+show ip interface brief
+show ip route
+show users
+show running-config | include ^netconf|^restconf|ip http|username|aaa
+show platform software yang-management process
+show netconf-yang sessions
+show restconf
+ping 10.60.60.10 source 10.60.60.1
+ping 10.70.70.10 source 10.70.70.1</code></pre>
+        <p>From AUTOMATION, confirm reachability to the management address:</p>
+        <pre><code>ping -c 5 10.60.60.1
+traceroute 10.70.70.10
+# Optional if tooling exists:
+nc -vz 10.60.60.1 22
+nc -vz 10.60.60.1 830
+nc -vz 10.60.60.1 443</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Prepare AAA, SSH, and HTTPS for Model-Driven Management</h2>
+        <p>NETCONF rides over SSH. RESTCONF rides over HTTPS. Configure the supporting management-plane services and local authorization before enabling the protocols.</p>
+        <pre><code>! R1-MANAGED
+conf t
+aaa new-model
+aaa authentication login default local
+aaa authorization exec default local
+username automation privilege 15 secret Cisco123!
+ip domain-name encor.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+ip http secure-server
+ip http authentication local
+end
+!
+show ip ssh
+show ip http server secure status
+show users</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> A device can accept SSH on TCP/22 while NETCONF on TCP/830 still fails. NETCONF requires the SSH subsystem and YANG management process, not just generic SSH login.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Enable and Verify NETCONF</h2>
+        <p>Enable NETCONF over SSH, verify the listening service, then inspect sessions and YANG management state.</p>
+        <pre><code>! R1-MANAGED
+conf t
+netconf-yang
+end
+!
+show running-config | include netconf-yang
+show netconf-yang sessions
+show platform software yang-management process
+show platform software yang-management process state
+show control-plane host open-ports | include 830</code></pre>
+        <p>From AUTOMATION, test the port and retrieve NETCONF capabilities if an SSH client is available:</p>
+        <pre><code>nc -vz 10.60.60.1 830
+ssh -s automation@10.60.60.1 -p 830 netconf</code></pre>
+        <p>After the NETCONF hello appears, you should see capability URIs that describe supported datastores, base protocol support, and Cisco/IETF YANG modules. End the session with a NETCONF close-session RPC if you are testing manually.</p>
+        <pre><code>&lt;rpc message-id="101" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"&gt;
+  &lt;close-session/&gt;
+&lt;/rpc&gt;]]&gt;]]&gt;</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Enable and Verify RESTCONF</h2>
+        <p>Enable RESTCONF and retrieve YANG-modeled data over HTTPS. RESTCONF uses HTTP verbs and returns XML or JSON depending on headers and endpoint support.</p>
+        <pre><code>! R1-MANAGED
+conf t
+restconf
+end
+!
+show running-config | include restconf|ip http
+show restconf
+show ip http server secure status
+show control-plane host open-ports | include 443</code></pre>
+        <p>From AUTOMATION, query the RESTCONF root and interface data. Use insecure TLS only because the lab uses a self-signed certificate.</p>
+        <pre><code>curl -k -u automation:Cisco123! https://10.60.60.1/restconf/
+curl -k -u automation:Cisco123! \
+  -H "Accept: application/yang-data+json" \
+  https://10.60.60.1/restconf/data/ietf-interfaces:interfaces
+curl -k -u automation:Cisco123! \
+  -H "Accept: application/yang-data+json" \
+  https://10.60.60.1/restconf/data/ietf-interfaces:interfaces/interface=Ethernet0%2F1</code></pre>
+        <p>Interpret HTTP status codes: 200 means a successful read, 201/204 usually indicates a successful create/update, 401 means authentication failed, 403 means authorization or NACM rejected the action, 404 usually means the URI/module/key path is wrong, and 409 often indicates a data conflict.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Configure IOS XE with RESTCONF and NETCONF</h2>
+        <p>Use RESTCONF with the IOS XE native YANG model to create a loopback, then use NETCONF-style XML to understand how the same configuration maps to a datastore edit. Verify both from API output and CLI.</p>
+        <p>Create a RESTCONF payload on AUTOMATION:</p>
+        <pre><code>cat &gt; loopback100-native.json &lt;&lt;'EOF'
+{
+  "Cisco-IOS-XE-native:Loopback": {
+    "name": 100,
+    "description": "Created by RESTCONF for ENCOR 4.6",
+    "ip": {
+      "address": {
+        "primary": {
+          "address": "100.100.100.1",
+          "mask": "255.255.255.255"
+        }
+      }
+    }
+  }
+}
+EOF
+curl -k -u automation:Cisco123! \
+  -X PUT \
+  -H "Content-Type: application/yang-data+json" \
+  -H "Accept: application/yang-data+json" \
+  --data @loopback100-native.json \
+  https://10.60.60.1/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback=100</code></pre>
+        <p>Verify on R1-MANAGED:</p>
+        <pre><code>show ip interface brief | include Loopback100
+show running-config interface Loopback100
+show logging | include RESTCONF|YANG</code></pre>
+        <p>Recognize the equivalent NETCONF edit-config pattern:</p>
+        <pre><code>&lt;rpc message-id="200" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"&gt;
+  &lt;edit-config&gt;
+    &lt;target&gt;&lt;running/&gt;&lt;/target&gt;
+    &lt;config&gt;
+      &lt;interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces"&gt;
+        &lt;interface&gt;
+          &lt;name&gt;Loopback101&lt;/name&gt;
+          &lt;description&gt;Created by NETCONF for ENCOR 4.6&lt;/description&gt;
+          &lt;type xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type"&gt;ianaift:softwareLoopback&lt;/type&gt;
+          &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/interface&gt;
+      &lt;/interfaces&gt;
+    &lt;/config&gt;
+  &lt;/edit-config&gt;
+&lt;/rpc&gt;]]&gt;]]&gt;</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify Configuration and Operational Data</h2>
+        <p>Use both protocol and CLI views. Configuration data tells you intended state. Operational data tells you observed state.</p>
+        <pre><code># AUTOMATION
+curl -k -u automation:Cisco123! \
+  -H "Accept: application/yang-data+json" \
+  https://10.60.60.1/restconf/data/Cisco-IOS-XE-native:native/interface/Loopback=100
+curl -k -u automation:Cisco123! \
+  -H "Accept: application/yang-data+json" \
+  https://10.60.60.1/restconf/data/ietf-interfaces:interfaces-state
+
+# R1-MANAGED
+show ip interface brief
+show running-config interface Loopback100
+show netconf-yang sessions
+show restconf
+show platform software yang-management process</code></pre>
+        <p>Answer these:</p>
+        <ul>
+          <li>Which TCP port is used by NETCONF over SSH?</li>
+          <li>Which TCP port and server feature are used by RESTCONF?</li>
+          <li>Which commands prove NETCONF/RESTCONF are enabled on the router?</li>
+          <li>Which response or output proves the YANG-modeled configuration was applied?</li>
+          <li>What is the difference between reading intended interface config and interface operational state?</li>
+        </ul>
+      </section>
+
+      <section id="task7" class="task">
+        <h2>Task 7: Troubleshoot NETCONF and RESTCONF Defects</h2>
+        <p>Diagnose the layer where the failure occurs before changing configuration.</p>
+        <ol>
+          <li>SSH works on TCP/22, but NETCONF fails because <code>netconf-yang</code> is missing or the YANG process is not running.</li>
+          <li>RESTCONF returns connection refused because HTTPS is disabled or <code>restconf</code> is missing.</li>
+          <li>RESTCONF returns 401 because the username or password is wrong.</li>
+          <li>RESTCONF returns 404 because the module name, list key, or escaped interface name is wrong.</li>
+          <li>RESTCONF updates fail because the content type is not <code>application/yang-data+json</code> or XML payload structure is wrong.</li>
+          <li>NETCONF connects but edit-config fails because the payload targets an unsupported model or datastore.</li>
+          <li>API output differs from CLI expectations because you read operational state when you meant configuration state, or the reverse.</li>
+        </ol>
+        <pre><code>show platform software yang-management process
+show platform software yang-management process monitor
+show netconf-yang sessions
+show netconf-yang statistics
+show restconf
+show ip http server secure status
+show control-plane host open-ports
+show logging | include YANG|NETCONF|RESTCONF|HTTP
+debug netconf-yang
+debug restconf</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Management Plane</b><span>AAA, SSH, HTTPS, local credentials, and reachability are correct.</span></div>
+          <div class="check"><b>NETCONF</b><span>NETCONF is enabled, reachable on TCP/830, and sessions/capabilities can be verified.</span></div>
+          <div class="check"><b>RESTCONF</b><span>RESTCONF is enabled, reachable over HTTPS, and YANG data can be read with correct headers and URIs.</span></div>
+          <div class="check"><b>Model Use</b><span>You can map CLI configuration to YANG-modeled JSON/XML and verify applied state.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/prog/configuration/179/b_179_programmability_cg.html">Cisco IOS XE programmability configuration guide</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/prog/command/179/b_179_programmability_cr.html">Cisco IOS XE programmability command reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 4.6 asks candidates to configure and verify NETCONF and RESTCONF. This lab separates transport, authentication, protocol enablement, YANG-modeled reads, and configuration writes so each failure domain is visible.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

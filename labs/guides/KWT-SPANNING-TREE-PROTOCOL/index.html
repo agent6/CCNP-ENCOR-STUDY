@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Spanning Tree Protocol</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>Spanning Tree Protocol</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Root Bridge</a>
+      <a href="#task3">Task 3: Port Roles</a>
+      <a href="#task4">Task 4: Blocking Ports</a>
+      <a href="#task5">Task 5: Change the Root</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab focuses on classic spanning-tree analysis: root bridge election, root ports, designated ports, and blocking or alternate ports. The CML topology starts with three switches connected in a redundant triangle and unused interfaces shut down.</p>
+        <p>All commands in this guide use the CML interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>45-60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR Layer 2</b><span>STP interpretation</span></div>
+          <div class="metric"><b>3 switches</b><span>SW1, SW2, SW3</span></div>
+          <div class="metric"><b>IOL-L2</b><span>Switch-only topology</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>The three switches form a triangle. STP must block one redundant path for VLAN 1.</p>
+        <img class="topology" src="assets/topology.svg" alt="Spanning Tree Protocol topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Baseline</h2>
+        <p>Check switch identity, active links, and the spanning-tree state for VLAN 1.</p>
+        <pre><code>! SW1, SW2, SW3
+show cdp neighbors
+show interfaces status
+show spanning-tree vlan 1
+show spanning-tree summary</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Identify the Root Bridge</h2>
+        <p>The root bridge is the switch with the lowest bridge ID. Bridge ID is the bridge priority plus VLAN ID, followed by the switch MAC address.</p>
+        <pre><code>show spanning-tree vlan 1 | include Root ID|Bridge ID|This bridge</code></pre>
+        <p>Record which switch is root and explain whether it won because of priority or MAC address.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Identify Root and Designated Ports</h2>
+        <p>On non-root switches, identify the root port. On every segment, identify the designated port.</p>
+        <pre><code>show spanning-tree vlan 1
+show spanning-tree vlan 1 detail</code></pre>
+        <p>Document each active interface as Root, Designated, or Alternate.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Identify Blocking or Alternate Ports</h2>
+        <p>Find the port that is administratively enabled but not forwarding because STP selected a better path.</p>
+        <pre><code>show spanning-tree vlan 1 | include Altn|BLK|Root|Desg
+show spanning-tree blockedports</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Change the Root Bridge and Re-Analyze</h2>
+        <p>Make SW1 the root bridge for VLAN 1, then verify how the root ports, designated ports, and alternate ports change.</p>
+        <pre><code>! SW1
+conf t
+spanning-tree vlan 1 priority 4096
+end
+
+! SW1, SW2, SW3
+show spanning-tree vlan 1
+show spanning-tree blockedports</code></pre>
+        <p>Expected result: SW1 becomes the root bridge, all SW1 active STP ports are designated, and non-root switches choose their lowest-cost path back to SW1.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

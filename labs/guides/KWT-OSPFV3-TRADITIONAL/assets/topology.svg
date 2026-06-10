@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="430" viewBox="0 0 1100 430" role="img" aria-labelledby="title desc">
+  <title id="title">OSPFv3 traditional topology</title>
+  <desc id="desc">R1 connects to R2 in OSPF area 0, R2 connects to R3 in area 1, and LAN stubs exist on R1 and R3.</desc>
+  <rect width="1100" height="430" fill="#f6f9fb"/>
+  <text x="45" y="52" fill="#0b243b" font-family="Arial, sans-serif" font-size="28" font-weight="700">OSPFv3 Traditional Configuration</text>
+  <text x="45" y="80" fill="#415466" font-family="Arial, sans-serif" font-size="15">Configure OSPFv2 for IPv4 first, then configure OSPFv3 per interface for IPv6.</text>
+  <rect x="180" y="135" width="245" height="170" fill="#e9f7fd" stroke="#18a3d7" stroke-width="2"/>
+  <text x="275" y="160" fill="#0b243b" font-family="Arial, sans-serif" font-size="16" font-weight="700">Area 0</text>
+  <rect x="675" y="135" width="245" height="170" fill="#fff4e6" stroke="#f28c28" stroke-width="2"/>
+  <text x="770" y="160" fill="#0b243b" font-family="Arial, sans-serif" font-size="16" font-weight="700">Area 1</text>
+  <g fill="#fff" stroke="#7a8b99" stroke-width="2">
+    <rect x="90" y="190" width="130" height="86" rx="5"/>
+    <rect x="485" y="190" width="130" height="86" rx="5"/>
+    <rect x="880" y="190" width="130" height="86" rx="5"/>
+    <rect x="90" y="330" width="130" height="52" rx="5"/>
+    <rect x="880" y="330" width="130" height="52" rx="5"/>
+  </g>
+  <g fill="#0b243b" font-family="Arial, sans-serif" font-weight="700" font-size="21">
+    <text x="139" y="224">R1</text>
+    <text x="534" y="224">R2</text>
+    <text x="929" y="224">R3</text>
+  </g>
+  <g fill="#415466" font-family="Arial, sans-serif" font-size="13">
+    <text x="116" y="248">Lo0 1.1.1.1</text>
+    <text x="116" y="267">2005::1111/64</text>
+    <text x="511" y="248">Lo0 2.2.2.2</text>
+    <text x="511" y="267">2006::2222/64</text>
+    <text x="906" y="248">Lo0 3.3.3.3</text>
+    <text x="906" y="267">2007::3333/64</text>
+    <text x="115" y="362">R1 LAN</text>
+    <text x="900" y="362">R3 LAN</text>
+  </g>
+  <line x1="220" y1="233" x2="485" y2="233" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="615" y1="233" x2="880" y2="233" stroke="#f28c28" stroke-width="4"/>
+  <line x1="155" y1="276" x2="155" y2="330" stroke="#7a8b99" stroke-width="3"/>
+  <line x1="945" y1="276" x2="945" y2="330" stroke="#7a8b99" stroke-width="3"/>
+  <g fill="#263946" font-family="Arial, sans-serif" font-size="13">
+    <text x="285" y="215">172.16.1.0/30</text>
+    <text x="285" y="250">2002::/64</text>
+    <text x="680" y="215">192.168.1.0/30</text>
+    <text x="680" y="250">2003::/64</text>
+    <text x="230" y="350">10.1.1.0/24, 2001::/64</text>
+    <text x="670" y="350">10.2.2.0/24, 2004::/64</text>
+  </g>
+</svg>

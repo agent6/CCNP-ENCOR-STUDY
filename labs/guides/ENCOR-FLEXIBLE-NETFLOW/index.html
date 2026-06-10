@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify Flexible NetFlow</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify Flexible NetFlow</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Flow Record</a>
+      <a href="#task3">Task 3: Exporter</a>
+      <a href="#task4">Task 4: Monitor</a>
+      <a href="#task5">Task 5: Verify Cache</a>
+      <a href="#task6">Task 6: Defects</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 4.2: configure and verify Flexible NetFlow. You will build a flow record, exporter, and monitor; attach the monitor to interfaces in the correct direction; generate traffic; and verify the flow cache and exporter statistics.</p>
+        <p>CCNP-level value comes from proving what is being measured. You must explain record match fields versus collect fields, why direction matters, how cache aging affects exported flows, and how to separate traffic-observation problems from collector-reachability problems.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.2</b><span>Flexible NetFlow</span></div>
+          <div class="metric"><b>IOL routers</b><span>Edge monitor and exporter</span></div>
+          <div class="metric"><b>6 tasks</b><span>Configure, generate, verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>CLIENT generates traffic through R1-EDGE and R2-WAN toward APP-SERVER. R1-EDGE exports flow data to COLLECTOR using UDP/2055. The starting CML topology has addressing and routing only; Flexible NetFlow is intentionally absent.</p>
+        <img class="topology" src="assets/flexible-netflow-topology.svg" alt="Flexible NetFlow topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Traffic and Collector Reachability</h2>
+        <p>Confirm the path works before adding telemetry. Flexible NetFlow cannot export useful records if traffic is not traversing the monitored interface, and exporter failures are often simple routing or source-interface mistakes.</p>
+        <pre><code>show ip interface brief
+show ip route
+show ip cef 10.20.20.10
+ping 10.20.20.10 source 10.10.10.1
+ping 10.50.50.10 source 10.50.50.1
+show running-config | section flow</code></pre>
+        <p>From CLIENT, generate baseline traffic:</p>
+        <pre><code>ping -c 5 10.20.20.10
+wget -O- http://10.20.20.10
+traceroute 10.20.20.10</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Create a Custom Flow Record</h2>
+        <p>Build a record for IPv4 application visibility. Match fields define the flow key. Collect fields add extra information to stored/exported records.</p>
+        <pre><code>flow record ENCOR-IPV4-RECORD
+ description IPv4 application visibility for ENCOR 4.2
+ match ipv4 source address
+ match ipv4 destination address
+ match transport source-port
+ match transport destination-port
+ match interface input
+ match ip protocol
+ collect counter bytes long
+ collect counter packets long
+ collect timestamp sys-uptime first
+ collect timestamp sys-uptime last
+ collect routing next-hop address ipv4</code></pre>
+        <p>Alternative style to recognize:</p>
+        <pre><code>flow monitor ENCOR-PREDEFINED
+ record netflow ipv4 original-input</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> A custom record lets you decide what defines a unique flow. A predefined record is faster to deploy, but you must still understand what fields it matches and collects.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure the Flow Exporter</h2>
+        <p>Configure the exporter to send flow data to COLLECTOR. Use a stable source interface and verify that the collector address is reachable from that source.</p>
+        <pre><code>flow exporter ENCOR-COLLECTOR
+ description Export to local collector
+ destination 10.50.50.10
+ source Ethernet0/2
+ transport udp 2055
+ export-protocol netflow-v9
+ template data timeout 60
+ option interface-table timeout 60</code></pre>
+        <p>Verify exporter configuration and reachability:</p>
+        <pre><code>show flow exporter ENCOR-COLLECTOR
+show flow exporter statistics
+ping 10.50.50.10 source Ethernet0/2
+show ip route 10.50.50.10</code></pre>
+        <p>If the collector is listening, you should see UDP/2055 packets arrive. Even without a decoder, IOS XE exporter statistics and cache entries prove whether records are being built and export attempts are occurring.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Create and Attach the Flow Monitor</h2>
+        <p>Connect the record and exporter with a monitor, then attach it to the interfaces where traffic actually crosses R1-EDGE.</p>
+        <pre><code>flow monitor ENCOR-IPV4-MONITOR
+ description Monitor client-to-server flows
+ record ENCOR-IPV4-RECORD
+ exporter ENCOR-COLLECTOR
+ cache timeout active 60
+ cache timeout inactive 15
+!
+interface Ethernet0/0
+ ip flow monitor ENCOR-IPV4-MONITOR input
+!
+interface Ethernet0/1
+ ip flow monitor ENCOR-IPV4-MONITOR output</code></pre>
+        <p>Interpret direction carefully. Input on Ethernet0/0 records traffic as it arrives from CLIENT. Output on Ethernet0/1 records forwarded traffic as it leaves toward R2-WAN. If you attach the monitor to the collector interface only, client-to-server flows will not appear there.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Generate Traffic and Verify the Flow Cache</h2>
+        <p>Generate ICMP and TCP traffic, then inspect cache and exporter output. Cache entries may appear before they are exported; inactive and active timers control when export occurs.</p>
+        <pre><code># CLIENT
+ping -c 20 10.20.20.10
+wget -O- http://10.20.20.10
+
+# R1-EDGE
+show flow monitor ENCOR-IPV4-MONITOR cache
+show flow monitor ENCOR-IPV4-MONITOR cache format table
+show flow monitor ENCOR-IPV4-MONITOR statistics
+show flow exporter statistics
+show running-config interface Ethernet0/0
+show running-config interface Ethernet0/1</code></pre>
+        <p>Explain the record:</p>
+        <ul>
+          <li>Which source and destination addresses define the flow?</li>
+          <li>Which protocol and ports distinguish ICMP from HTTP traffic?</li>
+          <li>Which interface direction created the record?</li>
+          <li>Did exporter counters increment after cache aging or manual clearing?</li>
+        </ul>
+        <pre><code>clear flow monitor ENCOR-IPV4-MONITOR cache
+show flow exporter statistics</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Troubleshoot Flexible NetFlow Defects</h2>
+        <p>Use these symptoms to diagnose common Flexible NetFlow mistakes.</p>
+        <ol>
+          <li>The monitor cache is empty because the monitor is attached to the wrong interface or wrong direction.</li>
+          <li>The cache has flows but the exporter counter does not increment because the exporter is missing from the monitor.</li>
+          <li>Exporter sends fail because the destination is unreachable from the configured source interface.</li>
+          <li>The collector sees UDP packets but cannot decode fields because the template has not been exported or the wrong export protocol is configured.</li>
+          <li>Short tests do not export immediately because inactive/active cache timers have not expired.</li>
+          <li>Only one side of a conversation appears because ingress and egress are monitored asymmetrically.</li>
+        </ol>
+        <pre><code>show flow monitor
+show flow monitor ENCOR-IPV4-MONITOR cache
+show flow monitor ENCOR-IPV4-MONITOR statistics
+show flow exporter
+show flow exporter statistics
+show platform software flow monitor
+show running-config | section flow
+show ip interface Ethernet0/0
+show ip interface Ethernet0/1</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Record</b><span>You can explain every match and collect field in the custom flow record.</span></div>
+          <div class="check"><b>Exporter</b><span>Exporter destination, source, transport, protocol, and statistics are correct.</span></div>
+          <div class="check"><b>Monitor</b><span>The monitor references the record and exporter and is attached in the correct interface direction.</span></div>
+          <div class="check"><b>Verification</b><span>Generated traffic appears in the cache and exporter statistics reflect export attempts.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/fnetflow/configuration/xe-17/fnf-xe-17-book.html">Cisco IOS XE Flexible NetFlow configuration guide</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/fnetflow/command/fnf-cr-book.html">Cisco Flexible NetFlow command reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 4.2 asks candidates to configure and verify Flexible NetFlow. This lab includes both custom and predefined record styles, and emphasizes cache/exporter verification because an attached monitor is not the same thing as successful export to a collector.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

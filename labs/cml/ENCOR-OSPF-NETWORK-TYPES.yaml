@@ -1,0 +1,1683 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR-OSPF-NETWORK-TYPES
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#F6F9FB"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -320.0
+  x2: 620.0
+  y2: -80.0
+  z_index: 2
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#FFFFFF"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: 20.0
+  x2: 620.0
+  y2: 360.0
+  z_index: 3
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: Starting state has OSPF configured with intentional network-type,
+    timer, passive-interface, and OSPFv3 defects for interpretation and repair.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 4
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R1-HQ
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      ipv6 unicast-routing
+      !
+      interface Ethernet0/0
+       description Area 0 broadcast segment to AREA0-SW
+       ip address 10.0.0.1 255.255.255.0
+       ipv6 address 2001:db8:0:0::1/64
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Area 10 point-to-point to R3-DIST
+       ip address 10.0.13.1 255.255.255.252
+       ipv6 address 2001:db8:0:13::1/64
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Area 0 point-to-point to R2-CORE
+       ip address 10.0.12.1 255.255.255.252
+       ipv6 address 2001:db8:0:12::1/64
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID loopback
+       ip address 1.1.1.1 255.255.255.255
+       no shutdown
+      !
+      router ospf 10
+       router-id 1.1.1.1
+       passive-interface default
+       no passive-interface Ethernet0/0
+       no passive-interface Ethernet0/1
+       network 10.0.0.0 0.0.0.255 area 0
+       network 10.0.13.0 0.0.0.3 area 10
+       network 10.10.0.0 0.0.255.255 area 10
+      !
+      interface Ethernet0/1
+       ip ospf network point-to-point
+      !
+      ipv6 router ospf 10
+       router-id 1.1.1.1
+       passive-interface default
+       no passive-interface Ethernet0/0
+      !
+      interface Ethernet0/0
+       ipv6 ospf 10 area 0
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: R1-HQ
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL
+  x: -360
+  y: -210
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R2-CORE
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      ipv6 unicast-routing
+      !
+      interface Ethernet0/0
+       description Area 0 broadcast segment to AREA0-SW
+       ip address 10.0.0.2 255.255.255.0
+       ipv6 address 2001:db8:0:0::2/64
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Area 20 point-to-point to R4-BR
+       ip address 10.0.24.1 255.255.255.252
+       ipv6 address 2001:db8:0:24::1/64
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Area 0 point-to-point to R1-HQ
+       ip address 10.0.12.2 255.255.255.252
+       ipv6 address 2001:db8:0:12::2/64
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID loopback
+       ip address 2.2.2.2 255.255.255.255
+       no shutdown
+      !
+      router ospf 10
+       router-id 2.2.2.2
+       passive-interface default
+       no passive-interface Ethernet0/0
+       no passive-interface Ethernet0/1
+       network 10.0.0.0 0.0.0.255 area 0
+       network 10.0.24.0 0.0.0.3 area 20
+      !
+      interface Ethernet0/0
+       ip ospf network point-to-point
+      !
+      ipv6 router ospf 10
+       router-id 2.2.2.2
+       passive-interface default
+       no passive-interface Ethernet0/0
+      !
+      interface Ethernet0/0
+       ipv6 ospf 10 area 0
+       ipv6 ospf network point-to-point
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: iol-xe-17-16-01a
+  label: R2-CORE
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL
+  x: 360
+  y: -210
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R3-DIST
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      ipv6 unicast-routing
+      !
+      interface Ethernet0/0
+       description Area 10 point-to-point to R1-HQ
+       ip address 10.0.13.2 255.255.255.252
+       ipv6 address 2001:db8:0:13::2/64
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Area 10 point-to-point to R5-SVC
+       ip address 10.0.35.1 255.255.255.252
+       ipv6 address 2001:db8:0:35::1/64
+       no shutdown
+      !
+      interface Ethernet0/2
+       description HQ user LAN
+       ip address 10.10.10.1 255.255.255.0
+       ipv6 address 2001:db8:10:10::1/64
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID loopback
+       ip address 3.3.3.3 255.255.255.255
+       no shutdown
+      !
+      router ospf 10
+       router-id 3.3.3.3
+       passive-interface default
+       no passive-interface Ethernet0/0
+       no passive-interface Ethernet0/1
+       network 10.0.13.0 0.0.0.3 area 10
+       network 10.0.35.0 0.0.0.3 area 10
+       network 10.10.0.0 0.0.255.255 area 10
+      !
+      interface Ethernet0/0
+       ip ospf hello-interval 5
+       ip ospf dead-interval 20
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: iol-xe-17-16-01a
+  label: R3-DIST
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL
+  x: -360
+  y: 110
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R4-BR
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      ipv6 unicast-routing
+      !
+      interface Ethernet0/0
+       description Area 20 point-to-point to R2-CORE
+       ip address 10.0.24.2 255.255.255.252
+       ipv6 address 2001:db8:0:24::2/64
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Area 20 point-to-point to R5-SVC
+       ip address 10.0.45.1 255.255.255.252
+       ipv6 address 2001:db8:0:45::1/64
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Branch user LAN
+       ip address 10.20.20.1 255.255.255.0
+       ipv6 address 2001:db8:20:20::1/64
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID loopback
+       ip address 4.4.4.4 255.255.255.255
+       no shutdown
+      !
+      router ospf 10
+       router-id 4.4.4.4
+       passive-interface default
+       no passive-interface Ethernet0/1
+       network 10.0.24.0 0.0.0.3 area 20
+       network 10.0.45.0 0.0.0.3 area 20
+       network 10.20.0.0 0.0.255.255 area 20
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: iol-xe-17-16-01a
+  label: R4-BR
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL
+  x: 360
+  y: 110
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R5-SVC
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      ipv6 unicast-routing
+      !
+      interface Ethernet0/0
+       description Area 10 point-to-point to R3-DIST
+       ip address 10.0.35.2 255.255.255.252
+       ipv6 address 2001:db8:0:35::2/64
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Area 20 point-to-point to R4-BR
+       ip address 10.0.45.2 255.255.255.252
+       ipv6 address 2001:db8:0:45::2/64
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Application server LAN
+       ip address 10.30.30.1 255.255.255.0
+       ipv6 address 2001:db8:30:30::1/64
+       no shutdown
+      !
+      interface Loopback0
+       description Lab-only service prefix for filtering
+       ip address 10.20.99.99 255.255.255.255
+       no shutdown
+      !
+      router ospf 10
+       router-id 5.5.5.5
+       passive-interface default
+       no passive-interface Ethernet0/0
+       no passive-interface Ethernet0/1
+       network 10.0.35.0 0.0.0.3 area 10
+       network 10.0.45.0 0.0.0.3 area 20
+       network 10.30.0.0 0.0.255.255 area 10
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: iol-xe-17-16-01a
+  label: R5-SVC
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL
+  x: 0
+  y: 190
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname AREA0-SW
+      !
+      no logging console
+      no ip domain-lookup
+      !
+      interface range Ethernet0/0-1
+       description Area 0 broadcast segment access ports
+       switchport mode access
+       spanning-tree portfast
+       no shutdown
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n5
+  image_definition: ioll2-xe-17-16-01a
+  label: AREA0-SW
+  node_definition: ioll2-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - IOL-L2
+  x: 0
+  y: -250
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname hq-user
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.10.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.10.10.1
+      ip -6 address add 2001:db8:10:10::10/64 dev eth0
+      ip -6 route add default via 2001:db8:10:10::1
+
+      echo "hq-user" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       hq-user localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n6
+  image_definition: alpine-base-3-21-3
+  label: HQ-USER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - endpoint
+  x: -610
+  y: 250
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname br-user
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.20.20.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.20.20.1
+      ip -6 address add 2001:db8:20:20::10/64 dev eth0
+      ip -6 route add default via 2001:db8:20:20::1
+
+      echo "br-user" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       br-user localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n7
+  image_definition: alpine-base-3-21-3
+  label: BR-USER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - endpoint
+  x: 610
+  y: 250
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname app-server
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.30.30.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.30.30.1
+      ip -6 address add 2001:db8:30:30::10/64 dev eth0
+      ip -6 route add default via 2001:db8:30:30::1
+
+      echo "app-server" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       app-server localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n8
+  image_definition: alpine-base-3-21-3
+  label: APP-SERVER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-OSPF-NETWORK-TYPES
+  - endpoint
+  x: 0
+  y: 390
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n5
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: R1-HQ-Ethernet0/0<->AREA0-SW-Ethernet0/0
+- id: l1
+  n1: n1
+  n2: n5
+  i1: i1
+  i2: i2
+  conditioning: {}
+  label: R2-CORE-Ethernet0/0<->AREA0-SW-Ethernet0/1
+- id: l2
+  n1: n0
+  n2: n1
+  i1: i3
+  i2: i3
+  conditioning: {}
+  label: R1-HQ-Ethernet0/2<->R2-CORE-Ethernet0/2
+- id: l3
+  n1: n0
+  n2: n2
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R1-HQ-Ethernet0/1<->R3-DIST-Ethernet0/0
+- id: l4
+  n1: n1
+  n2: n3
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R2-CORE-Ethernet0/1<->R4-BR-Ethernet0/0
+- id: l5
+  n1: n2
+  n2: n4
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R3-DIST-Ethernet0/1<->R5-SVC-Ethernet0/0
+- id: l6
+  n1: n3
+  n2: n4
+  i1: i2
+  i2: i2
+  conditioning: {}
+  label: R4-BR-Ethernet0/1<->R5-SVC-Ethernet0/1
+- id: l7
+  n1: n6
+  n2: n2
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: HQ-USER-eth0<->R3-DIST-Ethernet0/2
+- id: l8
+  n1: n7
+  n2: n3
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: BR-USER-eth0<->R4-BR-Ethernet0/2
+- id: l9
+  n1: n8
+  n2: n4
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: APP-SERVER-eth0<->R5-SVC-Ethernet0/2
+lab:
+  description: CCNP ENCOR OSPF network type and passive-interface troubleshooting
+    lab.
+  notes: Starting state has OSPF configured with intentional network-type, timer,
+    passive-interface, and OSPFv3 defects for interpretation and repair.
+  title: ENCOR-OSPF-NETWORK-TYPES
+  version: 0.3.0

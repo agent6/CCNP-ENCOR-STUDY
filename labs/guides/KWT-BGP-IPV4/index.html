@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: BGP for IPv4</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>BGP for IPv4</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: R1 BGP</a>
+      <a href="#task3">Task 3: R1 Network</a>
+      <a href="#task4">Task 4: R2 BGP</a>
+      <a href="#task5">Task 5: Verify</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab configures a basic IPv4 eBGP relationship between directly connected routers. R1 belongs to AS 64500, R2 belongs to AS 64495, and each router advertises one connected internal network to the other autonomous system.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>30-40 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.c</b><span>Direct eBGP</span></div>
+          <div class="metric"><b>2 routers</b><span>R1 and R2</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 and R2 are directly connected on 198.51.100.0/30. The small IOL-L2 switches keep each router's internal /24 network active so the BGP <code>network</code> statements have exact routes to advertise.</p>
+        <img class="topology" src="assets/topology.svg" alt="BGP for IPv4 topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Starting State</h2>
+        <p>Confirm the interface state and direct reachability before configuring BGP. BGP neighbor formation depends on TCP reachability to the configured neighbor address.</p>
+        <pre><code>! R1
+show ip interface brief
+show ip route connected
+ping 198.51.100.2
+
+! R2
+show ip interface brief
+show ip route connected
+ping 198.51.100.1</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure R1's BGP Process and Neighbor</h2>
+        <p>Start BGP on R1 in AS 64500 and define R2 as a directly connected eBGP neighbor in AS 64495.</p>
+        <pre><code>! R1
+conf t
+router bgp 64500
+ bgp log-neighbor-changes
+ neighbor 198.51.100.2 remote-as 64495
+end
+
+show bgp ipv4 unicast summary</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Advertise R1's Internal Network</h2>
+        <p>Advertise the exact connected R1 internal network. BGP <code>network</code> statements require a matching route in the local routing table.</p>
+        <pre><code>! R1
+conf t
+router bgp 64500
+ network 192.0.2.0 mask 255.255.255.0
+end
+
+show bgp ipv4 unicast 192.0.2.0</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure R2's BGP Process, Neighbor, and Network</h2>
+        <p>Start BGP on R2 in AS 64495, define R1 as the neighbor, and advertise R2's internal network.</p>
+        <pre><code>! R2
+conf t
+router bgp 64495
+ bgp log-neighbor-changes
+ neighbor 198.51.100.1 remote-as 64500
+ network 203.0.113.0 mask 255.255.255.0
+end</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Verify BGP Tables and Reachability</h2>
+        <p>Verify the BGP neighbor state, BGP table, route installation, AS path, next hop, and end-to-end reachability between advertised networks.</p>
+        <pre><code>! R1
+show bgp ipv4 unicast summary
+show bgp ipv4 unicast
+show ip route bgp
+show ip route 203.0.113.0
+ping 203.0.113.1 source 192.0.2.1
+
+! R2
+show bgp ipv4 unicast summary
+show bgp ipv4 unicast
+show ip route bgp
+show ip route 192.0.2.0
+ping 192.0.2.1 source 203.0.113.1</code></pre>
+        <p>Expected result: R1 learns 203.0.113.0/24 through AS 64495, and R2 learns 192.0.2.0/24 through AS 64500. The local advertised network should show next hop 0.0.0.0 and high local weight on the originating router.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

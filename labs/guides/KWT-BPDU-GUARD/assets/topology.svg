@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="560" viewBox="0 0 1040 560" role="img" aria-labelledby="title desc">
+  <title id="title">BPDU Guard CML topology</title>
+  <desc id="desc">Five IOL-L2 switches. SW1 is the root bridge. SW4 has a PortFast edge port toward SW5 that is used to trigger BPDU Guard.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4f6475"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#092033" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1040" height="560" rx="8" fill="#f4f7f9"/>
+  <g stroke="#526779" stroke-width="4" stroke-linecap="round">
+    <line x1="520" y1="140" x2="520" y2="280"/>
+    <line x1="520" y1="360" x2="245" y2="455"/>
+    <line x1="520" y1="360" x2="795" y2="455"/>
+    <line x1="600" y1="320" x2="850" y2="320"/>
+  </g>
+  <g fill="#263946" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">
+    <text x="535" y="210">Eth0/0</text>
+    <text x="330" y="445">Eth0/2</text>
+    <text x="668" y="445">Eth0/3</text>
+    <text x="694" y="305">Eth0/1</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="410" y="58" width="220" height="84" rx="8" fill="#07233b"/>
+    <rect x="410" y="278" width="220" height="84" rx="8" fill="#005f82"/>
+    <rect x="112" y="414" width="220" height="84" rx="8" fill="#ffffff" stroke="#cbdbe5"/>
+    <rect x="708" y="414" width="220" height="84" rx="8" fill="#ffffff" stroke="#cbdbe5"/>
+    <rect x="812" y="278" width="190" height="84" rx="8" fill="#ffffff" stroke="#cbdbe5"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="520" y="92" fill="#ffffff" font-size="24" font-weight="800">SW1</text>
+    <text x="520" y="122" fill="#b8ecff" font-size="15">Root bridge, priority 24576</text>
+    <text x="520" y="312" fill="#ffffff" font-size="24" font-weight="800">SW4</text>
+    <text x="520" y="342" fill="#c5f2ff" font-size="15">PortFast + BPDU Guard target</text>
+    <text x="222" y="448" fill="#17232f" font-size="24" font-weight="800">SW2</text>
+    <text x="222" y="478" fill="#5c6f7d" font-size="15">Downstream switch</text>
+    <text x="818" y="448" fill="#17232f" font-size="24" font-weight="800">SW3</text>
+    <text x="818" y="478" fill="#5c6f7d" font-size="15">Downstream switch</text>
+    <text x="907" y="312" fill="#17232f" font-size="24" font-weight="800">SW5</text>
+    <text x="907" y="342" fill="#5c6f7d" font-size="15">Starts shutdown</text>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#263946">
+    <rect x="642" y="235" width="334" height="36" rx="6" fill="#e8f7fc" stroke="#8dd7ef"/>
+    <text x="658" y="258">SW4 Eth0/1 is an edge port. SW5 sends the BPDU.</text>
+    <rect x="322" y="18" width="396" height="28" rx="6" fill="#e9f8f3" stroke="#a6e5d3"/>
+    <text x="520" y="38" text-anchor="middle" font-weight="700">All nodes are IOL-L2. Use Ethernet interface names in CML.</text>
+  </g>
+</svg>

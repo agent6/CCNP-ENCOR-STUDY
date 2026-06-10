@@ -1,0 +1,937 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR-EBGP
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#F6F9FB"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -260.0
+  x2: 620.0
+  y2: -70.0
+  z_index: 2
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#FFFFFF"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -30.0
+  x2: 620.0
+  y2: 310.0
+  z_index: 3
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: Starting state has addressing only. Students configure direct eBGP
+    neighbors, advertise prefixes, verify neighbor state, and compare BGP best-path
+    attributes.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 4
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R1-EDGE
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Direct eBGP to R2-ISP-A Ethernet0/0 - AS 65020
+       ip address 10.12.0.1 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Direct eBGP to R3-ISP-B Ethernet0/0 - AS 65020
+       ip address 10.13.0.1 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Enterprise user LAN
+       ip address 10.10.10.1 255.255.255.0
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID seed
+       ip address 1.1.1.1 255.255.255.255
+       no shutdown
+      !
+      ! BGP is intentionally absent. Configure AS 65010 during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: R1-EDGE
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - IOL
+  x: -360
+  y: -170
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R2-ISP-A
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Direct eBGP to R1-EDGE Ethernet0/0 - AS 65010
+       ip address 10.12.0.2 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Direct eBGP to R4-SVC Ethernet0/0 - AS 65040
+       ip address 10.24.0.1 255.255.255.252
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID seed
+       ip address 2.2.2.2 255.255.255.255
+       no shutdown
+      !
+      ! BGP is intentionally absent. Configure AS 65020 during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: iol-xe-17-16-01a
+  label: R2-ISP-A
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - IOL
+  x: -70
+  y: -300
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R3-ISP-B
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Direct eBGP to R1-EDGE Ethernet0/1 - AS 65010
+       ip address 10.13.0.2 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Direct eBGP to R4-SVC Ethernet0/1 - AS 65040
+       ip address 10.34.0.1 255.255.255.252
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID seed
+       ip address 3.3.3.3 255.255.255.255
+       no shutdown
+      !
+      ! BGP is intentionally absent. Configure AS 65020 during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: iol-xe-17-16-01a
+  label: R3-ISP-B
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - IOL
+  x: -70
+  y: 60
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname R4-SVC
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description Direct eBGP to R2-ISP-A Ethernet0/1 - AS 65020
+       ip address 10.24.0.2 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Direct eBGP to R3-ISP-B Ethernet0/1 - AS 65020
+       ip address 10.34.0.2 255.255.255.252
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Application server LAN
+       ip address 10.40.40.1 255.255.255.0
+       no shutdown
+      !
+      interface Loopback0
+       description Router ID seed
+       ip address 4.4.4.4 255.255.255.255
+       no shutdown
+      !
+      interface Loopback100
+       description Service host inside aggregate 198.51.100.0/24
+       ip address 198.51.100.10 255.255.255.255
+       no shutdown
+      !
+      ip route 198.51.100.0 255.255.255.0 Null0 name SAAS_AGGREGATE_SEED
+      !
+      ! BGP is intentionally absent. Configure AS 65040 during the lab.
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: iol-xe-17-16-01a
+  label: R4-SVC
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - IOL
+  x: 300
+  y: -120
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname hq-user
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.10.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.10.10.1
+
+      echo "hq-user" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       hq-user localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: alpine-base-3-21-3
+  label: HQ-USER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - endpoint
+  x: -610
+  y: -170
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname app-server
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.40.40.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.40.40.1
+
+      echo "app-server" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       app-server localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n5
+  image_definition: alpine-base-3-21-3
+  label: APP-SERVER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-EBGP
+  - endpoint
+  x: 560
+  y: -120
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n1
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: R1-EDGE-Ethernet0/0<->R2-ISP-A-Ethernet0/0
+- id: l1
+  n1: n0
+  n2: n2
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R1-EDGE-Ethernet0/1<->R3-ISP-B-Ethernet0/0
+- id: l2
+  n1: n1
+  n2: n3
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: R2-ISP-A-Ethernet0/1<->R4-SVC-Ethernet0/0
+- id: l3
+  n1: n2
+  n2: n3
+  i1: i2
+  i2: i2
+  conditioning: {}
+  label: R3-ISP-B-Ethernet0/1<->R4-SVC-Ethernet0/1
+- id: l4
+  n1: n4
+  n2: n0
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: HQ-USER-eth0<->R1-EDGE-Ethernet0/2
+- id: l5
+  n1: n5
+  n2: n3
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: APP-SERVER-eth0<->R4-SVC-Ethernet0/2
+lab:
+  description: CCNP ENCOR direct eBGP neighbor and best-path lab using IOL routers
+    and Alpine endpoints.
+  notes: Starting state has IPv4 addressing only. Students configure direct eBGP,
+    advertise prefixes, verify neighbor relationships, and compare best-path controls.
+  title: ENCOR-EBGP
+  version: 0.3.0

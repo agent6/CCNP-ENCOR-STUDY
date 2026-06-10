@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPFv3 Traditional Configuration</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>OSPFv3 Traditional Configuration</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: OSPFv2</a>
+      <a href="#task2">Task 2: IPv4 Verification</a>
+      <a href="#task3">Task 3: R1 OSPFv3</a>
+      <a href="#task4">Task 4: R2 OSPFv3</a>
+      <a href="#task5">Task 5: R3 OSPFv3</a>
+      <a href="#task6">Task 6: OSPFv3 Verification</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab configures IPv4 OSPFv2 first, then configures OSPFv3 using the traditional per-interface method. The CML topology starts with IPv4 and IPv6 addressing already applied. OSPFv2, IPv6 unicast routing, and OSPFv3 are intentionally absent.</p>
+        <p>All commands in this guide use the CML interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>OSPFv2 and OSPFv3</span></div>
+          <div class="metric"><b>3 routers</b><span>R1, R2, R3</span></div>
+          <div class="metric"><b>IOL-XE</b><span>Traditional OSPFv3</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R2 is the ABR between area 0 and area 1. R1 connects to area 0, while R3 and the R3 LAN are in area 1.</p>
+        <img class="topology" src="assets/topology.svg" alt="OSPFv3 traditional configuration topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Configure OSPFv2 for IPv4 Reachability</h2>
+        <p>Configure OSPFv2 so the IPv4 topology is reachable before adding OSPFv3.</p>
+        <pre><code>! R1
+conf t
+router ospf 1
+ network 0.0.0.0 255.255.255.255 area 0
+end
+
+! R2
+conf t
+router ospf 1
+ network 172.16.1.0 0.0.0.3 area 0
+ network 192.168.1.0 0.0.0.3 area 1
+ network 2.2.2.2 0.0.0.0 area 1
+end
+
+! R3
+conf t
+router ospf 1
+ network 192.168.1.0 0.0.0.3 area 1
+ network 3.3.3.3 0.0.0.0 area 1
+exit
+interface Ethernet0/1
+ ip ospf 1 area 1
+end</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Verify IPv4 OSPF</h2>
+        <p>On R3, confirm you have inter-area IPv4 routes and can reach R1's loopback.</p>
+        <pre><code>! R3
+show ip ospf neighbor
+show ip route ospf
+show ip route
+ping 1.1.1.1</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure Traditional OSPFv3 on R1</h2>
+        <p>Enable IPv6 routing and attach OSPFv3 process 1 to each IPv6-enabled interface. Suppress adjacency formation on the LAN-facing and loopback interfaces.</p>
+        <pre><code>! R1
+conf t
+ipv6 unicast-routing
+ipv6 cef
+ipv6 router ospf 1
+ router-id 1.1.1.1
+ passive-interface Loopback0
+ passive-interface Ethernet0/0
+exit
+interface Ethernet0/0
+ ipv6 ospf 1 area 0
+interface Ethernet0/1
+ ipv6 ospf 1 area 0
+interface Loopback0
+ ipv6 ospf 1 area 0
+end</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure Traditional OSPFv3 on R2</h2>
+        <p>Make R2 the ABR between area 0 and area 1.</p>
+        <pre><code>! R2
+conf t
+ipv6 unicast-routing
+ipv6 cef
+ipv6 router ospf 1
+ router-id 2.2.2.2
+exit
+interface Ethernet0/0
+ ipv6 ospf 1 area 0
+interface Ethernet0/1
+ ipv6 ospf 1 area 1
+interface Loopback0
+ ipv6 ospf 1 area 1
+end</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Configure Traditional OSPFv3 on R3</h2>
+        <p>Place R3 in area 1 and make the LAN and loopback passive.</p>
+        <pre><code>! R3
+conf t
+ipv6 unicast-routing
+ipv6 cef
+ipv6 router ospf 1
+ router-id 3.3.3.3
+ passive-interface Ethernet0/1
+ passive-interface Loopback0
+exit
+interface Ethernet0/0
+ ipv6 ospf 1 area 1
+interface Ethernet0/1
+ ipv6 ospf 1 area 1
+interface Loopback0
+ ipv6 ospf 1 area 1
+end</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify OSPFv3 Routes, Neighbors, and Database</h2>
+        <p>On R3, verify IPv6 inter-area routes, the OSPFv3 neighbor, the interface state, and the OSPFv3 database.</p>
+        <pre><code>! R3
+show ipv6 route
+show ipv6 route ospf
+show ipv6 ospf neighbor
+show ipv6 ospf interface Ethernet0/0
+show ipv6 ospf database
+ping 2005::1111</code></pre>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

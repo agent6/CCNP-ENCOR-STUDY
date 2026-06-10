@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify CoPP</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify CoPP</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Classify Control Plane Traffic</a>
+      <a href="#task3">Task 3: Apply CoPP</a>
+      <a href="#task4">Task 4: Verify Counters</a>
+      <a href="#task5">Task 5: Protect Routing and Management</a>
+      <a href="#task6">Task 6: Tune and Troubleshoot</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 5.2.b: configure and verify Control Plane Policing. You will build a CoPP policy that protects R1-EDGE from excessive traffic destined to the router itself while preserving data-plane forwarding and routing stability.</p>
+        <p>CCNP-level value is in understanding what is punted to the route processor, what stays in the data plane, how ACLs classify traffic for MQC, and how policers behave under test. You will separate SSH, ICMP, OSPF, and remaining control-plane traffic into explicit classes, then verify each class with counters and operational tests.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 5.2.b</b><span>CoPP</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>Router control-plane protection</span></div>
+          <div class="metric"><b>6 tasks</b><span>Classify, police, verify, tune</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>ADMIN-PC and ATTACK-PC sit on separate VLANs behind SW-ACCESS. R1-EDGE forms an OSPF adjacency with R2-WAN and forwards traffic to APP-SERVER. The starting CML topology has IP connectivity, SSH, and OSPF already working. CoPP is intentionally absent.</p>
+        <img class="topology" src="assets/copp-topology.svg" alt="CoPP topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Control Plane and Data Plane Behavior</h2>
+        <p>Verify what reaches the router control plane and what is only forwarded through the router. CoPP affects packets destined to, sourced by, or processed by the router CPU; it should not block ordinary transit traffic unless that traffic must be punted.</p>
+        <pre><code>! R1-EDGE
+show ip interface brief
+show ip ospf neighbor
+show ip route ospf
+show control-plane
+show policy-map control-plane
+show running-config | section control-plane
+show users</code></pre>
+        <p>From ADMIN-PC and ATTACK-PC, test traffic to R1-EDGE and through R1-EDGE:</p>
+        <pre><code>ping -c 5 10.10.10.1
+ping -c 5 10.10.20.1
+ping -c 5 10.30.30.10
+wget -O- http://10.30.30.10
+ssh admin@10.10.10.1</code></pre>
+        <p>From R1-EDGE, confirm the routing protocol is healthy before policing it:</p>
+        <pre><code>show ip ospf neighbor detail
+show ip protocols
+show ip cef 10.30.30.10
+ping 10.30.30.10 source Loopback0</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Classify Control Plane Traffic</h2>
+        <p>Use ACLs only as match criteria for MQC classes. In this role, an ACL permit means "classify this packet into the class"; it is not the forwarding decision. Excluded or denied lines simply do not match that class.</p>
+        <pre><code>! R1-EDGE
+conf t
+ip access-list extended COPP-MGMT-SSH
+ remark Trusted SSH sessions to R1-EDGE interface addresses
+ permit tcp host 10.10.10.10 any eq 22
+ permit tcp host 10.10.20.10 any eq 22
+!
+ip access-list extended COPP-ICMP
+ remark ICMP destined to R1-EDGE interface and loopback addresses
+ permit icmp any host 10.10.10.1
+ permit icmp any host 10.10.20.1
+ permit icmp any host 10.12.12.1
+ permit icmp any host 1.1.1.1
+!
+ip access-list extended COPP-OSPF
+ remark OSPF hellos and updates must stay available
+ permit ospf any any
+!
+class-map match-any CM-COPP-ROUTING
+ match access-group name COPP-OSPF
+class-map match-any CM-COPP-MGMT
+ match access-group name COPP-MGMT-SSH
+class-map match-any CM-COPP-ICMP
+ match access-group name COPP-ICMP
+end
+!
+show class-map
+show access-lists COPP-MGMT-SSH
+show access-lists COPP-ICMP
+show access-lists COPP-OSPF</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> CoPP classification ACLs should usually match traffic destined to the device, not traffic merely crossing the device. A transit HTTP flow to APP-SERVER should not match an ICMP or SSH CoPP class.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Build and Apply the CoPP Policy</h2>
+        <p>Create a conservative input policy. The exact rates in a production network come from platform guidance and measured traffic baselines; in this lab, the rates are intentionally low enough that you can see counters move without breaking OSPF.</p>
+        <pre><code>! R1-EDGE
+conf t
+policy-map PM-COPP-INPUT
+ class CM-COPP-ROUTING
+  police 256000 conform-action transmit exceed-action transmit
+ class CM-COPP-MGMT
+  police 128000 conform-action transmit exceed-action drop
+ class CM-COPP-ICMP
+  police 32000 conform-action transmit exceed-action drop
+ class class-default
+  police 64000 conform-action transmit exceed-action drop
+!
+control-plane
+ service-policy input PM-COPP-INPUT
+end
+!
+show running-config | section policy-map PM-COPP-INPUT
+show running-config | section control-plane
+show policy-map control-plane</code></pre>
+        <p>Test again from ADMIN-PC and ATTACK-PC. SSH from ADMIN-PC should work. ICMP to R1-EDGE should work under normal load. Transit HTTP to APP-SERVER should continue to work.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Verify Counters and Policing Behavior</h2>
+        <p>Use short, controlled tests. You are trying to prove classification and policing, not overwhelm the lab.</p>
+        <pre><code>! R1-EDGE
+clear counters
+show policy-map control-plane
+show access-lists COPP-MGMT-SSH
+show access-lists COPP-ICMP
+show access-lists COPP-OSPF</code></pre>
+        <p>Generate control-plane traffic:</p>
+        <pre><code>! ATTACK-PC
+ping -c 30 -s 1200 10.10.20.1
+ping -c 30 1.1.1.1
+ssh admin@10.10.20.1
+
+! ADMIN-PC
+ssh admin@10.10.10.1
+ping -c 10 10.10.10.1</code></pre>
+        <p>Then verify on R1-EDGE:</p>
+        <pre><code>show policy-map control-plane
+show access-lists
+show processes cpu sorted | exclude 0.00
+show logging | include POLICE|CoPP|CP|SSH|OSPF</code></pre>
+        <p>Expected result: class counters increment for matched traffic. Some ICMP packets may be dropped if the offered rate exceeds the policer. OSPF neighbors should remain full.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Protect Routing and Management Without Breaking Operations</h2>
+        <p>CoPP policies often fail because a useful protocol is missing from the policy, or because class-default is too strict. Confirm the routing class handles OSPF and the management class handles SSH while untrusted sources fall into a lower-priority class.</p>
+        <pre><code>! R1-EDGE
+show ip ospf neighbor
+show policy-map control-plane class CM-COPP-ROUTING
+show policy-map control-plane class CM-COPP-MGMT
+show policy-map control-plane class class-default
+show tcp brief | include :22</code></pre>
+        <p>Optional refinement: split trusted and untrusted SSH so scans are limited more aggressively than known admin hosts.</p>
+        <pre><code>conf t
+ip access-list extended COPP-UNTRUSTED-SSH
+ deny tcp host 10.10.10.10 any eq 22
+ deny tcp host 10.10.20.10 any eq 22
+ permit tcp any any eq 22
+!
+class-map match-any CM-COPP-UNTRUSTED-SSH
+ match access-group name COPP-UNTRUSTED-SSH
+!
+policy-map PM-COPP-INPUT
+ class CM-COPP-UNTRUSTED-SSH
+  police 16000 conform-action transmit exceed-action drop
+end
+!
+show policy-map control-plane</code></pre>
+        <p>ACL deny statements in the untrusted SSH classifier exclude trusted sources from that class; they do not deny the traffic by themselves. This distinction matters when troubleshooting CoPP.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Tune and Troubleshoot CoPP</h2>
+        <p>Use symptoms to isolate classification, attachment, rate, and protocol gaps.</p>
+        <ol>
+          <li>No counters increment: traffic is transit traffic, the ACL does not match router-destined addresses, or the service policy is not attached under <code>control-plane</code>.</li>
+          <li>SSH fails from trusted hosts: the management class ACL misses the source, destination, or TCP port direction.</li>
+          <li>OSPF flaps: routing traffic is missing or class-default is too restrictive.</li>
+          <li>ICMP tests behave differently than HTTP tests: ICMP to the router is control-plane traffic; HTTP through the router is data-plane traffic.</li>
+          <li>Policy-map counters show drops but ACL counters do not: the packet may match another class first, or the ACL is not the match condition for that class.</li>
+        </ol>
+        <pre><code>show policy-map control-plane
+show running-config | section class-map
+show running-config | section policy-map
+show running-config | section control-plane
+show ip ospf neighbor detail
+show access-lists
+show platform software fed active punt cause summary
+show processes cpu history</code></pre>
+        <div class="callout"><p><strong>Operational note:</strong> Platform support and exact punt visibility commands vary. If a platform-specific punt command is unavailable, use <code>show policy-map control-plane</code>, protocol state, and controlled traffic tests as the authoritative evidence for this lab.</p></div>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Classification</b><span>SSH, ICMP, OSPF, and default control-plane traffic are separated into intentional classes.</span></div>
+          <div class="check"><b>Attachment</b><span>The policy is applied under <code>control-plane</code> as an input service policy.</span></div>
+          <div class="check"><b>Verification</b><span>You can prove matches, drops, and allowed traffic with policy-map counters and live tests.</span></div>
+          <div class="check"><b>Operations</b><span>OSPF remains full and transit traffic to APP-SERVER continues while router-destined traffic is policed.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/routers/ios/config/17-x/qos/b-quality-of-service/m_qos-plcshp-ctrl-pln-plc-0.html">Cisco IOS XE Quality of Service Configuration Guide: Control Plane Policing</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/qos_plcshp/configuration/xe-16/qos-plcshp-xe-16-book/qos-plcshp-ctrl-pln-plc.html">Cisco IOS XE QoS Policing and Shaping: Control Plane Policing</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 5.2.b asks candidates to configure and verify CoPP. This lab uses MQC class maps, policy maps, ACL-based classification, control-plane service-policy attachment, and operational counter verification.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

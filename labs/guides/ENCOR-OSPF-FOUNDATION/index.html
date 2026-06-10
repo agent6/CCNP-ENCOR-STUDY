@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPFv2 and OSPFv3 Foundations</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>OSPFv2 and OSPFv3 Foundations</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: OSPFv2</a>
+      <a href="#task3">Task 3: OSPFv3</a>
+      <a href="#task4">Task 4: Passive Interfaces</a>
+      <a href="#task5">Task 5: Verification</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 3.2.b by configuring simple OSPFv2 and OSPFv3 environments and interpreting neighbor state, router IDs, passive interfaces, and route installation. You will use both network-statement and interface-level styles so you can recognize either in the field.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>OSPFv2/v3</span></div>
+          <div class="metric"><b>IOL routers</b><span>Dual-stack routing</span></div>
+          <div class="metric"><b>5 tasks</b><span>Configure and verify</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <img class="topology" src="../ENCOR-OSPF/assets/ospf-topology.svg" alt="OSPF topology">
+      </section>
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Underlay and Router IDs</h2>
+        <p>Confirm all connected interfaces are up and assign stable router IDs. OSPFv3 also needs a router ID even when routing IPv6.</p>
+        <pre><code>show ip interface brief
+show ipv6 interface brief
+show ip route connected
+show ipv6 route connected
+show cdp neighbors detail</code></pre>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Configure OSPFv2 Area 0</h2>
+        <p>Use classic OSPFv2 network statements on the backbone, then compare with interface-level <code>ip ospf</code> syntax on one link.</p>
+        <pre><code>router ospf 10
+ router-id 1.1.1.1
+ passive-interface default
+ no passive-interface ethernet0/0
+ network 10.0.12.0 0.0.0.255 area 0
+!
+interface ethernet0/1
+ ip ospf 10 area 0
+ ip ospf network point-to-point</code></pre>
+        <p>Know both configuration styles. Network statements select interfaces by address; interface-level OSPF makes the area membership explicit on the interface.</p>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Configure OSPFv3</h2>
+        <p>Enable IPv6 unicast routing and configure OSPFv3 for IPv6. Depending on IOS XE train, you may see classic interface OSPFv3 or address-family OSPFv3.</p>
+        <pre><code>ipv6 unicast-routing
+ipv6 router ospf 10
+ router-id 1.1.1.1
+ passive-interface default
+ no passive-interface ethernet0/0
+!
+interface ethernet0/0
+ ipv6 ospf 10 area 0</code></pre>
+        <p>Alternative style:</p>
+        <pre><code>router ospfv3 10
+ router-id 1.1.1.1
+ address-family ipv6 unicast
+  passive-interface default
+  no passive-interface ethernet0/0
+ exit-address-family
+!
+interface ethernet0/0
+ ospfv3 10 ipv6 area 0</code></pre>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Passive Interfaces</h2>
+        <p>Advertise user LANs without sending Hellos toward endpoints. Use <code>passive-interface default</code> and explicitly enable transit links.</p>
+        <pre><code>show ip ospf interface brief
+show ipv6 ospf interface brief
+show ip protocols
+show ipv6 protocols</code></pre>
+        <p>A passive OSPF interface still advertises its connected prefix. It simply does not form neighbor adjacencies on that interface.</p>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Verification and Defect Repair</h2>
+        <ol>
+          <li>Fix a neighbor stuck in INIT because Hellos are not reciprocated.</li>
+          <li>Fix duplicate router IDs that prevent stable adjacency.</li>
+          <li>Fix a LAN that is missing from OSPF because it was never selected by the process.</li>
+        </ol>
+        <pre><code>show ip ospf neighbor detail
+show ipv6 ospf neighbor detail
+show ip route ospf
+show ipv6 route ospf
+show ip ospf database router
+debug ip ospf adj</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>OSPFv2</b><span>IPv4 OSPF neighbors form and routes install.</span></div>
+          <div class="check"><b>OSPFv3</b><span>IPv6 OSPF neighbors form and routes install.</span></div>
+          <div class="check"><b>Passive intent</b><span>Endpoint LANs advertise without forming neighbors.</span></div>
+          <div class="check"><b>Operational proof</b><span>Neighbor, database, route, and ping outputs all agree.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/7039-1.html">Cisco OSPF design and implementation reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/open-shortest-path-first-ospf/13697-10.html">Cisco OSPF neighbor states reference</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

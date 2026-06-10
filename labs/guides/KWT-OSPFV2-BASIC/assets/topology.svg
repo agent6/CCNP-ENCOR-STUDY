@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560" role="img" aria-labelledby="title desc">
+  <title id="title">OSPFv2 Basic Configuration CML topology</title>
+  <desc id="desc">Three IOL routers in a two-area OSPFv2 topology with two IOL-L2 switches keeping the LAN interfaces up.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#092033" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="1080" height="560" rx="8" fill="#f4f7f9"/>
+  <g stroke="#526779" stroke-width="4" stroke-linecap="round">
+    <line x1="245" y1="280" x2="510" y2="280"/>
+    <line x1="570" y1="280" x2="835" y2="280"/>
+    <line x1="210" y1="360" x2="210" y2="456"/>
+    <line x1="870" y1="360" x2="870" y2="456"/>
+  </g>
+  <g fill="#263946" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700">
+    <text x="330" y="258">172.16.1.0/30</text>
+    <text x="670" y="258">192.168.1.0/30</text>
+    <text x="224" y="418">10.1.1.0/24</text>
+    <text x="884" y="418">10.2.2.0/24</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="120" y="228" width="180" height="104" rx="8" fill="#07233b"/>
+    <rect x="450" y="228" width="180" height="104" rx="8" fill="#005f82"/>
+    <rect x="780" y="228" width="180" height="104" rx="8" fill="#07233b"/>
+    <rect x="96" y="456" width="228" height="70" rx="8" fill="#ffffff" stroke="#cbdbe5"/>
+    <rect x="756" y="456" width="228" height="70" rx="8" fill="#ffffff" stroke="#cbdbe5"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" text-anchor="middle">
+    <text x="210" y="262" fill="#ffffff" font-size="25" font-weight="800">R1</text>
+    <text x="210" y="291" fill="#b8ecff" font-size="15">Area 0</text>
+    <text x="210" y="316" fill="#b8ecff" font-size="15">Lo0 1.1.1.1/32</text>
+    <text x="540" y="262" fill="#ffffff" font-size="25" font-weight="800">R2</text>
+    <text x="540" y="291" fill="#c5f2ff" font-size="15">ABR: Area 0 / Area 1</text>
+    <text x="540" y="316" fill="#c5f2ff" font-size="15">Lo0 2.2.2.2/32</text>
+    <text x="870" y="262" fill="#ffffff" font-size="25" font-weight="800">R3</text>
+    <text x="870" y="291" fill="#b8ecff" font-size="15">Area 1</text>
+    <text x="870" y="316" fill="#b8ecff" font-size="15">Lo0 3.3.3.3/32</text>
+    <text x="210" y="486" fill="#17232f" font-size="20" font-weight="800">SW-R1-LAN</text>
+    <text x="210" y="510" fill="#5c6f7d" font-size="14">keeps R1 LAN up</text>
+    <text x="870" y="486" fill="#17232f" font-size="20" font-weight="800">SW-R3-LAN</text>
+    <text x="870" y="510" fill="#5c6f7d" font-size="14">keeps R3 LAN up</text>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#263946">
+    <rect x="302" y="42" width="476" height="34" rx="6" fill="#e9f8f3" stroke="#a6e5d3"/>
+    <text x="540" y="64" text-anchor="middle" font-weight="700">Starting state: IPv4 addressing only. Configure OSPFv2 during the lab.</text>
+    <rect x="310" y="94" width="460" height="44" rx="6" fill="#e8f7fc" stroke="#8dd7ef"/>
+    <text x="540" y="121" text-anchor="middle">R2 becomes the ABR between area 0 and area 1.</text>
+  </g>
+</svg>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify ACLs</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify ACLs</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Extended ACL</a>
+      <a href="#task3">Task 3: Named ACL Maintenance</a>
+      <a href="#task4">Task 4: Object Groups</a>
+      <a href="#task5">Task 5: Standard ACL and VTY</a>
+      <a href="#task6">Task 6: Verification</a>
+      <a href="#task7">Task 7: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 5.2.a: configure and verify ACLs. You will use extended ACLs to filter application traffic, named ACL editing to correct policy order, object groups to simplify repeated entries, and standard ACLs to restrict device management access.</p>
+        <p>CCNP-level value is in placement, direction, and verification. A correct ACE in the wrong direction is still wrong. A permit without the required return or supporting traffic can look like a routing issue. You will prove behavior with traffic tests, ACL hit counters, logging, sequence numbers, and interface attachment state.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 5.2.a</b><span>ACLs</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>Routed and switched policy</span></div>
+          <div class="metric"><b>7 tasks</b><span>Configure, test, fix, verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>USER-PC and ADMIN-PC connect through SW-ACCESS to R1-EDGE using VLAN 10 and VLAN 20 subinterfaces. APP-SERVER represents an internal application segment. DMZ-HOST represents a restricted host. The starting CML topology has routing and service reachability only; ACLs are intentionally absent.</p>
+        <img class="topology" src="assets/acl-topology.svg" alt="ACL topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Connectivity and Policy Requirements</h2>
+        <p>Verify the network before adding policy. Record what works so ACL failures do not get confused with routing or host-service problems.</p>
+        <pre><code>! R1-EDGE
+show ip interface brief
+show ip route
+show running-config | include access-list|ip access-group|access-class
+show access-lists
+show ip interface Ethernet0/0.10
+show ip interface Ethernet0/0.20
+show ip interface Ethernet0/1
+show ip interface Ethernet0/2</code></pre>
+        <p>From USER-PC and ADMIN-PC, test all services:</p>
+        <pre><code>ping -c 3 10.30.30.10
+wget -O- http://10.30.30.10
+ping -c 3 10.40.40.10
+wget -O- http://10.40.40.10
+traceroute 10.30.30.10</code></pre>
+        <p>Policy goal:</p>
+        <ul>
+          <li>USER-PC may reach APP-SERVER on HTTP and ICMP only.</li>
+          <li>USER-PC must not reach DMZ-HOST.</li>
+          <li>ADMIN-PC may manage R1-EDGE by SSH and may reach both server networks.</li>
+          <li>All other client-to-server traffic should be denied and visible in ACL counters.</li>
+        </ul>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure an Extended Named ACL Near the Source</h2>
+        <p>Filter USER-PC traffic as it enters R1-EDGE on VLAN 10. Extended ACLs should generally be placed close to the source because they can match source, destination, and transport.</p>
+        <pre><code>! R1-EDGE
+conf t
+ip access-list extended USER-IN
+ remark Allow USER-PC to APP-SERVER HTTP and ICMP only
+ permit tcp host 10.10.10.10 host 10.30.30.10 eq 80
+ permit icmp host 10.10.10.10 host 10.30.30.10 echo
+ permit icmp host 10.30.30.10 host 10.10.10.10 echo-reply
+ deny ip host 10.10.10.10 10.40.40.0 0.0.0.255 log
+ deny ip host 10.10.10.10 any log
+ permit ip any any
+exit
+interface Ethernet0/0.10
+ ip access-group USER-IN in
+end
+!
+show access-lists USER-IN
+show ip interface Ethernet0/0.10 | include access list</code></pre>
+        <p>Test from USER-PC. HTTP and ping to APP-SERVER should work. DMZ-HOST should fail. Other traffic should increment deny counters.</p>
+        <div class="callout"><p><strong>Depth check:</strong> The final <code>permit ip any any</code> protects other traffic on the interface while this ACL focuses on USER-PC. Without it, the implicit deny blocks everything not explicitly permitted.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Modify ACL Order with Sequence Numbers</h2>
+        <p>Named ACLs are maintained by sequence number. Add a temporary mistake, observe the impact, then resequence and correct the ACL without removing it from the interface.</p>
+        <pre><code>! R1-EDGE
+conf t
+ip access-list extended USER-IN
+ 5 deny ip host 10.10.10.10 host 10.30.30.10 log
+end
+!
+show access-lists USER-IN</code></pre>
+        <p>Retest HTTP to APP-SERVER from USER-PC. It should fail because the earlier deny wins. Remove the bad line and resequence:</p>
+        <pre><code>conf t
+ip access-list extended USER-IN
+ no 5
+exit
+ip access-list resequence USER-IN 10 10
+end
+!
+show access-lists USER-IN</code></pre>
+        <p>Retest and confirm counters increment on the intended permit lines.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Use Object Groups for Server Policy</h2>
+        <p>Object groups reduce repeated ACEs and make policy intent easier to read. Configure ADMIN-PC access to both server networks using network and service object groups.</p>
+        <pre><code>! R1-EDGE
+conf t
+object-group network SERVER-NETS
+ 10.30.30.0 255.255.255.0
+ 10.40.40.0 255.255.255.0
+!
+object-group service WEB-ICMP
+ tcp eq www
+ icmp
+!
+ip access-list extended ADMIN-IN
+ remark ADMIN-PC may reach server networks for web and ICMP
+ permit object-group WEB-ICMP host 10.10.20.10 object-group SERVER-NETS
+ deny ip host 10.10.20.10 any log
+ permit ip any any
+!
+interface Ethernet0/0.20
+ ip access-group ADMIN-IN in
+end
+!
+show object-group
+show access-lists ADMIN-IN
+show ip interface Ethernet0/0.20 | include access list</code></pre>
+        <p>If your image does not support service object groups in ACLs, replace the object-group ACE with explicit TCP/80 and ICMP permit statements. The verification and placement logic are the same.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Restrict VTY Access with a Standard ACL</h2>
+        <p>Use a standard ACL for source-only management access to R1-EDGE. Standard ACLs are appropriate here because the VTY line only needs to identify permitted source addresses.</p>
+        <pre><code>! R1-EDGE
+conf t
+ip domain-name encor.local
+username admin privilege 15 secret Admin123!
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip access-list standard MGMT-SOURCES
+ permit host 10.10.20.10
+ deny any log
+!
+line vty 0 4
+ login local
+ transport input ssh
+ access-class MGMT-SOURCES in
+line vty 5 15
+ login local
+ transport input ssh
+ access-class MGMT-SOURCES in
+end
+!
+show access-lists MGMT-SOURCES
+show running-config | section line vty
+show ip ssh</code></pre>
+        <p>ADMIN-PC should be allowed to SSH to R1-EDGE. USER-PC should be denied by the VTY access-class even if the password is correct.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify ACL Behavior, Counters, and Logs</h2>
+        <p>Generate controlled traffic, then inspect counters. Clear counters only when you need a clean test window.</p>
+        <pre><code>! R1-EDGE
+clear access-list counters USER-IN
+clear access-list counters ADMIN-IN
+clear access-list counters MGMT-SOURCES
+show access-lists
+show ip interface Ethernet0/0.10
+show ip interface Ethernet0/0.20
+show logging | include SEC|list|denied|ACL|ACCESS</code></pre>
+        <p>Traffic matrix:</p>
+        <ul>
+          <li>USER-PC to APP-SERVER HTTP: permitted.</li>
+          <li>USER-PC to APP-SERVER ICMP: permitted.</li>
+          <li>USER-PC to DMZ-HOST: denied and counted.</li>
+          <li>ADMIN-PC to APP-SERVER HTTP/ICMP: permitted.</li>
+          <li>ADMIN-PC to DMZ-HOST HTTP/ICMP: permitted.</li>
+          <li>USER-PC SSH to R1-EDGE: denied by VTY access-class.</li>
+        </ul>
+        <pre><code>show access-lists USER-IN
+show access-lists ADMIN-IN
+show access-lists MGMT-SOURCES
+show running-config interface Ethernet0/0.10
+show running-config interface Ethernet0/0.20</code></pre>
+      </section>
+
+      <section id="task7" class="task">
+        <h2>Task 7: Troubleshoot ACL Defects</h2>
+        <p>Work from symptom to placement, direction, order, match criteria, and implicit deny.</p>
+        <ol>
+          <li>Traffic is blocked because the ACL is applied inbound when you expected outbound, or vice versa.</li>
+          <li>A deny ACE is above a permit ACE, so the permit never matches.</li>
+          <li>The wildcard mask is wrong, matching a broader network than intended.</li>
+          <li>The ACL permits TCP/80 but the test uses ICMP or another protocol.</li>
+          <li>The implicit deny is blocking unrelated traffic because there is no explicit final permit.</li>
+          <li>VTY access-class blocks management even though the data-plane ACL permits the source.</li>
+          <li>Counters do not increment because traffic is taking a different interface or never reaches the router.</li>
+        </ol>
+        <pre><code>show access-lists
+show ip interface
+show running-config | include access-group|access-class
+show running-config | section ip access-list
+show cef exact-route 10.10.10.10 10.30.30.10
+show logging | include denied|list|ACL
+debug ip packet detail 101
+undebug all</code></pre>
+        <p>Use packet debugs sparingly. ACL counters, interface attachment, and targeted traffic tests usually provide enough evidence without creating excessive control-plane load.</p>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Extended ACL</b><span>USER-IN permits only intended traffic and denies restricted destinations with counters.</span></div>
+          <div class="check"><b>Maintenance</b><span>You can edit, resequence, and explain named ACL order without removing policy from the interface.</span></div>
+          <div class="check"><b>Object Groups</b><span>ADMIN-IN uses object groups or equivalent explicit ACEs with correct behavior.</span></div>
+          <div class="check"><b>Management</b><span>VTY access-class allows only the management source and rejects other sources.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/routers/ios/config/17-x/sec-vpn/b-security-vpn/m_sec-access-list-ov-0.html">Cisco IOS XE Security and VPN Configuration Guide: IP Access List Overview</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 5.2.a asks candidates to configure and verify ACLs. This lab covers data-plane ACLs, named ACL maintenance, object-group policy, and management access-class controls because each uses ACL logic differently.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

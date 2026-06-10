@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Interpret QoS Configurations</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
+      <div>
+        <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
+        <h1>Interpret QoS Configurations and Counters</h1>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#plan">QoS Policy Map</a>
+      <a href="#task1">Task 1: Read the MQC</a>
+      <a href="#task2">Task 2: Classify and Mark</a>
+      <a href="#task3">Task 3: Queueing vs Policing</a>
+      <a href="#task4">Task 4: Direction and Attachment</a>
+      <a href="#task5">Task 5: Defect Analysis</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 1.4: interpret QoS configurations. The starting CML topology already contains QoS policy objects and service-policy attachments. Your job is to read the configuration, predict forwarding treatment, generate test traffic, interpret counters, and identify defects.</p>
+        <p>This is not a copy-paste QoS build lab. CCNP-level value comes from explaining what the device is actually doing: which traffic matches a class, which direction the policy applies, whether a command marks, queues, shapes, or polices, and whether the counters support the conclusion.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 1.4</b><span>Interpret QoS configs</span></div>
+          <div class="metric"><b>3 routers</b><span>IOL WAN path</span></div>
+          <div class="metric"><b>5 tasks</b><span>Interpret, validate, repair</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>HQ-RTR classifies traffic from HQ-VOICE and HQ-DATA toward the branch. WAN-RTR is only transit. BR-RTR has a return policy with intentional defects. Endpoints are Alpine hosts so you can generate DSCP-marked ICMP traffic with <code>ping -Q</code>.</p>
+        <img class="topology" src="assets/qos-topology.svg" alt="QoS interpretation topology">
+      </section>
+
+      <section id="plan" class="panel">
+        <h2>QoS Policy Map</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Class</th><th>Expected Match</th><th>Expected Treatment</th><th>Interpretation Focus</th></tr></thead>
+            <tbody>
+              <tr><td>VOICE-EF</td><td>DSCP EF</td><td>Priority queue, strict bandwidth cap</td><td>Low latency is not unlimited bandwidth.</td></tr>
+              <tr><td>VIDEO-AF41</td><td>DSCP AF41</td><td>Guaranteed bandwidth</td><td>Bandwidth command reserves during congestion only.</td></tr>
+              <tr><td>CRITICAL-DATA</td><td>ACL-selected app traffic</td><td>DSCP AF21 or bandwidth class</td><td>ACL match and DSCP match are different classification methods.</td></tr>
+              <tr><td>SCAVENGER</td><td>DSCP CS1</td><td>Policed or low bandwidth</td><td>Policing drops or remarks immediately; queueing schedules only under congestion.</td></tr>
+              <tr><td>class-default</td><td>Everything else</td><td>Best effort</td><td>Default class counters prove misses as much as matches.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Read the MQC Structure</h2>
+        <p>Map each class-map to each policy-map and identify whether the policy is used for classification, marking, queueing, shaping, or policing.</p>
+        <pre><code>show class-map
+show policy-map
+show running-config | section class-map
+show running-config | section policy-map
+show running-config | include service-policy</code></pre>
+        <p>Document the policy hierarchy. A nested policy means the parent may shape while the child queues. A flat policy has only one level of class treatment.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Classify and Mark Traffic</h2>
+        <p>Generate marked test traffic from the Alpine hosts and predict which class should increment. Remember that Linux <code>ping -Q</code> takes the full TOS byte, not the DSCP number alone.</p>
+        <pre><code># HQ-VOICE host
+ping -Q 0xb8 -c 20 10.20.10.10
+
+# HQ-DATA host
+ping -Q 0x88 -c 20 10.20.10.10
+ping -Q 0x48 -c 20 10.20.10.10
+ping -Q 0x20 -c 20 10.20.10.10
+
+# Router verification
+show policy-map interface ethernet0/0 output
+show access-lists QOS-CRITICAL-DATA
+show ip cef 10.20.10.10</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> DSCP EF is decimal 46, but the TOS byte for <code>ping -Q</code> is 46 shifted left two bits: <code>0xb8</code>. AF41 is DSCP 34, or <code>0x88</code>. AF21 is DSCP 18, or <code>0x48</code>. CS1 is DSCP 8, or <code>0x20</code>.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Queueing vs Policing</h2>
+        <p>Interpret what the policy does without assuming every class enforces the same behavior. Compare <code>priority</code>, <code>bandwidth</code>, <code>shape average</code>, <code>police</code>, and <code>set dscp</code>.</p>
+        <pre><code>show policy-map WAN-EDGE-OUT
+show policy-map interface ethernet0/0 output class VOICE-EF
+show policy-map interface ethernet0/0 output class SCAVENGER
+show interfaces ethernet0/0 | include rate|drops|queue
+show platform hardware qfp active feature qos interface ethernet0/0 output</code></pre>
+        <p>Explain whether packet drops would appear because of congestion management, policing, shaping queue depth, physical interface drops, or no match at all.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Direction and Attachment</h2>
+        <p>Find every service-policy attachment and determine whether it is placed in the right direction for the expected traffic path.</p>
+        <pre><code>show running-config interface ethernet0/0
+show running-config interface ethernet0/1
+show running-config interface ethernet0/2
+show policy-map interface
+show ip cef exact-route 10.10.10.10 10.20.10.10</code></pre>
+        <p>A correctly written policy-map does nothing until it is attached to the right interface and direction. An output queueing policy attached to a LAN interface may show counters but still not protect the WAN bottleneck.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Defect Analysis</h2>
+        <p>Use the running configuration and counters to locate these defects. Repair only after you can explain the evidence.</p>
+        <ol>
+          <li>BR-RTR has a return QoS policy attached in the wrong direction.</li>
+          <li>BR-RTR classifies voice with a <code>match-all</code> class that requires both DSCP EF and an RTP ACL, so EF ICMP test traffic falls into class-default.</li>
+          <li>HQ-RTR marks data correctly on ingress, but a later class map keys only on an ACL, so DSCP AF21 tests do not hit the expected class.</li>
+          <li>A low-priority class uses <code>police</code>, not <code>bandwidth</code>, so drops can appear even without interface congestion.</li>
+        </ol>
+        <pre><code>show policy-map interface ethernet0/0 output
+show policy-map interface ethernet0/0 input
+show running-config | section class-map match
+show running-config | section policy-map
+show access-lists
+clear counters ethernet0/0</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>MQC map</b><span>You can trace class-map to policy-map to service-policy attachment.</span></div>
+          <div class="check"><b>Counter proof</b><span>You can generate marked traffic and identify the matching class counters.</span></div>
+          <div class="check"><b>Treatment clarity</b><span>You can distinguish marking, queueing, shaping, and policing behavior.</span></div>
+          <div class="check"><b>Defect evidence</b><span>You can prove a QoS issue from direction, match logic, and counters.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/quality-of-service-qos/qos-packet-marking/10103-dscpvalues.html">Cisco DSCP and precedence values reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/quality-of-service-qos/qos-policing/19645-policevsshape.html">Cisco policing versus shaping reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR asks candidates to interpret QoS configurations, so this lab emphasizes reading and validating existing policy behavior. Full QoS design and every platform-specific queueing implementation are broader than this topic.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: IP SLA Path Selection</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>IP SLA Path Selection</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline Path</a>
+      <a href="#task2">Task 2: IP SLA Operation</a>
+      <a href="#task3">Task 3: Tracking and Routes</a>
+      <a href="#task4">Task 4: Verify Primary Path</a>
+      <a href="#task5">Task 5: Force Backup Path</a>
+      <a href="#task6">Task 6: Final Verification</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab uses IP SLA and object tracking to select the best path from R1 to the server network. The starting CML topology has OSPF reachability and naturally prefers BB2. You will add tracked static routes so R1 uses BB2 while measured latency is acceptable and fails over to BB1 when the IP SLA threshold is exceeded.</p>
+        <p>All commands in this guide use the CML interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.4</b><span>IP SLA</span></div>
+          <div class="metric"><b>5 routers</b><span>PC, R1, BB1, BB2, SERVER</span></div>
+          <div class="metric"><b>IOL-XE</b><span>Tracked static route</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 reaches the server network through BB1 or BB2. OSPF makes BB2 the preferred path at baseline. The IP SLA operation probes BB2 and controls whether a tracked static route through BB2 remains installed.</p>
+        <img class="topology" src="assets/topology.svg" alt="IP SLA path selection topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Confirm the Baseline Path</h2>
+        <p>From PC, trace to SERVER. The initial path should prefer BB2 because OSPF sees it as the lower-cost path.</p>
+        <pre><code>! PC
+traceroute 198.51.100.3
+
+! R1
+show ip route 198.51.100.0
+show ip ospf neighbor
+show ip ospf interface brief</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure the IP SLA Operation</h2>
+        <p>On R1, create IP SLA operation 1. It sends ICMP echo probes to BB2's R1-facing address and uses R1's PC-facing address as the source.</p>
+        <pre><code>! R1
+conf t
+ip sla 1
+ icmp-echo 203.0.113.5 source-ip 192.0.2.1
+ frequency 5
+ threshold 100
+exit
+ip sla schedule 1 life forever start-time now
+end</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Track the SLA and Install Primary/Backup Routes</h2>
+        <p>Create a tracking object and use it to control the primary static route through BB2. Add a less-preferred backup static route through BB1.</p>
+        <pre><code>! R1
+conf t
+track 1 ip sla 1
+ delay down 10 up 10
+exit
+ip route 198.51.100.0 255.255.255.0 203.0.113.5 track 1
+ip route 198.51.100.0 255.255.255.0 203.0.113.1 2
+end</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Verify the Primary Path</h2>
+        <p>Verify that tracking is up, IP SLA is succeeding, and the route points to BB2.</p>
+        <pre><code>! R1
+show track 1
+show ip sla statistics
+show ip route 198.51.100.0
+
+! PC
+traceroute 198.51.100.3</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Force the Backup Path</h2>
+        <p>IP SLA operations cannot be edited in place. Remove operation 1 and recreate it with a one millisecond threshold so the operation transitions to over-threshold and the tracked route is removed.</p>
+        <pre><code>! R1
+conf t
+no ip sla 1
+ip sla 1
+ icmp-echo 203.0.113.5 source-ip 192.0.2.1
+ frequency 5
+ threshold 1
+exit
+ip sla schedule 1 life forever start-time now
+end</code></pre>
+        <p>Wait for the tracking delay to expire, then verify state.</p>
+        <pre><code>show track 1
+show ip sla statistics</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Final Verification</h2>
+        <p>Confirm that R1 now uses the backup route through BB1 and that PC traffic follows that path.</p>
+        <pre><code>! R1
+show ip route 198.51.100.0
+show track 1
+
+! PC
+traceroute 198.51.100.3</code></pre>
+        <p>Expected result: R1 installs the static route through 203.0.113.1 with administrative distance 2 after the tracked BB2 route is withdrawn.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

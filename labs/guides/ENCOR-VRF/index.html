@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: VRF-Lite Segmentation</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco">
+      <div>
+        <p class="eyebrow">CCNP ENCOR Custom Local Lab</p>
+        <h1>VRF-Lite Segmentation and Route Leaking</h1>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#plan">Addressing and VRFs</a>
+      <a href="#task1">Task 1: Baseline Audit</a>
+      <a href="#task2">Task 2: Build VRFs</a>
+      <a href="#task3">Task 3: Prove Isolation</a>
+      <a href="#task4">Task 4: Route Leaking</a>
+      <a href="#task5">Task 5: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 2.2.a: configure and verify VRF as a data path virtualization technology. You will create VRF-lite routing tables, move interfaces into the correct VRFs, validate control-plane separation, and selectively leak routes without collapsing segmentation.</p>
+        <p>The lab is CCNP-level because the success criteria are not just "ping works." You must prove which routing table owns each interface, explain why pings fail without a VRF context, and repair route leaking without adding broad default routes.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 2.2.a</b><span>Exam topic</span></div>
+          <div class="metric"><b>IOL routers</b><span>No switches required</span></div>
+          <div class="metric"><b>5 tasks</b><span>Configure, verify, troubleshoot</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>Use HQ-RTR as the campus edge and DC-RTR as the service edge. CORP and GUEST must remain separated end to end. A shared services loopback is reachable only after controlled route leaking is configured.</p>
+        <img class="topology" src="../ENCOR-VIRT/assets/wan-topology.svg" alt="WAN virtualization topology">
+      </section>
+      <section id="plan" class="panel">
+        <h2>Addressing and VRFs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>VRF</th><th>Purpose</th><th>Example Interfaces</th><th>Routes Expected</th></tr></thead>
+            <tbody>
+              <tr><td>CORP</td><td>Employee traffic</td><td>HQ-RTR e0/1, DC-RTR e0/1</td><td>10.10.0.0/24, 10.30.0.0/24, leaked 10.100.0.10/32</td></tr>
+              <tr><td>GUEST</td><td>Untrusted user traffic</td><td>HQ-RTR e0/2, DC-RTR e0/2</td><td>10.20.0.0/24, 10.40.0.0/24 only</td></tr>
+              <tr><td>SERVICES</td><td>Shared management/service prefix</td><td>DC-RTR loopback100</td><td>10.100.0.10/32</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Audit</h2>
+        <p>Start by identifying which interfaces are currently in the global routing table and which connected routes disappear when a VRF assignment is made.</p>
+        <pre><code>show vrf
+show ip interface brief
+show ip route connected
+show running-config interface ethernet0/1
+show running-config interface ethernet0/2</code></pre>
+        <div class="callout warning"><p><strong>Operational trap:</strong> On IOS XE, adding <code>vrf forwarding</code> or <code>ip vrf forwarding</code> to an interface removes the existing IP address from that interface. Reapply the address after the VRF is attached.</p></div>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Build VRFs</h2>
+        <p>Create VRFs using the modern <code>vrf definition</code> syntax. Know the legacy <code>ip vrf</code> form, but use one style consistently in production.</p>
+        <pre><code>configure terminal
+vrf definition CORP
+ description Employee routing table
+ address-family ipv4
+ exit-address-family
+!
+vrf definition GUEST
+ description Guest routing table
+ address-family ipv4
+ exit-address-family
+!
+interface ethernet0/1
+ description CORP LAN
+ vrf forwarding CORP
+ ip address 10.10.0.1 255.255.255.0
+ no shutdown
+!
+interface ethernet0/2
+ description GUEST LAN
+ vrf forwarding GUEST
+ ip address 10.20.0.1 255.255.255.0
+ no shutdown
+end</code></pre>
+        <p>Alternative syntax you may encounter: <code>ip vrf CORP</code> with <code>ip vrf forwarding CORP</code>. Verification expectations are the same, but the running configuration format differs.</p>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Prove Isolation</h2>
+        <p>Verify the global table cannot see VRF routes, then verify each VRF can reach only its own connected and static routes.</p>
+        <pre><code>show ip route
+show ip route vrf CORP
+show ip route vrf GUEST
+ping vrf CORP 10.30.0.10 source 10.10.0.1
+ping vrf GUEST 10.40.0.10 source 10.20.0.1
+traceroute vrf CORP 10.30.0.10 source 10.10.0.1</code></pre>
+        <p>A normal <code>ping 10.30.0.10</code> should fail until the correct VRF context is supplied.</p>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Controlled Route Leaking</h2>
+        <p>Leak only the shared service /32 from SERVICES into CORP. Do not leak GUEST into CORP, and do not solve the problem with a global default route.</p>
+        <pre><code>configure terminal
+ip route vrf SERVICES 10.100.0.10 255.255.255.255 loopback100
+ip route vrf CORP 10.100.0.10 255.255.255.255 10.30.0.1 global
+end
+show ip route vrf CORP 10.100.0.10
+show ip cef vrf CORP 10.100.0.10 detail</code></pre>
+        <p>Static leaking is intentionally used here because it is transparent and easy to audit. Larger environments often use MP-BGP route targets, but that belongs to broader VPN design rather than this focused ENCOR VRF-lite task.</p>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Troubleshooting</h2>
+        <p>Fix these defects without changing the segmentation policy:</p>
+        <ol>
+          <li>HQ-RTR e0/2 has an IP address but is not in VRF GUEST.</li>
+          <li>CORP can reach the shared service, but GUEST can also reach it because of an overbroad static route.</li>
+          <li>A technician tests with <code>ping 10.30.0.10</code> and reports failure even though CORP routing is correct.</li>
+        </ol>
+        <pre><code>show running-config | section vrf
+show ip interface brief vrf all
+show ip route vrf GUEST 10.100.0.10
+show ip cef vrf CORP 10.30.0.10
+ping vrf CORP 10.30.0.10 source 10.10.0.1</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>VRF ownership</b><span>All customer-facing interfaces appear in the intended VRF.</span></div>
+          <div class="check"><b>Route isolation</b><span>Global, CORP, and GUEST tables have distinct routes.</span></div>
+          <div class="check"><b>Context-aware tests</b><span>Pings and traceroutes use the right VRF context.</span></div>
+          <div class="check"><b>Controlled leak</b><span>Only the shared service prefix is reachable from CORP.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/ip-routing/13788-3.html">Cisco VRF-lite technology support reference</a></li>
+        </ul>
+        <p class="footer">Research note: the lab intentionally focuses on VRF-lite configuration and verification, which aligns to ENCOR data path virtualization. MPLS VPN provider design is outside this lab.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

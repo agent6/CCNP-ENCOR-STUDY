@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR network time lab topology</title>
+  <desc id="desc">Three IOL routers and two IOL-L2 switches used to interpret NTP and PTP network time configurations.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.switch{fill:#14795f}.link{stroke:#667b8a;stroke-width:4;fill:none}.time{stroke:#00a0d2}.warn{stroke:#b86e00}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 3.3.a: Interpret NTP and PTP configuration, status, hierarchy, and defects</text>
+
+  <path class="link time" d="M260 260 L470 260"/>
+  <path class="link time" d="M550 260 L760 260"/>
+  <path class="link warn" d="M510 300 L510 420"/>
+  <path class="link warn" d="M550 460 L760 460"/>
+
+  <g transform="translate(200 220)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-TIME</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">NTP master</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">Stratum seed</text>
+  </g>
+  <g transform="translate(470 220)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-DIST</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">NTP client/server</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">Access time source</text>
+  </g>
+  <g transform="translate(760 220)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R3-BRANCH</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">NTP defect</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">Auth mismatch</text>
+  </g>
+  <g transform="translate(470 420)">
+    <rect class="switch" width="80" height="70" rx="8"/>
+    <text class="txt label" x="40" y="98" text-anchor="middle">SW1-ACCESS</text>
+    <text class="txt small" x="40" y="118" text-anchor="middle">NTP + PTP review</text>
+  </g>
+  <g transform="translate(760 420)">
+    <rect class="switch" width="80" height="70" rx="8"/>
+    <text class="txt label" x="40" y="98" text-anchor="middle">SW2-ACCESS</text>
+    <text class="txt small" x="40" y="118" text-anchor="middle">PTP mismatch review</text>
+  </g>
+
+  <rect class="pill" x="318" y="236" width="118" height="30" rx="15"/>
+  <text class="txt small" x="377" y="256" text-anchor="middle">10.33.12.0/30</text>
+  <rect class="pill" x="608" y="236" width="118" height="30" rx="15"/>
+  <text class="txt small" x="667" y="256" text-anchor="middle">10.33.23.0/30</text>
+  <rect class="pill" x="384" y="348" width="150" height="30" rx="15"/>
+  <text class="txt small" x="459" y="368" text-anchor="middle">VLAN 33 management</text>
+  <rect class="pill" x="608" y="438" width="118" height="30" rx="15"/>
+  <text class="txt small" x="667" y="458" text-anchor="middle">PTP segment</text>
+
+  <text class="txt small" x="58" y="520">Live CML focus: NTP status, associations, authentication, source interface, access control, and stratum interpretation.</text>
+  <text class="txt small" x="58" y="544">PTP focus: interpret mode, domain, clock role, transport, delay mechanism, priority, and platform support from config/status excerpts.</text>
+</svg>

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify AAA Device Access</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify AAA Device Access</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Local AAA Users</a>
+      <a href="#task3">Task 3: AAA Method Lists</a>
+      <a href="#task4">Task 4: Apply to Lines</a>
+      <a href="#task5">Task 5: Authorization</a>
+      <a href="#task6">Task 6: Server Fallback</a>
+      <a href="#task7">Task 7: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 5.1.b: configure and verify device access control with authentication and authorization using AAA. You will enable <code>aaa new-model</code>, build named authentication and authorization method lists, apply them to console and VTY lines, verify local fallback, and interpret TACACS+/RADIUS placement in the design.</p>
+        <p>CCNP-level value is in separating authentication from authorization. Authentication proves who the user is. Exec authorization decides whether the user gets an EXEC shell and at what privilege. Command authorization controls whether a command is allowed. TACACS+ is typically preferred for per-command authorization; RADIUS is commonly used for authentication and coarse attributes.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 5.1.b</b><span>AAA authN/authZ</span></div>
+          <div class="metric"><b>IOL routers</b><span>AAA target and SSH client</span></div>
+          <div class="metric"><b>7 tasks</b><span>Configure, apply, test, troubleshoot</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-AAA is the device under test. R2-JUMP and ADMIN-PC are management sources on the 10.81.81.0/24 network. AAA-SERVER is a placeholder external AAA server used to test method-list fallback and server reachability. APP-SERVER proves that management-plane changes do not break forwarding. The starting topology has IP reachability and no AAA policy.</p>
+        <img class="topology" src="assets/aaa-topology.svg" alt="AAA device access topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Management and AAA State</h2>
+        <p>Before enabling AAA, inventory the line configuration and prove management reachability. Enabling AAA before creating a working local user and method-list plan is a common lockout path.</p>
+        <pre><code>! R1-AAA
+show ip interface brief
+show running-config | include ^aaa|^username|^tacacs|^radius|^ip tacacs|^ip radius
+show running-config | section line con
+show running-config | section line vty
+show users
+show privilege
+ping 10.81.81.2 source 10.81.81.1
+ping 10.81.81.20 source 10.81.81.1
+ping 10.91.91.10 source 10.91.91.1</code></pre>
+        <p>From R2-JUMP, verify that R1-AAA is reachable:</p>
+        <pre><code>ping 10.81.81.1
+show ip route 10.91.91.0</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Create Local Users Before Enabling AAA</h2>
+        <p>Create a local emergency path first. These users are used directly by local method lists and as fallback if an external AAA server is unavailable.</p>
+        <pre><code>! R1-AAA
+conf t
+enable secret EncorEnable123!
+username aaa-admin privilege 15 secret AaaAdmin123!
+username aaa-ops privilege 5 secret AaaOps123!
+username breakglass privilege 15 secret BreakGlass123!
+ip domain-name encor.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+end
+!
+show running-config | include ^username|^enable secret|^ip ssh|^ip domain
+show ip ssh</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> Do not enable <code>aaa new-model</code> until you have a tested local recovery user and console access. AAA changes the default line authentication behavior.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure AAA Authentication Method Lists</h2>
+        <p>Enable AAA and build separate method lists for console and VTY. Use local-only authentication on the console and a TACACS+ group with local fallback for VTY access.</p>
+        <pre><code>! R1-AAA
+conf t
+aaa new-model
+!
+tacacs server AAA-SERVER
+ address ipv4 10.81.81.20
+ key CiscoTacacs123!
+!
+aaa group server tacacs+ TACACS-ADMIN
+ server name AAA-SERVER
+ ip tacacs source-interface Ethernet0/0
+!
+aaa authentication login CONSOLE-AUTH local
+aaa authentication login VTY-AUTH group TACACS-ADMIN local
+aaa authentication enable default enable
+end
+!
+show running-config | section aaa
+show running-config | section tacacs
+show aaa servers</code></pre>
+        <p>The lab AAA-SERVER does not run a TACACS+ service by default. That is intentional: the VTY method list should try the server group and then use local fallback. In production, the same method-list structure points to ISE or another TACACS+ service.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Apply AAA Authentication to Console and VTY Lines</h2>
+        <p>Apply the named method lists. Keep console behavior predictable and use SSH-only VTY access for remote management.</p>
+        <pre><code>! R1-AAA
+conf t
+line console 0
+ login authentication CONSOLE-AUTH
+ exec-timeout 10 0
+ logging synchronous
+line vty 0 4
+ login authentication VTY-AUTH
+ transport input ssh
+ exec-timeout 10 0
+ logging synchronous
+line vty 5 15
+ login authentication VTY-AUTH
+ transport input ssh
+ exec-timeout 10 0
+ logging synchronous
+end
+!
+show running-config | section line con
+show running-config | section line vty</code></pre>
+        <p>From R2-JUMP, test valid and invalid logins. A valid local user should work after the TACACS+ attempt fails over to local.</p>
+        <pre><code>ssh -l aaa-admin 10.81.81.1
+ssh -l aaa-ops 10.81.81.1
+ssh -l no-such-user 10.81.81.1
+telnet 10.81.81.1</code></pre>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Configure Exec and Command Authorization</h2>
+        <p>Authentication only gets the user identified. Configure authorization so user privilege and command access are evaluated by AAA. Use local authorization for console and TACACS+ with local fallback for VTY.</p>
+        <pre><code>! R1-AAA
+conf t
+aaa authorization exec CONSOLE-EXEC local
+aaa authorization exec VTY-EXEC group TACACS-ADMIN local
+aaa authorization commands 1 VTY-CMD group TACACS-ADMIN local
+aaa authorization commands 15 VTY-CMD group TACACS-ADMIN local
+!
+line console 0
+ authorization exec CONSOLE-EXEC
+line vty 0 4
+ authorization exec VTY-EXEC
+ authorization commands 1 VTY-CMD
+ authorization commands 15 VTY-CMD
+line vty 5 15
+ authorization exec VTY-EXEC
+ authorization commands 1 VTY-CMD
+ authorization commands 15 VTY-CMD
+end
+!
+show running-config | include ^aaa authorization
+show running-config | section line vty</code></pre>
+        <p>Log in as <code>aaa-admin</code> and <code>aaa-ops</code>. Verify privilege level and command behavior:</p>
+        <pre><code>show privilege
+show users
+show running-config
+configure terminal</code></pre>
+        <p>Interpretation focus: local privilege is coarse. TACACS+ command authorization can return per-command permit/deny decisions. RADIUS generally does not provide the same per-command authorization model.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify Server Fallback, Accounting Readiness, and Failure Modes</h2>
+        <p>Prove the method list behavior. You should be able to explain whether the server was used, whether local fallback was used, and how to keep a break-glass path.</p>
+        <pre><code>show aaa servers
+show running-config | section aaa
+show running-config | section tacacs
+show users
+show ssh
+show logging | include AAA|TACACS|LOGIN|SSH
+debug aaa authentication
+debug aaa authorization
+debug tacacs
+undebug all</code></pre>
+        <p>Optional production-style accounting commands to recognize, but not required for this exam subtopic:</p>
+        <pre><code>aaa accounting exec default start-stop group TACACS-ADMIN
+aaa accounting commands 15 default start-stop group TACACS-ADMIN</code></pre>
+        <p>Depth check: server fallback happens only when the server method is unavailable. A definitive reject from a reachable AAA server does not necessarily fall through to the next method. Know the difference between timeout, error, and reject.</p>
+      </section>
+
+      <section id="task7" class="task">
+        <h2>Task 7: Troubleshoot AAA Defects</h2>
+        <p>Use the symptom to isolate authentication, authorization, transport, or external server behavior.</p>
+        <ol>
+          <li>AAA was enabled before local users were created, causing remote login failure.</li>
+          <li>The VTY line has no <code>login authentication</code> statement, so the intended method list is not used.</li>
+          <li>SSH works but the user lands in the wrong privilege level because exec authorization is missing or the local user privilege is wrong.</li>
+          <li>Commands fail unexpectedly because command authorization is applied without a usable fallback.</li>
+          <li>AAA-SERVER is reachable by ping but TACACS+ fails because the shared key, source interface, or service is wrong.</li>
+          <li>Local fallback works for server timeout but not for an explicit reject from the AAA server.</li>
+          <li>Console access is broken because console and VTY method lists were treated the same without a break-glass design.</li>
+        </ol>
+        <pre><code>show running-config | section aaa
+show running-config | section tacacs
+show running-config | section line
+show aaa servers
+show users
+show privilege
+show logging | include AAA|TACACS|LOGIN
+debug aaa authentication
+debug aaa authorization
+debug tacacs
+undebug all</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Authentication</b><span>Console and VTY lines use the intended AAA login method lists.</span></div>
+          <div class="check"><b>Authorization</b><span>Exec and command authorization are configured and can be explained.</span></div>
+          <div class="check"><b>Fallback</b><span>VTY access attempts TACACS+ and falls back to local only for the appropriate failure behavior.</span></div>
+          <div class="check"><b>Verification</b><span>You can prove user privilege, line method-list attachment, server status, debug output, and forwarding reachability.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/sec_usr_aaa/configuration/xe-17/sec-usr-aaa-xe-17-book.html">Cisco IOS XE Security Configuration Guide: Authentication, Authorization, and Accounting</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/sec_usr_aaa/command/sec-usr-aaa-cr-book.html">Cisco IOS Security Command Reference: AAA</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 5.1.b asks for AAA authentication and authorization. This lab separates method-list authentication, exec authorization, command authorization, and external-server fallback because each can fail independently.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

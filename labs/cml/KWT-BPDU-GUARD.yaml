@@ -1,0 +1,420 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: KWT-BPDU-GUARD
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -560.0
+  y1: -380.0
+  z_index: 1
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: SW4 Ethernet0/1 is configured as a PortFast edge port toward SW5.
+    SW5 Ethernet0/0 starts shut down; bring it up to trigger BPDU Guard after
+    enabling the global default on SW4.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -560.0
+  y1: -338.0
+  z_index: 2
+smart_annotations: []
+nodes:
+- boot_disk_size:
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname SW1
+      !
+      no ip domain-lookup
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      spanning-tree vlan 1 priority 24576
+      !
+      interface Ethernet0/0
+       description Link to SW4 Ethernet0/0
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/2
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/3
+       description Unused
+       shutdown
+      !
+      line con 0
+       logging synchronous
+       exec-timeout 0 0
+      !
+      end
+  cpu_limit:
+  cpus:
+  data_volume:
+  hide_links: false
+  id: n0
+  image_definition: ioll2-xe-17-16-01a
+  label: SW1
+  node_definition: ioll2-xe
+  parameters: {}
+  ram:
+  tags:
+  - KWT-BPDU-GUARD
+  - IOL-L2
+  x: 0
+  y: -220
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address:
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address:
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address:
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address:
+    slot: 3
+    type: physical
+- boot_disk_size:
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname SW2
+      !
+      no ip domain-lookup
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      interface Ethernet0/0
+       description Link to SW4 Ethernet0/2
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/2
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/3
+       description Unused
+       shutdown
+      !
+      line con 0
+       logging synchronous
+       exec-timeout 0 0
+      !
+      end
+  cpu_limit:
+  cpus:
+  data_volume:
+  hide_links: false
+  id: n1
+  image_definition: ioll2-xe-17-16-01a
+  label: SW2
+  node_definition: ioll2-xe
+  parameters: {}
+  ram:
+  tags:
+  - KWT-BPDU-GUARD
+  - IOL-L2
+  x: -360
+  y: 170
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address:
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address:
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address:
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address:
+    slot: 3
+    type: physical
+- boot_disk_size:
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname SW3
+      !
+      no ip domain-lookup
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      interface Ethernet0/0
+       description Link to SW4 Ethernet0/3
+       no shutdown
+      !
+      interface Ethernet0/1
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/2
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/3
+       description Unused
+       shutdown
+      !
+      line con 0
+       logging synchronous
+       exec-timeout 0 0
+      !
+      end
+  cpu_limit:
+  cpus:
+  data_volume:
+  hide_links: false
+  id: n2
+  image_definition: ioll2-xe-17-16-01a
+  label: SW3
+  node_definition: ioll2-xe
+  parameters: {}
+  ram:
+  tags:
+  - KWT-BPDU-GUARD
+  - IOL-L2
+  x: 360
+  y: 170
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address:
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address:
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address:
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address:
+    slot: 3
+    type: physical
+- boot_disk_size:
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname SW4
+      !
+      no ip domain-lookup
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      interface Ethernet0/0
+       description Link to SW1 Ethernet0/0
+       no shutdown
+      !
+      interface Ethernet0/1
+       description PortFast edge link to SW5 Ethernet0/0
+       spanning-tree portfast edge
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Link to SW2 Ethernet0/0
+       no shutdown
+      !
+      interface Ethernet0/3
+       description Link to SW3 Ethernet0/0
+       no shutdown
+      !
+      line con 0
+       logging synchronous
+       exec-timeout 0 0
+      !
+      end
+  cpu_limit:
+  cpus:
+  data_volume:
+  hide_links: false
+  id: n3
+  image_definition: ioll2-xe-17-16-01a
+  label: SW4
+  node_definition: ioll2-xe
+  parameters: {}
+  ram:
+  tags:
+  - KWT-BPDU-GUARD
+  - IOL-L2
+  x: 0
+  y: 20
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address:
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address:
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address:
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address:
+    slot: 3
+    type: physical
+- boot_disk_size:
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      hostname SW5
+      !
+      no ip domain-lookup
+      !
+      spanning-tree mode rapid-pvst
+      spanning-tree extend system-id
+      !
+      interface Ethernet0/0
+       description Link to SW4 Ethernet0/1 - shut until BPDU Guard test
+       shutdown
+      !
+      interface Ethernet0/1
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/2
+       description Unused
+       shutdown
+      !
+      interface Ethernet0/3
+       description Unused
+       shutdown
+      !
+      line con 0
+       logging synchronous
+       exec-timeout 0 0
+      !
+      end
+  cpu_limit:
+  cpus:
+  data_volume:
+  hide_links: false
+  id: n4
+  image_definition: ioll2-xe-17-16-01a
+  label: SW5
+  node_definition: ioll2-xe
+  parameters: {}
+  ram:
+  tags:
+  - KWT-BPDU-GUARD
+  - IOL-L2
+  x: 420
+  y: 20
+  interfaces:
+  - id: i0
+    label: Ethernet0/0
+    mac_address:
+    slot: 0
+    type: physical
+  - id: i1
+    label: Ethernet0/1
+    mac_address:
+    slot: 1
+    type: physical
+  - id: i2
+    label: Ethernet0/2
+    mac_address:
+    slot: 2
+    type: physical
+  - id: i3
+    label: Ethernet0/3
+    mac_address:
+    slot: 3
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n3
+  i1: i0
+  i2: i0
+  conditioning: {}
+  label: SW1-Ethernet0/0<->SW4-Ethernet0/0
+- id: l1
+  n1: n3
+  n2: n4
+  i1: i1
+  i2: i0
+  conditioning: {}
+  label: SW4-Ethernet0/1<->SW5-Ethernet0/0
+- id: l2
+  n1: n3
+  n2: n1
+  i1: i2
+  i2: i0
+  conditioning: {}
+  label: SW4-Ethernet0/2<->SW2-Ethernet0/0
+- id: l3
+  n1: n3
+  n2: n2
+  i1: i3
+  i2: i0
+  conditioning: {}
+  label: SW4-Ethernet0/3<->SW3-Ethernet0/0
+lab:
+  description: BPDU Guard lab using five IOL-L2 switches. SW4 has a PortFast edge
+    port toward SW5, and SW5 starts shut down so the learner can trigger the err-disable
+    event.
+  notes: Enable global BPDU Guard on SW4, bring up SW5 Ethernet0/0, verify the BPDU
+    Guard syslog and err-disabled state, then recover the port.
+  title: KWT-BPDU-GUARD
+  version: 0.3.0

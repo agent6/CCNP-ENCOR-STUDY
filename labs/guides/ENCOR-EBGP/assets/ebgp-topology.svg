@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR eBGP lab topology</title>
+  <desc id="desc">Four IOL routers and two Alpine endpoints. R1 enterprise edge peers by directly connected eBGP with two provider routers. Both provider routers peer with a service edge router.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.endpoint{fill:#14795f}.link{stroke:#667b8a;stroke-width:4;fill:none}.wan{stroke:#00a0d2}.pathA{stroke:#14795f}.pathB{stroke:#9a6200}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 3.2.c: directly connected eBGP neighbors, neighbor relationships, and best-path selection</text>
+
+  <path class="link wan pathA" d="M290 230 L500 160"/>
+  <path class="link wan pathB" d="M290 310 L500 390"/>
+  <path class="link wan pathA" d="M680 160 L880 250"/>
+  <path class="link wan pathB" d="M680 390 L880 310"/>
+  <path class="link" d="M170 270 L250 270"/>
+  <path class="link" d="M920 280 L1010 280"/>
+
+  <g transform="translate(250 230)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-EDGE</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">AS 65010</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">10.10.10.1/24</text>
+  </g>
+  <g transform="translate(500 120)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-ISP-A</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">AS 65020</text>
+  </g>
+  <g transform="translate(500 350)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R3-ISP-B</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">AS 65020</text>
+  </g>
+  <g transform="translate(880 240)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R4-SVC</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">AS 65040</text>
+    <text class="txt small" x="40" y="146" text-anchor="middle">10.40.40.1/24</text>
+  </g>
+  <g transform="translate(90 240)">
+    <rect class="endpoint" width="80" height="60" rx="8"/>
+    <text class="txt label" x="40" y="88" text-anchor="middle">HQ-USER</text>
+    <text class="txt small" x="40" y="108" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(1010 250)">
+    <rect class="endpoint" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.40.40.10</text>
+  </g>
+
+  <g>
+    <rect class="pill" x="360" y="152" width="118" height="30" rx="15"/>
+    <text class="txt small" x="419" y="172" text-anchor="middle">10.12.0.0/30</text>
+    <rect class="pill" x="355" y="383" width="118" height="30" rx="15"/>
+    <text class="txt small" x="414" y="403" text-anchor="middle">10.13.0.0/30</text>
+    <rect class="pill" x="715" y="180" width="118" height="30" rx="15"/>
+    <text class="txt small" x="774" y="200" text-anchor="middle">10.24.0.0/30</text>
+    <rect class="pill" x="715" y="378" width="118" height="30" rx="15"/>
+    <text class="txt small" x="774" y="398" text-anchor="middle">10.34.0.0/30</text>
+  </g>
+
+  <text class="txt small" x="58" y="520">Best-path exercises compare weight, local preference, AS-path length, and MED. All BGP peerings are directly connected eBGP sessions.</text>
+</svg>

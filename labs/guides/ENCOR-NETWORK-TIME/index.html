@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Interpret Network Time</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Interpret Network Time</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Clock Baseline</a>
+      <a href="#task2">Task 2: NTP Hierarchy</a>
+      <a href="#task3">Task 3: NTP Defects</a>
+      <a href="#task4">Task 4: PTP Interpretation</a>
+      <a href="#task5">Task 5: Compare NTP and PTP</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 3.3.a: interpret network time protocol configurations such as NTP and PTP. The CML topology gives you live NTP behavior to inspect, while the guide includes platform-style PTP configuration and status excerpts for interpretation because PTP support is hardware and platform dependent.</p>
+        <p>Your job is to explain what the configuration means, prove whether time synchronization is healthy, and identify why a device is not synchronizing. Do not stop at “the command is present.” Interpret stratum, source, authentication, access control, selected peer, PTP clock role, domain, transport, and delay mechanism.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.3.a</b><span>NTP and PTP interpretation</span></div>
+          <div class="metric"><b>IOL/IOL-L2</b><span>Live NTP, PTP review</span></div>
+          <div class="metric"><b>5 tasks</b><span>Interpret and repair</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-TIME is a lab NTP reference. R2-DIST syncs from R1 and serves downstream devices. R3-BRANCH and SW2-ACCESS include intentional NTP defects. SW1-ACCESS and SW2-ACCESS are also used for PTP interpretation scenarios.</p>
+        <img class="topology" src="assets/network-time-topology.svg" alt="Network time topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Clock and Time Source</h2>
+        <p>Start by separating local clock state from network synchronization. A device can have a clock value and still not be synchronized to a valid source.</p>
+        <pre><code>show clock detail
+show ntp status
+show ntp associations
+show ntp associations detail
+show running-config | include ^ntp|clock timezone|clock summer-time
+show logging | include NTP|Clock|time</code></pre>
+        <p>Interpret these fields:</p>
+        <ul>
+          <li><strong>Clock is synchronized</strong> means the device selected a usable NTP source.</li>
+          <li><strong>Stratum</strong> is distance from the reference clock. Lower is closer, but not automatically better if policy blocks it.</li>
+          <li><strong>Reference ID</strong> identifies the selected source or reference.</li>
+          <li><strong>Offset, delay, and dispersion</strong> describe quality and stability of the association.</li>
+        </ul>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Interpret the NTP Hierarchy</h2>
+        <p>Map the intended time flow from configuration and status output. R1-TIME should be the upstream source, R2-DIST should select R1, and access/branch devices should select R2.</p>
+        <pre><code>show running-config | section ntp
+show access-lists NTP
+show ip interface brief
+show ip route 10.33.12.1
+show ntp associations
+show ntp status</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Device</th><th>Expected Role</th><th>Key Interpretation</th><th>Risk to Notice</th></tr></thead>
+            <tbody>
+              <tr><td>R1-TIME</td><td>Lab stratum source</td><td><code>ntp master</code>, source interface, serve-only ACL</td><td>Lab master is not the same as a real GPS/atomic source.</td></tr>
+              <tr><td>R2-DIST</td><td>NTP client and downstream server</td><td>Authenticated server to R1, trusted key, LAN-facing service</td><td>If R2 is unsynced, every downstream client inherits bad time.</td></tr>
+              <tr><td>R3-BRANCH</td><td>NTP client</td><td>Server points to R2 but authentication is wrong</td><td>Reachability can work while NTP rejects updates.</td></tr>
+              <tr><td>SW1-ACCESS</td><td>NTP client</td><td>SVI source, default gateway, trusted key</td><td>Source address and ACL must agree.</td></tr>
+              <tr><td>SW2-ACCESS</td><td>NTP client with defect</td><td>Server/key mismatch</td><td>Wrong key ID or untrusted key prevents sync.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Troubleshoot NTP Defects</h2>
+        <p>Find and repair the defects using output first. Make a change only after you can explain which symptom proves the problem.</p>
+        <ol>
+          <li>R3-BRANCH can ping R2-DIST, but NTP does not synchronize because the configured authentication key does not match the trusted key.</li>
+          <li>SW2-ACCESS points to the right server, but uses the wrong key ID and does not trust the key used by the server.</li>
+          <li>If a device shows reachability but no NTP association, check access groups, source interface, and routing back to the source address.</li>
+          <li>If a device shows an association but is not synchronized, inspect reach, stratum, authentication, selected peer marker, and last event.</li>
+        </ol>
+        <pre><code>debug ntp authentication
+debug ntp packets
+show ntp associations detail
+show running-config | section ntp
+clear ntp statistics
+show access-lists NTP-CLIENTS</code></pre>
+        <p>Expected repair examples:</p>
+        <pre><code>ntp authenticate
+ntp authentication-key 10 md5 C1sc0Time
+ntp trusted-key 10
+ntp server 10.33.23.1 key 10 source Ethernet0/0</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Interpret PTP Configuration and Status</h2>
+        <p>PTP is platform dependent. If your IOL-L2 image does not support the PTP parser, use these realistic excerpts as the artifact to interpret. The exam topic is interpretation, so focus on what the commands imply operationally.</p>
+        <h3>PTP Excerpt A</h3>
+        <pre><code>ptp mode e2etransparent
+ptp domain 0
+!
+interface TenGigabitEthernet1/0/1
+ description Uplink to distribution
+ ptp enable
+!
+show ptp clock
+ PTP CLOCK INFO
+  Clock Type: End-to-End Transparent Clock
+  Domain: 0
+  Transport: Ethernet
+  Clock State: Forwarding</code></pre>
+        <p>Interpretation: this switch does not become the grandmaster. It measures residence time and updates correction fields so PTP endpoints can calculate more accurate time across the switching path.</p>
+
+        <h3>PTP Excerpt B</h3>
+        <pre><code>ptp mode boundary
+ptp domain 24
+ptp priority1 128
+ptp priority2 128
+!
+interface TenGigabitEthernet1/0/1
+ ptp enable
+!
+show ptp parent
+ Parent Clock: 00:00:00:00:00:00:00:00
+ Port State: Listening
+ Last Announce Received: never</code></pre>
+        <p>Interpretation: the domain does not match Excerpt A. A domain mismatch can make PTP devices ignore each other even when Layer 2 forwarding works. A boundary clock can be a slave on one port and a master toward another segment after it selects a parent.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Compare NTP and PTP Design Meaning</h2>
+        <p>Answer these from the configuration and output, not from memorized definitions alone:</p>
+        <ol>
+          <li>Which devices are time sources, clients, and transit devices?</li>
+          <li>Which NTP devices authenticate time, and which merely trust a reachable server?</li>
+          <li>Which source interface or SVI address should upstream ACLs permit?</li>
+          <li>Which PTP device is a transparent clock versus a boundary clock?</li>
+          <li>Which PTP output proves the device has not selected a parent clock?</li>
+          <li>Which protocol would you expect for sub-microsecond timing, and why is ordinary NTP not enough?</li>
+        </ol>
+        <div class="callout"><p><strong>Depth check:</strong> NTP normally synchronizes routed IP devices well enough for logs, certificates, automation, and troubleshooting correlation. PTP is used where much tighter timing is required and depends on hardware timestamping, clock role, PTP domain, transport, and delay mechanism consistency.</p></div>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>NTP status</b><span>You can explain selected source, stratum, reach, offset, and why a device is or is not synchronized.</span></div>
+          <div class="check"><b>NTP config</b><span>You can interpret server, source, authentication, trusted key, and access group behavior.</span></div>
+          <div class="check"><b>Defect proof</b><span>You can prove authentication or source/ACL problems before changing config.</span></div>
+          <div class="check"><b>PTP interpretation</b><span>You can distinguish ordinary, boundary, and transparent clocks, and spot domain or parent-clock problems.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/availability/high-availability/19643-ntpm.html">Cisco NTP configuration and troubleshooting reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/switches/catalyst-9000-series-switches/217719-understand-and-configure-precision-time.html">Cisco Precision Time Protocol reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR asks candidates to interpret NTP and PTP configurations. This lab keeps NTP live in CML and uses PTP excerpts for interpretation because PTP command support depends on platform hardware and software capabilities.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: GRE over IPsec</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>GRE over IPsec Transport Protection</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Plain GRE</a>
+      <a href="#task2">Task 2: Protect GRE</a>
+      <a href="#task3">Task 3: Routing over GRE</a>
+      <a href="#task4">Task 4: Validate Encryption</a>
+      <a href="#task5">Task 5: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab combines ENCOR 2.2.b GRE and IPsec. You will carry routed traffic over GRE and protect that GRE traffic with IPsec. The goal is to distinguish overlay reachability from encryption state.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75-90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 2.2.b</b><span>GRE plus IPsec</span></div>
+          <div class="metric"><b>IOL routers</b><span>HQ, Internet, Branch</span></div>
+          <div class="metric"><b>5 tasks</b><span>Overlay, crypto, routing</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel"><h2>Topology</h2><img class="topology" src="../ENCOR-VIRT/assets/wan-topology.svg" alt="WAN virtualization topology"></section>
+      <section id="task1" class="task">
+        <h2>Task 1: Establish Plain GRE</h2>
+        <p>Build Tunnel10 first without IPsec. This separates routing and encapsulation problems from crypto problems.</p>
+        <pre><code>interface tunnel10
+ description GRE overlay to BR-RTR
+ ip address 172.16.10.1 255.255.255.252
+ tunnel source ethernet0/0
+ tunnel destination 198.51.100.6
+ tunnel mode gre ip
+ no shutdown
+!
+ip route 10.60.0.0 255.255.255.0 tunnel10
+show interface tunnel10
+ping 172.16.10.2 source 172.16.10.1</code></pre>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Protect GRE with IPsec</h2>
+        <p>Apply an IPsec profile directly to the GRE tunnel. This protects tunnel packets without building a separate crypto ACL that matches LAN-to-LAN traffic.</p>
+        <pre><code>crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer BR-RTR
+  address 198.51.100.6
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.6 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+!
+crypto ipsec profile GRE-PROTECT
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface tunnel10
+ tunnel protection ipsec profile GRE-PROTECT</code></pre>
+        <div class="callout"><p><strong>Design depth:</strong> GRE over IPsec can also be built with a crypto map that matches protocol GRE between public peer addresses. Tunnel protection is usually cleaner because the protection is tied to the tunnel interface.</p></div>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Run Routing over the Tunnel</h2>
+        <p>Enable OSPF over Tunnel10. Do not advertise the public transport network into the overlay.</p>
+        <pre><code>router ospf 10
+ passive-interface default
+ no passive-interface tunnel10
+ network 172.16.10.0 0.0.0.3 area 0
+ network 10.10.0.0 0.0.0.255 area 0
+!
+show ip ospf neighbor
+show ip route ospf
+show ip protocols</code></pre>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Validate Encryption</h2>
+        <p>Generate LAN-to-LAN traffic and prove the GRE packets are encrypted on the underlay.</p>
+        <pre><code>ping 10.60.0.10 source 10.10.0.1 repeat 10
+show crypto ikev2 sa detailed
+show crypto ipsec sa peer 198.51.100.6
+show crypto session interface tunnel10 detail
+show interface tunnel10 | include Tunnel protocol|Tunnel source|MTU</code></pre>
+        <p>Expect IPsec counters to increment while routing still points to Tunnel10. If GRE works but counters stay zero, the tunnel is probably not protected or traffic is using a different path.</p>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Troubleshooting</h2>
+        <ol>
+          <li>OSPF neighbors form before IPsec is applied, then drop after protection because peer identity is wrong.</li>
+          <li>IPsec is up, but OSPF does not form because multicast over the GRE tunnel is blocked by an ACL.</li>
+          <li>LAN pings work, but large TCP flows fail because GRE plus IPsec overhead was ignored.</li>
+        </ol>
+        <pre><code>show crypto session detail
+show crypto ikev2 sa detailed
+show ip ospf interface tunnel10
+show access-lists
+ping 10.60.0.10 size 1400 df-bit source 10.10.0.1</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>GRE foundation</b><span>Tunnel10 is verified before crypto is added.</span></div>
+          <div class="check"><b>IPsec protection</b><span>IKE and IPsec SAs are up and bound to the tunnel.</span></div>
+          <div class="check"><b>Routing overlay</b><span>OSPF routes are learned through Tunnel10.</span></div>
+          <div class="check"><b>Data proof</b><span>LAN traffic causes IPsec encaps and decaps counters to increment.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/security-vpn/ipsec-negotiation-ike-protocols/217432-configure-ios-xe-site-to-site-vpn-conn.html">Cisco IOS XE site-to-site VPN configuration example</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/ip/generic-routing-encapsulation-gre/118361-technote-gre-00.html">Cisco GRE technical support reference</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

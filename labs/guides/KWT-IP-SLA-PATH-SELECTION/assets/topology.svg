@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="520" viewBox="0 0 1160 520" role="img" aria-labelledby="title desc">
+  <title id="title">IP SLA path selection topology</title>
+  <desc id="desc">PC connects to R1. R1 connects to BB1 and BB2. BB1, BB2, and SERVER share the 198.51.100.0/24 server LAN.</desc>
+  <rect width="1160" height="520" fill="#f6f9fb"/>
+  <text x="45" y="52" fill="#0b243b" font-family="Arial, sans-serif" font-size="28" font-weight="700">IP SLA Path Selection</text>
+  <text x="45" y="80" fill="#415466" font-family="Arial, sans-serif" font-size="15">Use IP SLA and object tracking to prefer BB2, then fail over to BB1 when latency exceeds the threshold.</text>
+  <rect x="140" y="160" width="130" height="86" rx="5" fill="#ffffff" stroke="#7a8b99" stroke-width="2"/>
+  <rect x="395" y="160" width="130" height="86" rx="5" fill="#0b243b" stroke="#18a3d7" stroke-width="3"/>
+  <rect x="690" y="95" width="130" height="86" rx="5" fill="#ffffff" stroke="#7a8b99" stroke-width="2"/>
+  <rect x="690" y="270" width="130" height="86" rx="5" fill="#ffffff" stroke="#7a8b99" stroke-width="2"/>
+  <rect x="910" y="180" width="130" height="86" rx="5" fill="#ffffff" stroke="#7a8b99" stroke-width="2"/>
+  <rect x="860" y="95" width="235" height="260" rx="0" fill="none" stroke="#c9d7e0" stroke-width="2" stroke-dasharray="8 7"/>
+  <g font-family="Arial, sans-serif" font-weight="700" font-size="20">
+    <text x="177" y="200" fill="#0b243b">PC</text>
+    <text x="433" y="200" fill="#ffffff">R1</text>
+    <text x="731" y="134" fill="#0b243b">BB1</text>
+    <text x="731" y="309" fill="#0b243b">BB2</text>
+    <text x="940" y="220" fill="#0b243b">SERVER</text>
+  </g>
+  <g fill="#415466" font-family="Arial, sans-serif" font-size="13">
+    <text x="163" y="224">192.0.2.2/24</text>
+    <text x="420" y="224">192.0.2.1</text>
+    <text x="715" y="158">203.0.113.1</text>
+    <text x="715" y="333">203.0.113.5</text>
+    <text x="932" y="244">198.51.100.3</text>
+  </g>
+  <line x1="270" y1="203" x2="395" y2="203" stroke="#7a8b99" stroke-width="4"/>
+  <line x1="525" y1="180" x2="690" y2="138" stroke="#7a8b99" stroke-width="4"/>
+  <line x1="525" y1="226" x2="690" y2="313" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="820" y1="138" x2="910" y2="205" stroke="#7a8b99" stroke-width="4"/>
+  <line x1="820" y1="313" x2="910" y2="240" stroke="#18a3d7" stroke-width="4"/>
+  <text x="294" y="188" fill="#263946" font-family="Arial, sans-serif" font-size="13">192.0.2.0/24</text>
+  <text x="548" y="133" fill="#263946" font-family="Arial, sans-serif" font-size="13">203.0.113.0/30</text>
+  <text x="548" y="299" fill="#263946" font-family="Arial, sans-serif" font-size="13">203.0.113.4/30</text>
+  <text x="900" y="116" fill="#263946" font-family="Arial, sans-serif" font-size="13">198.51.100.0/24 shared LAN</text>
+  <path d="M455 120 C510 35 675 35 753 92" fill="none" stroke="#d84b2a" stroke-width="3" stroke-dasharray="10 8"/>
+  <text x="500" y="40" fill="#d84b2a" font-family="Arial, sans-serif" font-size="15" font-weight="700">Backup static route via BB1</text>
+  <path d="M460 260 C540 440 720 430 755 358" fill="none" stroke="#268a54" stroke-width="3" stroke-dasharray="10 8"/>
+  <text x="505" y="455" fill="#268a54" font-family="Arial, sans-serif" font-size="15" font-weight="700">Tracked primary static route via BB2</text>
+</svg>

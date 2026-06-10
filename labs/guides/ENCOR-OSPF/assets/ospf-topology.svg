@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR OSPF lab topology</title>
+  <desc id="desc">Five IOL routers, one IOL-L2 broadcast segment, and endpoint LANs across OSPF areas 0, 10, and 20.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f6f9fb; }
+      .zone { fill: #fff; stroke: #d3e0e8; stroke-width: 2; rx: 10; }
+      .area0 { fill: #eaf4f8; stroke: #99d7ec; stroke-width: 2; rx: 10; }
+      .area10 { fill: #edf9f4; stroke: #b8e4d6; stroke-width: 2; rx: 10; }
+      .area20 { fill: #fff8ea; stroke: #f1d39d; stroke-width: 2; rx: 10; }
+      .router { fill: #0b243b; stroke: #00a0d2; stroke-width: 3; rx: 8; }
+      .switch { fill: #17364f; stroke: #78c7e8; stroke-width: 3; rx: 8; }
+      .host { fill: #ffffff; stroke: #537286; stroke-width: 2; rx: 8; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #ffffff; font-size: 17px; font-weight: 700; text-anchor: middle; }
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #263946; font-size: 13px; text-anchor: middle; }
+      .zone-label { font-family: Arial, Helvetica, sans-serif; fill: #40586a; font-size: 18px; font-weight: 700; }
+      .link { stroke: #8296a4; stroke-width: 4; fill: none; }
+      .p2p { stroke: #0096c7; stroke-width: 5; fill: none; }
+      .broadcast { stroke: #14795f; stroke-width: 5; stroke-dasharray: 10 7; fill: none; }
+      .tag { fill: #e7f6fb; stroke: #99d7ec; rx: 6; }
+      .tagtext { font-family: Arial, Helvetica, sans-serif; fill: #075979; font-size: 13px; text-anchor: middle; font-weight: 700; }
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="640"/>
+  <rect class="area0" x="270" y="70" width="640" height="250"/>
+  <rect class="area10" x="50" y="360" width="470" height="210"/>
+  <rect class="area20" x="660" y="360" width="470" height="210"/>
+  <text class="zone-label" x="295" y="105">Area 0 Backbone</text>
+  <text class="zone-label" x="75" y="395">Area 10 Campus</text>
+  <text class="zone-label" x="685" y="395">Area 20 Branch</text>
+
+  <rect class="switch" x="500" y="135" width="180" height="70"/>
+  <text class="label" x="590" y="165">AREA0-SW</text>
+  <text class="label" x="590" y="188">IOL-L2</text>
+  <rect class="router" x="290" y="140" width="135" height="70"/>
+  <text class="label" x="357" y="170">R1-HQ</text>
+  <text class="label" x="357" y="193">IOL</text>
+  <rect class="router" x="755" y="140" width="135" height="70"/>
+  <text class="label" x="822" y="170">R2-CORE</text>
+  <text class="label" x="822" y="193">IOL</text>
+  <rect class="router" x="260" y="430" width="135" height="70"/>
+  <text class="label" x="327" y="460">R3-DIST</text>
+  <text class="label" x="327" y="483">IOL</text>
+  <rect class="router" x="785" y="430" width="135" height="70"/>
+  <text class="label" x="852" y="460">R4-BR</text>
+  <text class="label" x="852" y="483">IOL</text>
+  <rect class="router" x="520" y="430" width="135" height="70"/>
+  <text class="label" x="587" y="460">R5-SVC</text>
+  <text class="label" x="587" y="483">IOL</text>
+
+  <path class="broadcast" d="M425 170 L500 170"/>
+  <path class="broadcast" d="M680 170 L755 170"/>
+  <path class="p2p" d="M357 210 L327 430"/>
+  <path class="p2p" d="M822 210 L852 430"/>
+  <path class="p2p" d="M395 470 L520 470"/>
+  <path class="p2p" d="M655 470 L785 470"/>
+  <path class="p2p" d="M425 190 L755 190"/>
+
+  <rect class="host" x="95" y="430" width="125" height="46"/>
+  <text class="small" x="157" y="458">HQ-USER</text>
+  <rect class="host" x="955" y="430" width="125" height="46"/>
+  <text class="small" x="1017" y="458">BR-USER</text>
+  <rect class="host" x="525" y="545" width="125" height="46"/>
+  <text class="small" x="587" y="573">APP-SERVER</text>
+  <path class="link" d="M220 453 L260 453"/>
+  <path class="link" d="M920 453 L955 453"/>
+  <path class="link" d="M587 500 L587 545"/>
+
+  <rect class="tag" x="340" y="30" width="500" height="34"/>
+  <text class="tagtext" x="590" y="52">Broadcast backbone plus point-to-point area links</text>
+  <rect class="tag" x="120" y="595" width="940" height="34"/>
+  <text class="tagtext" x="590" y="617">Labs cover OSPFv2, OSPFv3, multi-area normal areas, summarization, filtering, network types, and passive interfaces</text>
+</svg>

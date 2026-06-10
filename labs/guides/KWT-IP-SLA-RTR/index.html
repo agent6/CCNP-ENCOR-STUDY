@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: IP SLA Response Time Reporter</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>IP SLA Response Time Reporter</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: IP SLA Responder</a>
+      <a href="#task3">Task 3: UDP Jitter Operation</a>
+      <a href="#task4">Task 4: Voice Marking</a>
+      <a href="#task5">Task 5: Schedule</a>
+      <a href="#task6">Task 6: Statistics</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab configures IP SLA Response Time Reporter behavior with a UDP jitter operation. R2 acts as the IP SLA responder. R1 sends simulated voice probes to R2 using UDP port 16384, G.729A codec settings, a ToS byte of 184, and a 5-second probe frequency.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>35-45 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.4</b><span>IP SLA</span></div>
+          <div class="metric"><b>2 routers</b><span>R1 and R2</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 and R2 are directly connected on 203.0.113.0/24 and run OSPF. The small IOL-L2 switches keep each LAN-facing router interface up so the starting config matches the supplied lab's addressing plan.</p>
+        <img class="topology" src="assets/topology.svg" alt="IP SLA Response Time Reporter topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify Baseline Reachability</h2>
+        <p>Verify that OSPF is established and that R1 can reach the R2 probe target.</p>
+        <pre><code>! R1
+show ip interface brief
+show ip ospf neighbor
+show ip route ospf
+ping 203.0.113.2
+
+! R2
+show ip interface brief
+show ip ospf neighbor</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Enable the IP SLA Responder</h2>
+        <p>On R2, enable the general IP SLA responder and verify that it is active.</p>
+        <pre><code>! R2
+conf t
+ip sla responder
+end
+
+show ip sla responder</code></pre>
+        <p>Expected result: the general IP SLA responder should be enabled on its control ports.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Create the UDP Jitter Operation</h2>
+        <p>On R1, create IP SLA operation 1. Target R2 at 203.0.113.2, use the first available voice RTP UDP port from the supplied lab, and configure G.729A with a 20-byte payload.</p>
+        <pre><code>! R1
+conf t
+ip sla 1
+ udp-jitter 203.0.113.2 16384 codec g729a codec-size 20
+end
+
+show running-config | section ip sla</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Set Voice-Like ToS and Probe Frequency</h2>
+        <p>Configure the ToS byte and make R1 send probes every 5 seconds.</p>
+        <pre><code>! R1
+conf t
+ip sla 1
+ tos 184
+ frequency 5
+exit
+end
+
+show running-config | section ip sla</code></pre>
+        <p>ToS 184 corresponds to a voice-style QoS marking in this lab context.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Schedule the Operation</h2>
+        <p>Schedule operation 1 to start now and run until manually removed.</p>
+        <pre><code>! R1
+conf t
+ip sla schedule 1 start-time now life forever
+end
+
+show ip sla configuration 1
+show ip sla statistics 1</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Interpret IP SLA Statistics</h2>
+        <p>Wait a few probe intervals, then verify the operation return code and interpret RTT, jitter, packet loss, and voice score fields.</p>
+        <pre><code>! R1
+show ip sla statistics
+show ip sla statistics 1 details
+show ip sla summary</code></pre>
+        <p>Expected result: operation 1 should show type <code>udp-jitter</code>, return code <code>OK</code>, successful probes, RTT values, source-to-destination and destination-to-source jitter, packet loss counters, and voice score fields such as ICPIF or MOS if supported by the image.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

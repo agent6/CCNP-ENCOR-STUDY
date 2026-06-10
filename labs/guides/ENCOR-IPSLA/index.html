@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify IP SLA</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify IP SLA</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: ICMP Echo</a>
+      <a href="#task3">Task 3: Tracking and Failover</a>
+      <a href="#task4">Task 4: UDP Jitter</a>
+      <a href="#task5">Task 5: TCP Connect</a>
+      <a href="#task6">Task 6: Verification</a>
+      <a href="#task7">Task 7: Defects</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 4.4: configure and verify IP SLA. You will configure ICMP echo operations, bind reachability to object tracking, use tracked static routes for path failover, run responder-based UDP jitter tests, and validate a TCP service with an IP SLA TCP connect operation.</p>
+        <p>CCNP-level value comes from proving what the probe measures and what the network does with the result. You will distinguish probe success from application success, source-interface reachability from destination reachability, one-way path issues from round-trip delay, and route installation from forwarding behavior.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.4</b><span>IP SLA</span></div>
+          <div class="metric"><b>IOL routers</b><span>Tracked routing and responder</span></div>
+          <div class="metric"><b>7 tasks</b><span>Configure, fail, verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-BRANCH reaches APP-SERVER through a primary path via R2-PRIMARY and a backup path via R3-BACKUP. R4-SERVICES is the service-edge router and IP SLA responder. The starting CML topology has addressing and routing only; IP SLA operations, object tracking, and tracked routes are intentionally absent.</p>
+        <img class="topology" src="assets/ipsla-topology.svg" alt="IP SLA topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Routing and Traffic</h2>
+        <p>Confirm the routed paths before adding probes. IP SLA cannot fix a broken topology, and tracked routing is hard to interpret if you do not know the baseline path.</p>
+        <pre><code>show ip interface brief
+show ip route
+show ip cef 10.20.20.10
+traceroute 10.20.20.10 source 10.10.10.1
+ping 10.20.20.10 source 10.10.10.1
+show running-config | section ip sla
+show track</code></pre>
+        <p>From CLIENT, generate baseline traffic:</p>
+        <pre><code>ping -c 5 10.20.20.10
+traceroute 10.20.20.10
+wget -O- http://10.20.20.10</code></pre>
+        <p>The initial traceroute should use the primary path through R2-PRIMARY.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure an ICMP Echo IP SLA Operation</h2>
+        <p>Configure R1-BRANCH to probe the application server address using a stable source interface. Tune frequency, timeout, and threshold so you can interpret the result.</p>
+        <pre><code>! R1-BRANCH
+ip sla 10
+ icmp-echo 10.20.20.10 source-interface Ethernet0/0
+ frequency 5
+ timeout 1000
+ threshold 200
+ip sla schedule 10 life forever start-time now
+!
+show ip sla configuration 10
+show ip sla statistics 10
+show ip sla summary</code></pre>
+        <p>Depth check: ICMP echo proves routed reachability to the target address. It does not prove HTTP is listening, and it does not prove the same path is used by every application flow.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Bind IP SLA to Object Tracking and Static Routes</h2>
+        <p>Use the IP SLA return code to track primary-path reachability, then replace the existing untracked service route with a tracked primary static route and a floating backup static route.</p>
+        <pre><code>! R1-BRANCH
+track 10 ip sla 10 reachability
+ delay down 10 up 5
+!
+no ip route 10.20.20.0 255.255.255.0 10.0.12.2
+ip route 10.20.20.0 255.255.255.0 10.0.12.2 track 10
+ip route 10.20.20.0 255.255.255.0 10.0.13.2 200
+!
+show track 10
+show ip route 10.20.20.0
+show ip sla statistics 10</code></pre>
+        <p>Test failover by administratively shutting the primary-facing interface on R1-BRANCH or R2-PRIMARY. Verify that the tracked route is removed and the floating route is installed.</p>
+        <pre><code>! R1-BRANCH
+interface Ethernet0/1
+ shutdown
+!
+show track 10
+show ip route 10.20.20.0
+traceroute 10.20.20.10 source 10.10.10.1
+!
+interface Ethernet0/1
+ no shutdown</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> Tracking the far server catches more than local link failure. Tracking only the interface line protocol would miss upstream black holes beyond the first hop.</p></div>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure UDP Jitter with an IP SLA Responder</h2>
+        <p>Configure R4-SERVICES as an IP SLA responder, then configure R1-BRANCH to measure UDP jitter toward R4. UDP jitter operations are useful for voice-style metrics because they report delay variation, packet loss, and round-trip data beyond basic reachability.</p>
+        <pre><code>! R4-SERVICES
+ip sla responder
+show ip sla responder
+!
+! R1-BRANCH
+ip sla 20
+ udp-jitter 10.20.20.1 16384 source-interface Ethernet0/0 codec g711ulaw
+ frequency 10
+ timeout 2000
+ip sla schedule 20 life forever start-time now
+!
+show ip sla configuration 20
+show ip sla statistics 20
+show ip sla statistics 20 details</code></pre>
+        <p>Interpret these fields: latest RTT, packet loss, one-way delay if timestamps are usable, jitter source-to-destination, jitter destination-to-source, and operation return code.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Configure TCP Connect to Validate an Application Port</h2>
+        <p>Configure a TCP connect operation from R1-BRANCH to APP-SERVER on TCP/80. This tests application-port reachability more directly than ICMP echo.</p>
+        <pre><code>! R1-BRANCH
+ip sla 30
+ tcp-connect 10.20.20.10 80 source-interface Ethernet0/0
+ frequency 10
+ timeout 2000
+ threshold 500
+ip sla schedule 30 life forever start-time now
+!
+show ip sla configuration 30
+show ip sla statistics 30
+show ip sla summary</code></pre>
+        <p>Compare IP SLA 10 and IP SLA 30. If ICMP succeeds but TCP connect fails, routing is probably not the problem; investigate application state, ACLs, firewalling, or the wrong destination port.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify Operations, History, and Control-Plane Impact</h2>
+        <p>Use multiple views to prove that the operations are scheduled, returning expected codes, and influencing routing only where intended.</p>
+        <pre><code>show ip sla summary
+show ip sla statistics
+show ip sla statistics 10 details
+show ip sla statistics 20 details
+show ip sla statistics 30 details
+show track
+show track 10
+show ip route 10.20.20.0
+show running-config | section ip sla
+show running-config | include ^track|^ip route 10.20.20.0</code></pre>
+        <p>Answer these:</p>
+        <ul>
+          <li>Which operation proves only IP reachability?</li>
+          <li>Which operation requires the IP SLA responder?</li>
+          <li>Which operation proves TCP/80 is open?</li>
+          <li>Which object changes the routing table?</li>
+          <li>What delay timers protect the route from flapping?</li>
+        </ul>
+      </section>
+
+      <section id="task7" class="task">
+        <h2>Task 7: Troubleshoot IP SLA Defects</h2>
+        <p>Use symptoms and show output before changing configuration.</p>
+        <ol>
+          <li>The operation is configured but never scheduled, so no statistics update.</li>
+          <li>The source interface is wrong, so the return path is missing or the probe uses an unexpected address.</li>
+          <li>The timeout is shorter than the real path delay, causing false failures.</li>
+          <li>The tracked route is installed but the floating backup route has a lower administrative distance than intended.</li>
+          <li>UDP jitter fails because the responder is not enabled on the target router.</li>
+          <li>ICMP succeeds but TCP connect fails because the service is not listening or the port is filtered.</li>
+          <li>Failover works, but failback flaps because no track delay was configured.</li>
+        </ol>
+        <pre><code>debug ip sla trace
+debug track
+show logging
+show ip sla statistics
+show ip sla application
+show track brief
+show ip route static
+show interfaces Ethernet0/1
+show interfaces Ethernet0/2</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Operations</b><span>ICMP echo, UDP jitter, and TCP connect are scheduled and return useful statistics.</span></div>
+          <div class="check"><b>Tracking</b><span>Object tracking follows the correct IP SLA operation and uses sensible delay timers.</span></div>
+          <div class="check"><b>Routing</b><span>The tracked primary route and floating backup route install and withdraw as expected.</span></div>
+          <div class="check"><b>Interpretation</b><span>You can explain what each operation proves, what it does not prove, and how to troubleshoot false positives.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/c9000/lyr3-fwd/ip-slas/ip-slas-configuration-guide/ip-slas.html">Cisco IOS XE IP SLAs configuration guide</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/c9000/lyr3-fwd/enhanced-object-tracking/enhanced-object-tracking-configuration-guide/static-route-object-tracking.html">Cisco IOS XE static route object tracking guide</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 4.4 asks candidates to configure and verify IP SLA. This lab includes basic reachability, service reachability, responder-based jitter metrics, and route tracking because those are different operational questions even when they share the same IP SLA framework.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

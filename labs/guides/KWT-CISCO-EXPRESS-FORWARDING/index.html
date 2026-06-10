@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Cisco Express Forwarding</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>Cisco Express Forwarding</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: FIB</a>
+      <a href="#task3">Task 3: Adjacency Table</a>
+      <a href="#task4">Task 4: Correlate Tables</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab inspects Cisco Express Forwarding on R1. The topology starts with OSPF already converged so R1 has a route to the R2-side LAN. You will compare the routing table, CEF forwarding information base, and CEF adjacency table.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>25-35 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR Architecture</b><span>CEF interpretation</span></div>
+          <div class="metric"><b>2 routers</b><span>R1 and R2</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 reaches 192.0.2.0/24 through next hop 203.0.113.2 on Ethernet0/2. SW1 and SW2 keep the LAN-facing links up, matching the supplied lab's switch-router layout.</p>
+        <img class="topology" src="assets/topology.svg" alt="Cisco Express Forwarding topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Baseline</h2>
+        <p>Confirm OSPF has installed a route on R1 toward the R2-side LAN and that R1 can resolve the next hop.</p>
+        <pre><code>! R1
+show ip interface brief
+show ip route
+show ip route 192.0.2.0
+show ip ospf neighbor
+ping 203.0.113.2
+ping 192.0.2.1</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Inspect the CEF FIB on R1</h2>
+        <p>Use the CEF table to identify attached, receive, drop, and recursive or next-hop forwarding entries. Pay special attention to 192.0.2.0/24, 198.51.100.0/24, and 203.0.113.0/24.</p>
+        <pre><code>! R1
+show ip cef
+show ip cef 192.0.2.0
+show ip cef 192.0.2.1 detail
+show ip cef 203.0.113.2 detail</code></pre>
+        <p>Expected result: R1 should forward 192.0.2.0/24 toward next hop 203.0.113.2 out Ethernet0/2. Directly connected prefixes should show attached or receive entries.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Inspect the CEF Adjacency Table</h2>
+        <p>The adjacency table stores Layer 2 rewrite information for directly connected next hops. Inspect the adjacency for R2 and interpret the encapsulation data.</p>
+        <pre><code>! R1
+show adjacency
+show adjacency detail
+show adjacency Ethernet0/2 detail
+show arp 203.0.113.2</code></pre>
+        <p>Expected result: R1 should have an IP adjacency for 203.0.113.2 on Ethernet0/2, with an encapsulation string derived from the resolved Layer 2 address.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Correlate RIB, FIB, and Adjacency</h2>
+        <p>Explain the forwarding chain for traffic from R1 toward 192.0.2.1. The RIB selects the route, CEF programs the FIB entry, and the adjacency table provides the rewrite for the next hop.</p>
+        <pre><code>! R1
+show ip route 192.0.2.0
+show ip cef 192.0.2.1 detail
+show adjacency Ethernet0/2 detail
+traceroute 192.0.2.1</code></pre>
+        <p>Depth check: CEF is not just a copy of the routing table. The FIB is optimized for forwarding decisions, while the adjacency table contains the resolved next-hop rewrite information needed to transmit the packet.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

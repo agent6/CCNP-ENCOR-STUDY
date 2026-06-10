@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: IPsec Tunnels</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>IPsec Tunnel Policy and Verification</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Crypto Baseline</a>
+      <a href="#task2">Task 2: Policy-Based IPsec</a>
+      <a href="#task3">Task 3: Route-Based IPsec</a>
+      <a href="#task4">Task 4: Verification Depth</a>
+      <a href="#task5">Task 5: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 2.2.b for IPsec tunneling. You will configure and verify a site-to-site IPsec VPN, then compare policy-based crypto maps with route-based tunnel protection so you can recognize both operational models.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 2.2.b</b><span>IPsec tunneling</span></div>
+          <div class="metric"><b>IOL routers</b><span>HQ, Internet, Branch</span></div>
+          <div class="metric"><b>5 tasks</b><span>Configure, compare, verify</span></div>
+        </div>
+      </section>
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <img class="topology" src="../ENCOR-VIRT/assets/wan-topology.svg" alt="WAN virtualization topology">
+        <p>INET-RTR is only transit. It must be able to route public transport addresses, but it must not learn private LAN prefixes.</p>
+      </section>
+      <section id="task1" class="task">
+        <h2>Task 1: Crypto Baseline</h2>
+        <p>Before configuring IPsec, prove that clear-text LAN traffic would fail or cross the wrong path and that peer transport addresses are reachable.</p>
+        <pre><code>show ip route 198.51.100.6
+ping 198.51.100.6 source ethernet0/0
+show access-lists
+show crypto ikev2 sa
+show crypto ipsec sa</code></pre>
+      </section>
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Policy-Based IPsec</h2>
+        <p>Use a crypto ACL to define interesting traffic between HQ and branch LANs. Keep the ACL symmetric on both peers.</p>
+        <pre><code>configure terminal
+crypto ikev2 proposal ENCOR-PROP
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+!
+crypto ikev2 policy ENCOR-POL
+ proposal ENCOR-PROP
+!
+crypto ikev2 keyring ENCOR-KEYS
+ peer BR-RTR
+  address 198.51.100.6
+  pre-shared-key local cisco123
+  pre-shared-key remote cisco123
+!
+crypto ikev2 profile ENCOR-IKEV2
+ match identity remote address 198.51.100.6 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local ENCOR-KEYS
+!
+ip access-list extended VPN-TRAFFIC
+ permit ip 10.10.0.0 0.0.0.255 10.60.0.0 0.0.0.255
+!
+crypto ipsec transform-set ENCOR-TS esp-aes 256 esp-sha256-hmac
+ mode tunnel
+!
+crypto map ENCOR-MAP 10 ipsec-isakmp
+ set peer 198.51.100.6
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+ match address VPN-TRAFFIC
+!
+interface ethernet0/0
+ crypto map ENCOR-MAP
+end</code></pre>
+      </section>
+      <section id="task3" class="task">
+        <h2>Task 3: Compare Route-Based IPsec</h2>
+        <p>On a second pair of routers, build a virtual tunnel interface and apply an IPsec profile. This method makes the tunnel a routable interface and avoids crypto ACL route ambiguity.</p>
+        <pre><code>crypto ipsec profile ENCOR-PROFILE
+ set transform-set ENCOR-TS
+ set ikev2-profile ENCOR-IKEV2
+!
+interface tunnel20
+ description Route-based IPsec VTI to branch
+ ip address 172.16.20.1 255.255.255.252
+ tunnel source ethernet0/0
+ tunnel destination 198.51.100.6
+ tunnel mode ipsec ipv4
+ tunnel protection ipsec profile ENCOR-PROFILE
+!
+ip route 10.60.0.0 255.255.255.0 tunnel20</code></pre>
+        <div class="callout"><p><strong>Comparison:</strong> Crypto maps encrypt traffic selected by an ACL on an interface. VTIs encrypt traffic routed to a tunnel interface. Both are valid; verification must match the model.</p></div>
+      </section>
+      <section id="task4" class="task">
+        <h2>Task 4: Verification Depth</h2>
+        <p>Generate interesting traffic and verify both IKE and IPsec state. Do not rely on only the ping result.</p>
+        <pre><code>ping 10.60.0.10 source 10.10.0.1 repeat 5
+show crypto ikev2 sa detailed
+show crypto ipsec sa peer 198.51.100.6
+show crypto session detail
+show access-lists VPN-TRAFFIC
+show platform hardware qfp active feature ipsec datapath drops</code></pre>
+        <p>Look for incrementing encaps and decaps counters. A one-way counter usually means peer ACL mismatch, NAT interference, wrong peer identity, or return routing failure.</p>
+      </section>
+      <section id="task5" class="task">
+        <h2>Task 5: Troubleshooting</h2>
+        <ol>
+          <li>IKEv2 fails because the remote identity does not match the profile.</li>
+          <li>IKE is up but IPsec counters do not increment because the crypto ACL is reversed on one peer.</li>
+          <li>Encaps increment but decaps remain zero because the return route points to the Internet instead of the VPN.</li>
+        </ol>
+        <pre><code>debug crypto ikev2 protocol
+debug crypto ikev2 error
+show crypto ikev2 sa detailed
+show crypto ipsec sa | include local ident|remote ident|pkts encaps|pkts decaps
+show ip route 10.60.0.0</code></pre>
+      </section>
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Peer setup</b><span>IKEv2 policy, keyring, and profile match the peer.</span></div>
+          <div class="check"><b>Traffic selection</b><span>Crypto ACL or VTI routing selects the right prefixes.</span></div>
+          <div class="check"><b>Counter proof</b><span>Encaps and decaps increment after real traffic.</span></div>
+          <div class="check"><b>Model awareness</b><span>You can explain crypto map versus VTI verification.</span></div>
+        </div>
+      </section>
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/security-vpn/ipsec-negotiation-ike-protocols/217432-configure-ios-xe-site-to-site-vpn-conn.html">Cisco IOS XE site-to-site VPN configuration example</a></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

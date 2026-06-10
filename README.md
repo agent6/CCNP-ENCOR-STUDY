@@ -10,6 +10,8 @@ A single-file web app (no install, runs in any browser) with:
 
 - **218 original practice questions** — concept questions plus "refer to the exhibit" output-interpretation scenarios (stuck OSPF neighbors, EtherChannel flags, BGP states, NAT tables, REST responses, and more)
 - **326 flashcards** — term/definition cards with an Again/Got-it repetition loop
+- **24 per-chapter cheat sheets** rendered in-app
+- **34 hands-on CML labs** ([`labs/`](labs/)) — full graded lab guides plus importable CML topology YAMLs, grouped by exam domain
 - All Chapters, Random 50, or per-chapter modes · instant feedback with explanations · per-chapter score breakdown · retry-missed drill mode
 
 ## 📚 Contents

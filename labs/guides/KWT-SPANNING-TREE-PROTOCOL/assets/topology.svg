@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" viewBox="0 0 980 520" role="img" aria-labelledby="title desc">
+  <title id="title">Spanning Tree Protocol three-switch topology</title>
+  <desc id="desc">SW1, SW2, and SW3 form a redundant triangle for STP analysis.</desc>
+  <rect width="980" height="520" fill="#f6f9fb"/>
+  <text x="45" y="52" fill="#0b243b" font-family="Arial, sans-serif" font-size="28" font-weight="700">Spanning Tree Protocol</text>
+  <text x="45" y="80" fill="#415466" font-family="Arial, sans-serif" font-size="15">Analyze root bridge election, root ports, designated ports, and alternate blocking ports.</text>
+  <g fill="#fff" stroke="#7a8b99" stroke-width="2">
+    <rect x="425" y="120" width="130" height="86" rx="5"/>
+    <rect x="200" y="335" width="130" height="86" rx="5"/>
+    <rect x="650" y="335" width="130" height="86" rx="5"/>
+  </g>
+  <g fill="#0b243b" font-family="Arial, sans-serif" font-weight="700" font-size="21">
+    <text x="449" y="160">SW3</text>
+    <text x="224" y="375">SW1</text>
+    <text x="674" y="375">SW2</text>
+  </g>
+  <line x1="425" y1="182" x2="330" y2="350" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="555" y1="182" x2="650" y2="350" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="330" y1="378" x2="650" y2="378" stroke="#18a3d7" stroke-width="4"/>
+  <g fill="#263946" font-family="Arial, sans-serif" font-size="13">
+    <text x="332" y="257">SW1 E0/1 - SW3 E0/1</text>
+    <text x="555" y="257">SW2 E0/2 - SW3 E0/2</text>
+    <text x="420" y="365">SW1 E0/2 - SW2 E0/1</text>
+  </g>
+  <rect x="330" y="35" width="320" height="50" rx="4" fill="#ffffff" stroke="#c9d7e0" stroke-width="2"/>
+  <text x="352" y="65" fill="#415466" font-family="Arial, sans-serif" font-size="14">Unused interfaces are administratively down.</text>
+</svg>

@@ -1,0 +1,1009 @@
+---
+annotations:
+- border_color: "#00000000"
+  border_style: ''
+  color: "#0B243B"
+  rotation: 0
+  text_bold: true
+  text_content: ENCOR-QOS-INTERPRET
+  text_font: sans-serif
+  text_italic: false
+  text_size: 24
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -620.0
+  y1: -500.0
+  z_index: 1
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#F6F9FB"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -260.0
+  x2: 620.0
+  y2: -70.0
+  z_index: 2
+- border_color: "#D3E0E8"
+  border_radius: 0
+  border_style: ''
+  color: "#FFFFFF"
+  rotation: 0
+  thickness: 2
+  type: rectangle
+  x1: -620.0
+  y1: -30.0
+  x2: 620.0
+  y2: 310.0
+  z_index: 3
+- border_color: "#00000000"
+  border_style: ''
+  color: "#263946"
+  rotation: 0
+  text_bold: false
+  text_content: QoS interpretation lab. HQ-RTR has marking and WAN egress policies.
+    WAN-RTR has transit policing. BR-RTR has intentional return-policy direction and
+    match-all classification defects.
+  text_font: sans-serif
+  text_italic: false
+  text_size: 14
+  text_unit: pt
+  thickness: 1
+  type: text
+  x1: -610.0
+  y1: -455.0
+  z_index: 4
+smart_annotations: []
+nodes:
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname HQ-RTR
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description WAN link to WAN-RTR Ethernet0/0 - QoS egress policy belongs here
+       ip address 10.255.0.2 255.255.255.252
+       no shutdown
+       service-policy output WAN-EDGE-OUT
+      !
+      interface Ethernet0/1
+       description HQ voice endpoint LAN
+       ip address 10.10.10.1 255.255.255.0
+       no shutdown
+       service-policy input MARK-HQ-LAN
+      !
+      interface Ethernet0/2
+       description HQ data endpoint LAN
+       ip address 10.10.20.1 255.255.255.0
+       no shutdown
+       service-policy input MARK-HQ-LAN
+      !
+      ip route 0.0.0.0 0.0.0.0 10.255.0.1
+      !
+      ip access-list extended QOS-CRITICAL-DATA
+       permit tcp 10.10.20.0 0.0.0.255 host 10.20.10.10 eq 443
+       permit tcp 10.10.20.0 0.0.0.255 host 10.20.10.10 eq 22
+      !
+      class-map match-any VOICE-EF
+       match dscp ef
+      class-map match-any VIDEO-AF41
+       match dscp af41
+      class-map match-any CRITICAL-DATA
+       match access-group name QOS-CRITICAL-DATA
+      class-map match-any SCAVENGER
+       match dscp cs1
+      !
+      policy-map MARK-HQ-LAN
+       class VOICE-EF
+        set dscp ef
+       class CRITICAL-DATA
+        set dscp af21
+       class class-default
+        set dscp default
+      !
+      policy-map WAN-EDGE-OUT
+       class VOICE-EF
+        priority 512
+       class VIDEO-AF41
+        bandwidth 1024
+       class CRITICAL-DATA
+        bandwidth 768
+       class SCAVENGER
+        police 64000 conform-action transmit exceed-action drop
+       class class-default
+        fair-queue
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n0
+  image_definition: iol-xe-17-16-01a
+  label: HQ-RTR
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - IOL
+  x: -420
+  y: -170
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname WAN-RTR
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description WAN link to HQ-RTR Ethernet0/0
+       ip address 10.255.0.1 255.255.255.252
+       no shutdown
+       service-policy input WAN-TRANSIT-IN
+      !
+      interface Ethernet0/1
+       description WAN link to BR-RTR Ethernet0/0
+       ip address 10.255.0.5 255.255.255.252
+       no shutdown
+       service-policy input WAN-TRANSIT-IN
+      !
+      ip route 10.10.10.0 255.255.255.0 10.255.0.2
+      ip route 10.10.20.0 255.255.255.0 10.255.0.2
+      ip route 10.20.10.0 255.255.255.0 10.255.0.6
+      ip route 10.20.20.0 255.255.255.0 10.255.0.6
+      !
+      class-map match-any TRANSIT-SCAVENGER
+       match dscp cs1
+      class-map match-any TRANSIT-VOICE
+       match dscp ef
+      !
+      policy-map WAN-TRANSIT-IN
+       class TRANSIT-VOICE
+        set dscp ef
+       class TRANSIT-SCAVENGER
+        police 64000 conform-action transmit exceed-action drop
+       class class-default
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n1
+  image_definition: iol-xe-17-16-01a
+  label: WAN-RTR
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - IOL
+  x: 0
+  y: -170
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: ios_config.txt
+    content: |
+      !
+      version 17.16
+      service timestamps debug datetime msec
+      service timestamps log datetime msec
+      no service password-encryption
+      !
+      hostname BR-RTR
+      !
+      no logging console
+      no aaa new-model
+      no ip domain-lookup
+      ip cef
+      !
+      interface Ethernet0/0
+       description WAN link to WAN-RTR Ethernet0/1 - DEFECT return QoS attached input, not output
+       ip address 10.255.0.6 255.255.255.252
+       no shutdown
+       service-policy input BR-RETURN-QOS
+      !
+      interface Ethernet0/1
+       description Branch user LAN
+       ip address 10.20.20.1 255.255.255.0
+       no shutdown
+      !
+      interface Ethernet0/2
+       description Branch server LAN
+       ip address 10.20.10.1 255.255.255.0
+       no shutdown
+      !
+      ip route 0.0.0.0 0.0.0.0 10.255.0.5
+      !
+      ip access-list extended RTP-PORTS
+       permit udp any any range 16384 32767
+      !
+      class-map match-all RETURN-VOICE
+       match dscp ef
+       match access-group name RTP-PORTS
+      class-map match-any RETURN-DATA
+       match dscp af21
+      class-map match-any RETURN-SCAVENGER
+       match dscp cs1
+      !
+      policy-map BR-RETURN-QOS
+       class RETURN-VOICE
+        priority 512
+       class RETURN-DATA
+        bandwidth 768
+       class RETURN-SCAVENGER
+        police 32000 conform-action transmit exceed-action drop
+       class class-default
+        fair-queue
+      !
+      !
+      line con 0
+       exec-timeout 0 0
+       logging synchronous
+      !
+      line vty 0 4
+       login
+      !
+      end
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n2
+  image_definition: iol-xe-17-16-01a
+  label: BR-RTR
+  node_definition: iol-xe
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - IOL
+  x: 420
+  y: -170
+  interfaces:
+  - id: i0
+    label: Loopback0
+    mac_address: 
+    slot: 0
+    type: loopback
+  - id: i1
+    label: Ethernet0/0
+    mac_address: 
+    slot: 0
+    type: physical
+  - id: i2
+    label: Ethernet0/1
+    mac_address: 
+    slot: 1
+    type: physical
+  - id: i3
+    label: Ethernet0/2
+    mac_address: 
+    slot: 2
+    type: physical
+  - id: i4
+    label: Ethernet0/3
+    mac_address: 
+    slot: 3
+    type: physical
+  - id: i5
+    label: Ethernet1/0
+    mac_address: 
+    slot: 4
+    type: physical
+  - id: i6
+    label: Ethernet1/1
+    mac_address: 
+    slot: 5
+    type: physical
+  - id: i7
+    label: Ethernet1/2
+    mac_address: 
+    slot: 6
+    type: physical
+  - id: i8
+    label: Ethernet1/3
+    mac_address: 
+    slot: 7
+    type: physical
+  - id: i9
+    label: Ethernet2/0
+    mac_address: 
+    slot: 8
+    type: physical
+  - id: i10
+    label: Ethernet2/1
+    mac_address: 
+    slot: 9
+    type: physical
+  - id: i11
+    label: Ethernet2/2
+    mac_address: 
+    slot: 10
+    type: physical
+  - id: i12
+    label: Ethernet2/3
+    mac_address: 
+    slot: 11
+    type: physical
+  - id: i13
+    label: Ethernet3/0
+    mac_address: 
+    slot: 12
+    type: physical
+  - id: i14
+    label: Ethernet3/1
+    mac_address: 
+    slot: 13
+    type: physical
+  - id: i15
+    label: Ethernet3/2
+    mac_address: 
+    slot: 14
+    type: physical
+  - id: i16
+    label: Ethernet3/3
+    mac_address: 
+    slot: 15
+    type: physical
+  - id: i17
+    label: Ethernet4/0
+    mac_address: 
+    slot: 16
+    type: physical
+  - id: i18
+    label: Ethernet4/1
+    mac_address: 
+    slot: 17
+    type: physical
+  - id: i19
+    label: Ethernet4/2
+    mac_address: 
+    slot: 18
+    type: physical
+  - id: i20
+    label: Ethernet4/3
+    mac_address: 
+    slot: 19
+    type: physical
+  - id: i21
+    label: Ethernet5/0
+    mac_address: 
+    slot: 20
+    type: physical
+  - id: i22
+    label: Ethernet5/1
+    mac_address: 
+    slot: 21
+    type: physical
+  - id: i23
+    label: Ethernet5/2
+    mac_address: 
+    slot: 22
+    type: physical
+  - id: i24
+    label: Ethernet5/3
+    mac_address: 
+    slot: 23
+    type: physical
+  - id: i25
+    label: Ethernet6/0
+    mac_address: 
+    slot: 24
+    type: physical
+  - id: i26
+    label: Ethernet6/1
+    mac_address: 
+    slot: 25
+    type: physical
+  - id: i27
+    label: Ethernet6/2
+    mac_address: 
+    slot: 26
+    type: physical
+  - id: i28
+    label: Ethernet6/3
+    mac_address: 
+    slot: 27
+    type: physical
+  - id: i29
+    label: Ethernet7/0
+    mac_address: 
+    slot: 28
+    type: physical
+  - id: i30
+    label: Ethernet7/1
+    mac_address: 
+    slot: 29
+    type: physical
+  - id: i31
+    label: Ethernet7/2
+    mac_address: 
+    slot: 30
+    type: physical
+  - id: i32
+    label: Ethernet7/3
+    mac_address: 
+    slot: 31
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname hq-voice
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.10.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.10.10.1
+
+      echo "hq-voice" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       hq-voice localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n3
+  image_definition: alpine-base-3-21-3
+  label: HQ-VOICE
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - endpoint
+  x: -620
+  y: 40
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname hq-data
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.10.20.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.10.20.1
+
+      echo "hq-data" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       hq-data localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n4
+  image_definition: alpine-base-3-21-3
+  label: HQ-DATA
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - endpoint
+  x: -620
+  y: 240
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname br-user
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.20.20.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.20.20.1
+
+      echo "br-user" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       br-user localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n5
+  image_definition: alpine-base-3-21-3
+  label: BR-USER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - endpoint
+  x: 620
+  y: 40
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+- boot_disk_size: 
+  configuration:
+  - name: node.cfg
+    content: |-
+      # this is a shell script which will be sourced at boot
+      hostname br-server
+      USERNAME=cisco
+      PASSWORD=cisco
+
+      ip address add 10.20.10.10/24 dev eth0
+      ip link set dev eth0 up
+      ip route add default via 10.20.10.1
+
+      echo "br-server" > /etc/hostname
+      cat <<EOF > /etc/hosts
+      127.0.0.1       br-server localhost
+      ::1             localhost
+      EOF
+  cpu_limit: 
+  cpus: 
+  data_volume: 
+  hide_links: false
+  id: n6
+  image_definition: alpine-base-3-21-3
+  label: BR-SERVER
+  node_definition: alpine
+  parameters: {}
+  ram: 
+  tags:
+  - ENCOR-QOS-INTERPRET
+  - endpoint
+  x: 620
+  y: 240
+  interfaces:
+  - id: i0
+    label: eth0
+    mac_address: 
+    slot: 0
+    type: physical
+links:
+- id: l0
+  n1: n0
+  n2: n1
+  i1: i1
+  i2: i1
+  conditioning: {}
+  label: HQ-RTR-Ethernet0/0<->WAN-RTR-Ethernet0/0
+- id: l1
+  n1: n1
+  n2: n2
+  i1: i2
+  i2: i1
+  conditioning: {}
+  label: WAN-RTR-Ethernet0/1<->BR-RTR-Ethernet0/0
+- id: l2
+  n1: n3
+  n2: n0
+  i1: i0
+  i2: i2
+  conditioning: {}
+  label: HQ-VOICE-eth0<->HQ-RTR-Ethernet0/1
+- id: l3
+  n1: n4
+  n2: n0
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: HQ-DATA-eth0<->HQ-RTR-Ethernet0/2
+- id: l4
+  n1: n5
+  n2: n2
+  i1: i0
+  i2: i2
+  conditioning: {}
+  label: BR-USER-eth0<->BR-RTR-Ethernet0/1
+- id: l5
+  n1: n6
+  n2: n2
+  i1: i0
+  i2: i3
+  conditioning: {}
+  label: BR-SERVER-eth0<->BR-RTR-Ethernet0/2
+lab:
+  description: CCNP ENCOR Architecture 1.4 lab for interpreting QoS class maps, policy
+    maps, service-policy direction, and counters using IOL routers.
+  notes: Starting state includes working routing and preloaded QoS policies. Students
+    interpret existing QoS behavior and identify intentional defects before making
+    repairs.
+  title: ENCOR-QOS-INTERPRET
+  version: 0.3.0

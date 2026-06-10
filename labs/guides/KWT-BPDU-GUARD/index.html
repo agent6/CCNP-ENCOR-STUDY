@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: BPDU Guard</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>BPDU Guard</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Loss of Edge Status</a>
+      <a href="#task3">Task 3: Restore PortFast</a>
+      <a href="#task4">Task 4: Enable BPDU Guard</a>
+      <a href="#task5">Task 5: Trigger Err-Disable</a>
+      <a href="#task6">Task 6: Recovery</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab demonstrates how BPDU Guard protects PortFast edge ports. SW4 has an edge port toward SW5. SW5 starts with its connected interface administratively shut down, so you can first observe normal PortFast behavior, then bring SW5 online to generate a BPDU and force SW4's edge port into err-disabled state.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>35-45 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR Layer 2</b><span>STP protection</span></div>
+          <div class="metric"><b>5 switches</b><span>SW1 through SW5</span></div>
+          <div class="metric"><b>IOL-L2</b><span>Switch-only topology</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>SW1 is the root bridge. SW4 connects to the root bridge on Ethernet0/0 and uses Ethernet0/1 as a PortFast edge port toward SW5. SW5 Ethernet0/0 is shut down in the starting configuration.</p>
+        <img class="topology" src="assets/topology.svg" alt="BPDU Guard topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Baseline</h2>
+        <p>Confirm that SW4 sees Ethernet0/1 as an edge port and that SW5 is not currently sending BPDUs into SW4.</p>
+        <pre><code>! SW4
+show spanning-tree vlan 1
+show spanning-tree interface Ethernet0/1 detail
+show interfaces Ethernet0/1 status
+show spanning-tree summary</code></pre>
+        <p>Expected result: Ethernet0/1 should appear as a forwarding designated port with edge or PortFast behavior.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Observe What Happens When the Edge Neighbor Sends BPDUs</h2>
+        <p>Bring SW5 online and verify that SW4 removes the edge indication from Ethernet0/1 after receiving BPDUs from another switch.</p>
+        <pre><code>! SW5
+conf t
+interface Ethernet0/0
+ no shutdown
+end
+
+! SW4
+show spanning-tree vlan 1
+show spanning-tree interface Ethernet0/1 detail</code></pre>
+        <p>Expected result: SW4 Ethernet0/1 remains forwarding, but it should no longer look like a clean host-facing edge port after it receives BPDUs.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Restore the PortFast Edge Condition</h2>
+        <p>Shut SW5 back down, then bounce SW4 Ethernet0/1 so the port returns to its PortFast edge behavior.</p>
+        <pre><code>! SW5
+conf t
+interface Ethernet0/0
+ shutdown
+end
+
+! SW4
+conf t
+interface Ethernet0/1
+ shutdown
+ no shutdown
+end
+show spanning-tree vlan 1
+show spanning-tree interface Ethernet0/1 detail</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Compare Interface-Level and Global BPDU Guard</h2>
+        <p>First enable and remove BPDU Guard directly on the interface. Then enable global BPDU Guard so it applies to PortFast edge ports.</p>
+        <pre><code>! SW4
+conf t
+interface Ethernet0/1
+ spanning-tree bpduguard enable
+ no spanning-tree bpduguard enable
+exit
+spanning-tree portfast edge bpduguard default
+end
+
+show spanning-tree summary
+show running-config | include bpduguard</code></pre>
+        <p>Expected result: the summary should show PortFast Edge BPDU Guard Default enabled.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Trigger BPDU Guard</h2>
+        <p>Bring SW5 Ethernet0/0 up. SW5 will send BPDUs toward SW4, and SW4 should err-disable Ethernet0/1 because it is a PortFast edge port protected by BPDU Guard.</p>
+        <pre><code>! SW5
+conf t
+interface Ethernet0/0
+ no shutdown
+end
+
+! SW4
+show logging | include BPDU|ERR|SPANTREE
+show interfaces Ethernet0/1
+show interfaces status err-disabled
+show spanning-tree vlan 1</code></pre>
+        <p>Expected result: SW4 Ethernet0/1 should be down/down with an err-disabled reason related to BPDU Guard.</p>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Recover the Port</h2>
+        <p>Remove the condition that caused BPDU Guard to fire, then manually recover the port.</p>
+        <pre><code>! SW5
+conf t
+interface Ethernet0/0
+ shutdown
+end
+
+! SW4
+conf t
+interface Ethernet0/1
+ shutdown
+ no shutdown
+end
+
+show interfaces Ethernet0/1
+show spanning-tree interface Ethernet0/1 detail</code></pre>
+        <p>Optional deeper check: configure and test timed recovery with <code>errdisable recovery cause bpduguard</code> and <code>errdisable recovery interval</code>, then remove those commands when finished.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

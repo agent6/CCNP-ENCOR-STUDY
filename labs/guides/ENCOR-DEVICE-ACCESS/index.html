@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure and Verify Device Access Control</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure and Verify Device Access Control</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Local Users</a>
+      <a href="#task3">Task 3: Console Line</a>
+      <a href="#task4">Task 4: SSH and VTY Lines</a>
+      <a href="#task5">Task 5: Privilege and Exec Behavior</a>
+      <a href="#task6">Task 6: Verification</a>
+      <a href="#task7">Task 7: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 5.1.a: configure and verify device access control using lines and local user authentication. You will build a secure local-user access model for console and VTY lines without using AAA, then verify successful and failed access from multiple management sources.</p>
+        <p>CCNP-level value is in understanding exactly which line is authenticating the user, which local username is used, what privilege level is granted, what transport is allowed, and how failed logins are handled. You will also distinguish local line authentication from AAA authentication so the boundary between 5.1.a and later AAA topics is clear.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>75 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 5.1.a</b><span>Lines and local users</span></div>
+          <div class="metric"><b>IOL routers</b><span>Console/VTY target and SSH client</span></div>
+          <div class="metric"><b>7 tasks</b><span>Configure, test, harden, verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1-SECURE is the device you will harden. R2-JUMP and ADMIN-PC are management sources on the 10.80.80.0/24 subnet. APP-SERVER provides a data-plane destination so you can prove management hardening does not break normal forwarding. The starting CML topology has addressing only; local users, line authentication, SSH keys, and VTY restrictions are intentionally absent.</p>
+        <img class="topology" src="assets/device-access-topology.svg" alt="Device access control topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Access and Forwarding State</h2>
+        <p>Identify the current access posture before changing anything. You should know whether a line has no login, line-password login, local login, or AAA login.</p>
+        <pre><code>! R1-SECURE
+show ip interface brief
+show running-config | section line con
+show running-config | section line vty
+show running-config | include ^username|^enable secret|^aaa|^ip ssh|^login block
+show users
+show privilege
+show ip ssh
+ping 10.80.80.10 source 10.80.80.1
+ping 10.90.90.10 source 10.90.90.1</code></pre>
+        <p>From R2-JUMP, verify routed reachability to the management target and app server:</p>
+        <pre><code>ping 10.80.80.1
+ping 10.90.90.10
+show ip route</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Local Users and Password Storage</h2>
+        <p>Create separate local users for full administration and read-only operations. Use secrets, not reversible passwords. Add an enable secret so privilege escalation is protected if a lower-privilege user enters user EXEC first.</p>
+        <pre><code>! R1-SECURE
+conf t
+service password-encryption
+enable algorithm-type scrypt secret EncorEnable123!
+username netadmin privilege 15 algorithm-type scrypt secret EncorAdmin123!
+username operator privilege 5 algorithm-type scrypt secret EncorOps123!
+username breakglass privilege 15 secret BreakGlass123!
+banner login ^CAuthorized access only. Activity may be monitored.^C
+end
+!
+show running-config | include ^username|^enable secret|service password
+show running-config | section banner</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> <code>service password-encryption</code> only obfuscates legacy type 7 passwords. Local <code>secret</code> values are hashed. Use <code>secret</code> for users and enable protection whenever the image supports it.</p></div>
+        <p>If the image does not support <code>algorithm-type scrypt</code>, use <code>enable secret</code> and <code>username ... secret</code>. Do not fall back to reversible <code>password</code> commands unless you are intentionally demonstrating why they are weaker.</p>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Secure the Console Line with Local Authentication</h2>
+        <p>Configure console authentication using the local username database. Keep the console useful for troubleshooting, but remove indefinite unattended sessions.</p>
+        <pre><code>! R1-SECURE
+conf t
+line console 0
+ login local
+ exec-timeout 10 0
+ logging synchronous
+ privilege level 15
+end
+!
+show running-config | section line con
+show users
+show privilege</code></pre>
+        <p>Interpretation focus: <code>login local</code> tells the line to authenticate against local usernames. <code>privilege level 15</code> on the line changes the privilege of console sessions after successful login. In production, you may choose not to make every console login privilege 15; know what your policy requires.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Enable SSH and Secure VTY Lines</h2>
+        <p>Build SSH-only remote access. Telnet should not be accepted. VTY lines should authenticate against local users and use sane session timers.</p>
+        <pre><code>! R1-SECURE
+conf t
+ip domain-name encor.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 2
+line vty 0 4
+ login local
+ transport input ssh
+ exec-timeout 10 0
+ logging synchronous
+line vty 5 15
+ login local
+ transport input ssh
+ exec-timeout 10 0
+ logging synchronous
+end
+!
+show ip ssh
+show running-config | section line vty</code></pre>
+        <p>From R2-JUMP, test both success and failure:</p>
+        <pre><code>ssh -l netadmin 10.80.80.1
+ssh -l operator 10.80.80.1
+telnet 10.80.80.1</code></pre>
+        <p>Expected behavior: SSH with valid local users succeeds; Telnet fails because the VTY transport is SSH-only.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Control Privilege, Command Access, and Login Abuse</h2>
+        <p>Configure a small privilege-level example and failed-login protection. This stays inside local line authentication and does not enable AAA.</p>
+        <pre><code>! R1-SECURE
+conf t
+privilege exec level 5 show running-config
+privilege exec level 5 show ip interface brief
+privilege exec level 5 show users
+login block-for 60 attempts 3 within 30
+login on-failure log
+login on-success log
+end
+!
+show running-config | include ^privilege|^login
+show login
+show privilege</code></pre>
+        <p>Log in as <code>operator</code> and compare available commands to <code>netadmin</code>. Then intentionally fail authentication three times from R2-JUMP and verify the temporary quiet mode.</p>
+        <pre><code>show login
+show logging | include LOGIN|SEC_LOGIN
+show users</code></pre>
+        <div class="callout"><p><strong>Depth check:</strong> Local privilege levels are not a replacement for full command authorization. They are still useful to understand because they affect what a local user can do before AAA is introduced.</p></div>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Verify Line State, Authentication Method, and Data Plane</h2>
+        <p>Use show commands that prove both the intended access policy and the current sessions.</p>
+        <pre><code>show running-config | section line con
+show running-config | section line vty
+show running-config | include ^username|^enable secret|^aaa|^ip ssh|^login
+show users
+show line
+show login
+show ip ssh
+show ssh
+show logging | include SSH|LOGIN|SEC_LOGIN
+show privilege
+ping 10.90.90.10 source 10.90.90.1</code></pre>
+        <p>Answer these:</p>
+        <ul>
+          <li>Which lines use local authentication?</li>
+          <li>Which command prevents Telnet access?</li>
+          <li>Which users receive privilege 15 immediately?</li>
+          <li>Which user has reduced privilege?</li>
+          <li>Which command proves failed-login blocking is active or inactive?</li>
+          <li>Which outputs prove management security did not break normal forwarding?</li>
+        </ul>
+      </section>
+
+      <section id="task7" class="task">
+        <h2>Task 7: Troubleshoot Access-Control Defects</h2>
+        <p>Work from the failure symptom toward the relevant layer: transport, line, local user database, privilege, or lockout state.</p>
+        <ol>
+          <li>SSH fails because RSA keys were never generated or <code>ip ssh version 2</code> is missing.</li>
+          <li>SSH connects but login fails because the username does not exist or the line is not using <code>login local</code>.</li>
+          <li>Telnet still works because the VTY line uses <code>transport input all</code> or includes Telnet.</li>
+          <li>The console does not prompt for a username because <code>login local</code> is missing on <code>line console 0</code>.</li>
+          <li>The operator user can enter privileged EXEC unexpectedly because a line privilege setting overrides your intended user privilege.</li>
+          <li>All remote logins fail because quiet mode is active after repeated bad attempts.</li>
+          <li>A user sees a limited command set because local privilege level is lower than expected.</li>
+        </ol>
+        <pre><code>show running-config | section line
+show running-config | include ^username|^enable secret|^privilege|^login
+show login
+show line vty 0
+show users
+show ip ssh
+debug ip ssh
+debug aaa authentication
+undebug all</code></pre>
+        <p><code>debug aaa authentication</code> can still show local method activity on some images, but do not enable <code>aaa new-model</code> for this lab. The exam topic here is line and local user authentication, not AAA method lists.</p>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>Local Users</b><span>Administrative and operator users exist with protected secrets and correct privilege levels.</span></div>
+          <div class="check"><b>Console</b><span>Console line uses local authentication and has appropriate session behavior.</span></div>
+          <div class="check"><b>VTY</b><span>VTY lines use local authentication, accept SSH only, and reject Telnet.</span></div>
+          <div class="check"><b>Verification</b><span>You can prove successful access, failed access, privilege behavior, lockout state, and unchanged data-plane reachability.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/sec_usr_cfg/configuration/xe-17/sec-usr-cfg-xe-17-book.html">Cisco IOS XE Security Configuration Guide: Securing User Services</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/sec_usr_cfg/command/sec-usr-cr-book.html">Cisco IOS Security Command Reference: User Security</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 5.1.a asks for lines and local user authentication. This lab deliberately does not enable AAA so the local line-authentication behavior is visible before external authentication and authorization are introduced.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

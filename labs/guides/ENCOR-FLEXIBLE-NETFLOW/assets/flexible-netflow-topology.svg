@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR Flexible NetFlow lab topology</title>
+  <desc id="desc">Client traffic crosses an edge router and WAN router to reach an application server. A collector host receives Flexible NetFlow exports from the edge router.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.host{fill:#14795f}.collector{fill:#00a0d2}.link{stroke:#667b8a;stroke-width:4;fill:none}.export{stroke:#00a0d2;stroke-width:4;stroke-dasharray:10 8;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 4.2: Configure and verify Flexible NetFlow records, exporters, monitors, and interface attachments</text>
+
+  <path class="link" d="M210 290 L390 290"/>
+  <path class="link" d="M470 290 L690 290"/>
+  <path class="link" d="M770 290 L950 290"/>
+  <path class="link" d="M430 330 L430 455"/>
+  <path class="export" d="M470 330 C560 410 600 455 760 455"/>
+
+  <g transform="translate(120 260)">
+    <rect class="host" width="90" height="60" rx="8"/>
+    <text class="txt label" x="45" y="88" text-anchor="middle">CLIENT</text>
+    <text class="txt small" x="45" y="108" text-anchor="middle">10.10.10.10</text>
+  </g>
+  <g transform="translate(390 250)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R1-EDGE</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">FNF monitor</text>
+  </g>
+  <g transform="translate(690 250)">
+    <rect class="router" width="80" height="80" rx="10"/>
+    <text class="txt label" x="40" y="108" text-anchor="middle">R2-WAN</text>
+    <text class="txt small" x="40" y="128" text-anchor="middle">Transit</text>
+  </g>
+  <g transform="translate(950 260)">
+    <rect class="host" width="100" height="60" rx="8"/>
+    <text class="txt label" x="50" y="88" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="50" y="108" text-anchor="middle">10.20.20.10</text>
+  </g>
+  <g transform="translate(745 425)">
+    <rect class="collector" width="110" height="60" rx="8"/>
+    <text class="txt label" x="55" y="88" text-anchor="middle">COLLECTOR</text>
+    <text class="txt small" x="55" y="108" text-anchor="middle">10.50.50.10</text>
+  </g>
+
+  <rect class="pill" x="246" y="266" width="120" height="30" rx="15"/>
+  <text class="txt small" x="306" y="286" text-anchor="middle">10.10.10.0/24</text>
+  <rect class="pill" x="528" y="266" width="120" height="30" rx="15"/>
+  <text class="txt small" x="588" y="286" text-anchor="middle">10.0.12.0/30</text>
+  <rect class="pill" x="808" y="266" width="120" height="30" rx="15"/>
+  <text class="txt small" x="868" y="286" text-anchor="middle">10.20.20.0/24</text>
+  <rect class="pill" x="480" y="402" width="130" height="30" rx="15"/>
+  <text class="txt small" x="545" y="422" text-anchor="middle">10.50.50.0/24</text>
+  <rect class="pill" x="596" y="452" width="130" height="30" rx="15"/>
+  <text class="txt small" x="661" y="472" text-anchor="middle">UDP/2055 export</text>
+
+  <text class="txt small" x="58" y="522">Configure custom and predefined records, exporters, monitors, cache timers, and input/output monitor direction.</text>
+  <text class="txt small" x="58" y="546">Verify with monitor cache, exporter statistics, interface attachments, traffic generation, and collector reachability.</text>
+</svg>

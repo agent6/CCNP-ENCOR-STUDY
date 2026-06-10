@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">ENCOR AAA device access control topology</title>
+  <desc id="desc">Admin workstation, jump router, AAA server placeholder, and app server connected to a managed IOS XE router.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f6f9fb}.box{fill:#fff;stroke:#d3e0e8;stroke-width:2}.router{fill:#0b243b}.secure{fill:#14795f}.host{fill:#00a0d2}.server{fill:#9a6200}.aaa{fill:#6f4aa8}.mgmt{stroke:#00a0d2;stroke-width:5;fill:none}.link{stroke:#667b8a;stroke-width:4;fill:none}.fail{stroke:#9a6200;stroke-width:4;stroke-dasharray:9 8;fill:none}.txt{font-family:Arial,Helvetica,sans-serif;fill:#17232f}.label{font-size:16px;font-weight:700}.small{font-size:13px;fill:#526676}.area{font-size:15px;font-weight:700;fill:#244558}.pill{fill:#e9f6fb;stroke:#afd8e8}
+    </style>
+  </defs>
+  <rect class="bg" width="1180" height="620"/>
+  <rect class="box" x="36" y="54" width="1108" height="510" rx="8"/>
+  <text class="txt area" x="58" y="88">ENCOR 5.1.b: Configure and verify AAA authentication and authorization for device access</text>
+
+  <path class="link" d="M210 215 L480 305"/>
+  <path class="link" d="M210 340 L480 320"/>
+  <path class="link" d="M210 455 L480 340"/>
+  <path class="link" d="M640 318 L910 318"/>
+  <path class="mgmt" d="M250 180 C365 95 510 115 560 245"/>
+  <path class="fail" d="M250 455 C365 535 510 510 560 390"/>
+
+  <g transform="translate(100 180)">
+    <rect class="host" width="110" height="70" rx="8"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">ADMIN-PC</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">10.81.81.10</text>
+  </g>
+  <g transform="translate(100 305)">
+    <rect class="router" width="110" height="70" rx="10"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">R2-JUMP</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">SSH test source</text>
+  </g>
+  <g transform="translate(100 420)">
+    <rect class="aaa" width="110" height="70" rx="8"/>
+    <text class="txt label" x="55" y="98" text-anchor="middle">AAA-SERVER</text>
+    <text class="txt small" x="55" y="118" text-anchor="middle">10.81.81.20</text>
+  </g>
+  <g transform="translate(480 258)">
+    <rect class="secure" width="160" height="120" rx="12"/>
+    <text class="txt label" x="80" y="148" text-anchor="middle">R1-AAA</text>
+    <text class="txt small" x="80" y="168" text-anchor="middle">AAA policy target</text>
+  </g>
+  <g transform="translate(910 283)">
+    <rect class="server" width="115" height="70" rx="8"/>
+    <text class="txt label" x="58" y="98" text-anchor="middle">APP-SERVER</text>
+    <text class="txt small" x="58" y="118" text-anchor="middle">10.91.91.10</text>
+  </g>
+
+  <rect class="pill" x="292" y="281" width="116" height="30" rx="15"/>
+  <text class="txt small" x="350" y="301" text-anchor="middle">10.81.81/24</text>
+  <rect class="pill" x="705" y="294" width="116" height="30" rx="15"/>
+  <text class="txt small" x="763" y="314" text-anchor="middle">10.91.91/24</text>
+  <rect class="pill" x="332" y="132" width="150" height="30" rx="15"/>
+  <text class="txt small" x="407" y="152" text-anchor="middle">AAA method lists</text>
+  <rect class="pill" x="315" y="492" width="180" height="30" rx="15"/>
+  <text class="txt small" x="405" y="512" text-anchor="middle">TACACS+ fallback test</text>
+
+  <text class="txt small" x="58" y="548">Students configure AAA local users, authentication method lists, exec authorization, command authorization, TACACS+ server-group fallback, and verification/debugs.</text>
+</svg>

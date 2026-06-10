@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPFv2 Basic Configuration</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>OSPFv2 Basic Configuration</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Configure OSPFv2</a>
+      <a href="#task3">Task 3: Verify R3</a>
+      <a href="#task4">Task 4: Verify R2</a>
+      <a href="#task5">Task 5: Passive Interface</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab configures multi-area OSPFv2 from an addressing-only starting state. R1 is in area 0, R3 is in area 1, and R2 is the ABR between the two areas. You will configure wildcard-mask network statements, verify route learning and neighbors, and make the R1 LAN-facing interface passive.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>45-60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>OSPFv2 basics</span></div>
+          <div class="metric"><b>3 routers</b><span>R1, R2, R3</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R1 and R2 share area 0 on 172.16.1.0/30. R2 and R3 share area 1 on 192.168.1.0/30. The small IOL-L2 switches keep each LAN interface operational so the 10.1.1.0/24 and 10.2.2.0/24 networks can be advertised.</p>
+        <img class="topology" src="assets/topology.svg" alt="OSPFv2 basic configuration topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Starting State</h2>
+        <p>Confirm addressing and direct connectivity before enabling OSPF. At this point, only connected routes should exist.</p>
+        <pre><code>! R1, R2, R3
+show ip interface brief
+show ip route connected
+
+! R1
+ping 172.16.1.2
+
+! R3
+ping 192.168.1.1</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure OSPFv2 on All Routers</h2>
+        <p>Configure every active routed interface and loopback to participate in OSPFv2. Use the process IDs and areas from the supplied lab.</p>
+        <pre><code>! R1
+conf t
+router ospf 1
+ network 10.1.1.0 0.0.0.255 area 0
+ network 1.1.1.1 0.0.0.0 area 0
+ network 172.16.1.0 0.0.0.3 area 0
+end
+
+! R2
+conf t
+router ospf 2
+ network 172.16.1.0 0.0.0.3 area 0
+ network 2.2.2.2 0.0.0.0 area 1
+ network 192.168.1.0 0.0.0.3 area 1
+end
+
+! R3
+conf t
+router ospf 1
+ network 0.0.0.0 255.255.255.255 area 1
+end</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Verify OSPFv2 from R3</h2>
+        <p>Verify that R3 learns area 0 routes through R2 and can reach R1's loopback.</p>
+        <pre><code>! R3
+show ip route
+show ip route ospf
+ping 1.1.1.1
+show ip protocols</code></pre>
+        <p>Expected result: R3 should learn R1's loopback and LAN as inter-area routes and should show OSPF process 1 routing for all local addresses in area 1.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Verify OSPFv2 from R2</h2>
+        <p>Use R2 to verify both adjacencies, the local OSPF RIB, and interface-level OSPF details on the R1-facing link.</p>
+        <pre><code>! R2
+show ip ospf neighbor
+show ip ospf rib
+show ip ospf interface Ethernet0/0
+show ip route ospf</code></pre>
+        <p>Expected result: R2 should have a full adjacency with R1 in area 0 and a full adjacency with R3 in area 1.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Make the R1 LAN Interface Passive</h2>
+        <p>Make R1's LAN-facing interface passive so the 10.1.1.0/24 route remains advertised, but OSPF does not send hellos toward the LAN segment.</p>
+        <pre><code>! R1
+conf t
+router ospf 1
+ passive-interface Ethernet0/0
+end
+
+show ip protocols
+show ip ospf interface Ethernet0/0
+show ip route 10.1.1.0</code></pre>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: OSPF Route Filtering</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR CML-Ready Lab</p><h1>OSPF Route Filtering</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: ABR Prefix List</a>
+      <a href="#task3">Task 3: Area Filter List</a>
+      <a href="#task4">Task 4: Verify Type 3 Filtering</a>
+      <a href="#task5">Task 5: Distribute List</a>
+      <a href="#task6">Task 6: Compare LSDB and RIB</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab starts with a working multi-area OSPFv2 topology. You will first filter Type 3 LSAs at the ABR with an area filter list, then apply a local inbound distribute list on R1 to suppress one OSPF route from the routing table while leaving the LSA visible in the OSPF database.</p>
+        <p>All commands in this guide use the CML Ethernet interface names shown in the topology.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>45-60 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 3.2.b</b><span>OSPF filtering</span></div>
+          <div class="metric"><b>3 routers</b><span>R1, R2, R3</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>CML-ready</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>R2 is the ABR between area 0 and area 1. The two small IOL-L2 switches keep the LAN-facing router interfaces operational so the 10.1.1.0/24 and 10.2.2.0/24 prefixes are present during the lab.</p>
+        <img class="topology" src="assets/topology.svg" alt="OSPF route filtering topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Verify the Starting OSPF Routes</h2>
+        <p>On R1, verify that area 1 loopbacks and the R3 LAN are visible as inter-area OSPF routes.</p>
+        <pre><code>! R1
+show ip ospf neighbor
+show ip route ospf
+show ip route 2.2.2.2
+show ip route 3.3.3.3
+show ip route 10.2.2.0</code></pre>
+        <p>Expected result: R1 learns 2.2.2.2/32, 3.3.3.3/32, 10.2.2.0/24, and 192.168.1.0/30 through R2.</p>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Build the ABR Prefix List</h2>
+        <p>On R2, create a prefix list that denies the R2 and R3 loopbacks but permits all other prefixes.</p>
+        <pre><code>! R2
+conf t
+ip prefix-list NO-LOOPBACKS seq 10 deny 2.2.2.2/32
+ip prefix-list NO-LOOPBACKS seq 20 deny 3.3.3.3/32
+ip prefix-list NO-LOOPBACKS seq 30 permit 0.0.0.0/0 le 32
+end
+
+show ip prefix-list NO-LOOPBACKS</code></pre>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Apply the Area Filter List on the ABR</h2>
+        <p>Apply the prefix list on R2 so those Type 3 LSAs are filtered as they enter area 0.</p>
+        <pre><code>! R2
+conf t
+router ospf 2
+ area 0 filter-list prefix NO-LOOPBACKS in
+end
+
+show running-config | section router ospf
+show ip ospf database summary</code></pre>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Verify the ABR Filter from R1</h2>
+        <p>Confirm that R1 no longer installs or sees summary routes for the filtered loopbacks, while other area 1 summaries remain available.</p>
+        <pre><code>! R1
+show ip route ospf
+show ip route 2.2.2.2
+show ip route 3.3.3.3
+show ip route 10.2.2.0
+show ip ospf database summary</code></pre>
+        <p>Expected result: the loopback routes are gone from R1, but 10.2.2.0/24 and 192.168.1.0/30 remain.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Filter One Route Locally with a Distribute List</h2>
+        <p>On R1, create a prefix list that denies only the R3 LAN and apply it inbound under the local OSPF process.</p>
+        <pre><code>! R1
+conf t
+ip prefix-list FILTER_10.2.2.0 seq 10 deny 10.2.2.0/24
+ip prefix-list FILTER_10.2.2.0 seq 20 permit 0.0.0.0/0 le 32
+router ospf 1
+ distribute-list prefix FILTER_10.2.2.0 in
+end
+
+show ip prefix-list FILTER_10.2.2.0
+show running-config | section router ospf</code></pre>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Compare the OSPF Database and Routing Table</h2>
+        <p>Verify the difference between ABR LSA filtering and a local distribute list. The R3 LAN summary should still exist in R1's OSPF database, but it should not be installed in R1's routing table.</p>
+        <pre><code>! R1
+show ip ospf database summary 10.2.2.0
+show ip route 10.2.2.0
+show ip route ospf
+show ip protocols | section Routing for Networks|Distributing</code></pre>
+        <p>Expected result: 10.2.2.0/24 remains visible as a summary LSA but is absent from the RIB because the distribute list filters route installation locally.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

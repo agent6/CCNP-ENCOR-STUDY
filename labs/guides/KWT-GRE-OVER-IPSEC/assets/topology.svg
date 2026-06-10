@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360" role="img" aria-labelledby="title desc">
+  <title id="title">GRE over IPsec four-router topology</title>
+  <desc id="desc">R1 connects to R2 over 192.0.2.0/30, R2 connects to R3 over 203.0.113.0/30, and R3 connects to R4 over 198.51.100.0/30. R1 and R4 build GRE over IPsec across the underlay.</desc>
+  <rect width="1000" height="360" fill="#f6f9fb"/>
+  <text x="40" y="50" fill="#0b243b" font-family="Arial, sans-serif" font-size="28" font-weight="700">GRE over IPsec</text>
+  <text x="40" y="78" fill="#415466" font-family="Arial, sans-serif" font-size="15">PDF-based four-router underlay. Build GRE Tunnel1 from R1 to R4, then encrypt GRE with IPsec.</text>
+  <g fill="#fff" stroke="#7a8b99" stroke-width="2">
+    <rect x="70" y="150" width="130" height="86" rx="5"/>
+    <rect x="310" y="150" width="130" height="86" rx="5"/>
+    <rect x="560" y="150" width="130" height="86" rx="5"/>
+    <rect x="800" y="150" width="130" height="86" rx="5"/>
+  </g>
+  <g fill="#0b243b" font-family="Arial, sans-serif" font-weight="700" font-size="21">
+    <text x="119" y="188">R1</text>
+    <text x="359" y="188">R2</text>
+    <text x="609" y="188">R3</text>
+    <text x="849" y="188">R4</text>
+  </g>
+  <g fill="#415466" font-family="Arial, sans-serif" font-size="13">
+    <text x="104" y="213">Lo0 1.1.1.1</text>
+    <text x="344" y="213">Lo0 2.2.2.2</text>
+    <text x="594" y="213">Lo0 3.3.3.3</text>
+    <text x="834" y="213">Lo0 4.4.4.4</text>
+  </g>
+  <line x1="200" y1="193" x2="310" y2="193" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="440" y1="193" x2="560" y2="193" stroke="#18a3d7" stroke-width="4"/>
+  <line x1="690" y1="193" x2="800" y2="193" stroke="#18a3d7" stroke-width="4"/>
+  <g fill="#263946" font-family="Arial, sans-serif" font-size="13">
+    <text x="205" y="178">192.0.2.0/30</text>
+    <text x="454" y="178">203.0.113.0/30</text>
+    <text x="700" y="178">198.51.100.0/30</text>
+  </g>
+  <path d="M135 136 C300 35 690 35 865 136" fill="none" stroke="#d84b2a" stroke-width="4" stroke-dasharray="10 8"/>
+  <text x="375" y="46" fill="#d84b2a" font-family="Arial, sans-serif" font-size="15" font-weight="700">Tunnel1 192.168.0.0/30</text>
+  <text x="365" y="66" fill="#d84b2a" font-family="Arial, sans-serif" font-size="15" font-weight="700">IPsec crypto map protects GRE</text>
+</svg>

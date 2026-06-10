@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CCNP ENCOR Lab: Configure SPAN/RSPAN/ERSPAN</title>
+  <link rel="icon" href="../LABCRT-2452/template_assets/cisco_logo.png">
+  <link rel="stylesheet" href="../ENCOR-VIRT/assets/virt.css">
+</head>
+<body>
+  <header class="topbar"><div class="wrap"><img class="logo" src="../LABCRT-2452/template_assets/cisco_logo.png" alt="Cisco"><div><p class="eyebrow">CCNP ENCOR Custom Local Lab</p><h1>Configure SPAN/RSPAN/ERSPAN</h1></div></div></header>
+  <main class="wrap">
+    <nav class="toc" aria-label="Lab navigation">
+      <h2>Lab Sections</h2>
+      <a href="../../../index.html">Back to study app</a>
+      <a href="#overview">Overview</a>
+      <a href="#topology">Topology</a>
+      <a href="#task1">Task 1: Baseline</a>
+      <a href="#task2">Task 2: Local SPAN</a>
+      <a href="#task3">Task 3: RSPAN</a>
+      <a href="#task4">Task 4: ERSPAN</a>
+      <a href="#task5">Task 5: Verification</a>
+      <a href="#task6">Task 6: Troubleshooting</a>
+      <a href="#grading">Grade Entire Lab</a>
+      <a href="#references">References</a>
+    </nav>
+    <div class="content">
+      <section id="overview" class="panel">
+        <h2>Overview</h2>
+        <p>This lab targets ENCOR 4.3: configure SPAN, RSPAN, and ERSPAN. You will mirror a local access port, carry mirrored traffic across a remote-span VLAN, and configure an IP-encapsulated ERSPAN source toward a routed collector.</p>
+        <p>CCNP-level value is in knowing what traffic is mirrored, where it is sent, and what breaks capture. You will verify source direction, destination behavior, RSPAN VLAN transport, ERSPAN source/destination reachability, and analyzer-side evidence.</p>
+        <div class="meta-grid">
+          <div class="metric"><b>90 min</b><span>Estimated time</span></div>
+          <div class="metric"><b>ENCOR 4.3</b><span>SPAN/RSPAN/ERSPAN</span></div>
+          <div class="metric"><b>IOL + IOL-L2</b><span>Switch and routed capture</span></div>
+          <div class="metric"><b>6 tasks</b><span>Configure and verify</span></div>
+        </div>
+      </section>
+
+      <section id="topology" class="panel">
+        <h2>Topology</h2>
+        <p>CLIENT traffic enters SW1-ACCESS and uses R1-EDGE as its gateway. LOCAL-ANALYZER is connected to SW1 for the local SPAN task. RSPAN-ANALYZER is connected to SW2 for remote SPAN. R1-EDGE and R2-CORE provide a routed ERSPAN path to ERSPAN-COLLECTOR.</p>
+        <img class="topology" src="assets/span-rspan-erspan-topology.svg" alt="SPAN RSPAN ERSPAN topology">
+      </section>
+
+      <section id="task1" class="task">
+        <h2>Task 1: Baseline Connectivity and Analyzer Behavior</h2>
+        <p>Confirm data-plane connectivity first. A SPAN destination port usually stops forwarding normal traffic, so know which host/interface you are sacrificing as the analyzer.</p>
+        <pre><code>show vlan brief
+show interfaces trunk
+show cdp neighbors
+show monitor session all
+show ip interface brief
+show ip route</code></pre>
+        <p>Generate traffic from CLIENT and verify the routed path:</p>
+        <pre><code>ping -c 5 10.20.20.10
+traceroute 10.20.20.10</code></pre>
+        <p>On analyzer hosts, use packet capture if available:</p>
+        <pre><code>ip link set eth0 promisc on
+tcpdump -ni eth0
+# If tcpdump is not available, verify switch monitor-session state and interface counters.</code></pre>
+      </section>
+
+      <section id="task2" class="task">
+        <h2>Task 2: Configure Local SPAN</h2>
+        <p>Mirror CLIENT ingress and egress traffic from SW1-ACCESS to the LOCAL-ANALYZER port on the same switch.</p>
+        <pre><code>! SW1-ACCESS
+monitor session 1 source interface Ethernet0/0 both
+monitor session 1 destination interface Ethernet0/3
+!
+show monitor session 1
+show interfaces Ethernet0/0 counters
+show interfaces Ethernet0/3 counters</code></pre>
+        <p>Generate traffic again from CLIENT. The analyzer should see copies of frames sourced from or destined to the monitored client port.</p>
+        <div class="callout"><p><strong>Depth check:</strong> A SPAN destination port is not a normal access port while it is a destination. Do not use a production uplink, trunk, or user port as the destination unless you intend to dedicate it to capture.</p></div>
+      </section>
+
+      <section id="task3" class="task">
+        <h2>Task 3: Configure RSPAN Across the Trunk</h2>
+        <p>Use VLAN 999 as the RSPAN VLAN. The source session on SW1 sends mirrored frames into VLAN 999; the destination session on SW2 receives that RSPAN VLAN and sends copies to RSPAN-ANALYZER.</p>
+        <pre><code>! SW1-ACCESS and SW2-ANALYZER
+vlan 999
+ name RSPAN-CAPTURE
+ remote-span
+!
+interface Ethernet0/1
+ switchport trunk allowed vlan add 999</code></pre>
+        <p>Configure SW1 as the RSPAN source switch:</p>
+        <pre><code>no monitor session 1
+monitor session 2 source interface Ethernet0/0 both
+monitor session 2 destination remote vlan 999
+show monitor session 2</code></pre>
+        <p>Configure SW2 as the RSPAN destination switch:</p>
+        <pre><code>monitor session 2 source remote vlan 999
+monitor session 2 destination interface Ethernet0/2
+show monitor session 2
+show vlan remote-span
+show interfaces trunk</code></pre>
+        <p>Interpretation focus: the RSPAN VLAN must exist, be marked <code>remote-span</code>, and be allowed across every trunk between the source and destination switches.</p>
+      </section>
+
+      <section id="task4" class="task">
+        <h2>Task 4: Configure ERSPAN Over the Routed Network</h2>
+        <p>Configure R1-EDGE as the ERSPAN source. It should mirror traffic on its client-facing interface and encapsulate the copy to ERSPAN-COLLECTOR across the routed network.</p>
+        <pre><code>! R1-EDGE
+monitor session 3 type erspan-source
+ source interface Ethernet0/0 both
+ destination
+  erspan-id 30
+  ip address 10.50.50.10
+  origin ip address 10.0.12.1
+ no shutdown
+!
+show monitor session 3
+show ip route 10.50.50.10
+ping 10.50.50.10 source 10.0.12.1</code></pre>
+        <p>On ERSPAN-COLLECTOR, capture GRE/ERSPAN traffic if tooling is available:</p>
+        <pre><code>ip link set eth0 promisc on
+tcpdump -ni eth0 proto gre or host 10.0.12.1</code></pre>
+        <p>Depth check: ERSPAN is not just “remote SPAN.” It uses IP encapsulation, so routing, source address selection, MTU, ACLs, and collector reachability matter.</p>
+      </section>
+
+      <section id="task5" class="task">
+        <h2>Task 5: Verify Capture Scope and Direction</h2>
+        <p>Run specific tests and explain which monitor should see each copy.</p>
+        <pre><code># CLIENT
+ping -c 10 10.20.20.10
+wget -O- http://10.20.20.10
+traceroute 10.20.20.10
+
+# SW1/SW2/R1
+show monitor session all
+show interfaces counters errors
+show interfaces Ethernet0/0 counters
+show interfaces Ethernet0/3 counters
+show interfaces trunk
+show ip interface brief</code></pre>
+        <p>Answer these:</p>
+        <ul>
+          <li>Which session mirrors a local switch port?</li>
+          <li>Which session depends on VLAN 999 being allowed on a trunk?</li>
+          <li>Which session depends on IP routing to a collector?</li>
+          <li>Which direction captures client-to-server only, server-to-client only, or both?</li>
+        </ul>
+      </section>
+
+      <section id="task6" class="task">
+        <h2>Task 6: Troubleshoot Monitoring Defects</h2>
+        <p>Use show output and traffic tests to prove the issue before changing configuration.</p>
+        <ol>
+          <li>Local SPAN destination is configured on the wrong interface, so the analyzer sees nothing.</li>
+          <li>Only transmit or receive direction is mirrored, so half the conversation is missing.</li>
+          <li>RSPAN VLAN exists but is not configured as <code>remote-span</code>.</li>
+          <li>RSPAN VLAN is pruned from the trunk between switches.</li>
+          <li>ERSPAN source cannot route to the collector from the configured origin IP.</li>
+          <li>ERSPAN ID/source does not match what the collector expects.</li>
+        </ol>
+        <pre><code>show monitor session all
+show vlan id 999
+show vlan remote-span
+show interfaces trunk
+show running-config | section monitor session
+show ip route 10.50.50.10
+show access-lists
+show platform software monitor session</code></pre>
+      </section>
+
+      <section id="grading" class="panel">
+        <h2>Grade Entire Lab</h2>
+        <div class="grade">
+          <div class="check"><b>SPAN</b><span>Local source and destination are correct, and analyzer sees mirrored local traffic.</span></div>
+          <div class="check"><b>RSPAN</b><span>Remote-span VLAN is configured and transported to the remote analyzer.</span></div>
+          <div class="check"><b>ERSPAN</b><span>Routed encapsulated mirror traffic reaches the ERSPAN collector.</span></div>
+          <div class="check"><b>Interpretation</b><span>You can explain source direction, destination behavior, VLAN transport, and IP collector reachability.</span></div>
+        </div>
+      </section>
+
+      <section id="references" class="panel">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://www.cisco.com/c/en/us/support/docs/switches/catalyst-6500-series-switches/10570-41.html">Cisco SPAN and RSPAN reference</a></li>
+          <li><a href="https://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst9300/software/release/17-9/configuration_guide/nmgmt/b_179_nmgmt_9300_cg/configuring_erspan.html">Cisco ERSPAN configuration reference</a></li>
+        </ul>
+        <p class="footer">Research note: ENCOR 4.3 asks candidates to configure SPAN, RSPAN, and ERSPAN. This lab separates local switching capture, VLAN-transported remote capture, and IP-routed ERSPAN so the failure domains are clear.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
