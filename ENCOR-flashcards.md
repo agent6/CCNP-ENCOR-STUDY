@@ -1,6 +1,6 @@
 # ENCOR 350-401 Flashcards
 
-Original term/definition cards for the 24 applicable OCG chapters. Also built into ENCOR-quiz-app.html (Flashcards mode).
+Original term/definition cards for the 24 applicable OCG chapters. Also built into the study app (flashcards.html).
 
 ## Ch 1 — Packet Forwarding (13 cards)
 

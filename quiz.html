@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>218 original practice questions with explanations</p>
+  </header>
+  <nav class="top">
+    <a href="index.html" data-page="home">Home</a>
+    <a href="quiz.html" data-page="quiz">Quiz</a>
+    <a href="flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="infographics.html" data-page="infographics">Infographics</a>
+    <a href="labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div id="menu">
+    <div class="card">
+      <h2 style="margin-bottom:6px;">Full Bank</h2>
+      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Every chapter, <span id="totalCount"></span> questions.</p>
+      <button class="btn" onclick="startQuiz('all', false)">Start All Chapters</button>
+      <button class="btn secondary" onclick="startQuiz('all', true)" style="margin-left:8px;">Random 50</button>
+      <div class="checkRow">
+        <input type="checkbox" id="shuffleChk" checked>
+        <label for="shuffleChk">Shuffle question order</label>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:4px;">Quiz by Chapter</h2>
+      <div class="grid" id="chapterGrid"></div>
+    </div>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="topRow">
+      <span class="pill" id="quizTitle"></span>
+      <span class="pill" id="quizProgressText"></span>
+      <span class="pill" id="quizScoreText"></span>
+      <button class="btn secondary" style="padding:6px 14px; font-size:.85rem;" onclick="goHome()">Exit</button>
+    </div>
+    <div class="progressOuter"><div class="progressInner" id="bar"></div></div>
+    <div class="card">
+      <div class="qMeta" id="qMeta"></div>
+      <div class="qText" id="qText"></div>
+      <pre class="exhibit hidden" id="qExhibit"></pre>
+      <div id="opts"></div>
+      <div id="feedback"></div>
+      <div class="controls">
+        <button class="btn hidden" id="submitBtn" onclick="submitMulti()">Submit</button>
+        <button class="btn hidden" id="nextBtn" onclick="nextQ()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="card">
+      <div class="scoreBig" id="finalScore"></div>
+      <div class="scoreSub" id="finalSub"></div>
+      <div style="text-align:center;">
+        <button class="btn" onclick="retryMissed()" id="retryMissedBtn">Retry Missed Questions</button>
+        <button class="btn secondary" onclick="goHome()" style="margin-left:8px;">Back to Menu</button>
+      </div>
+    </div>
+    <div class="card" id="chapterBreakdownCard">
+      <h3 style="margin-bottom:10px;">By Chapter</h3>
+      <table id="breakdownTable"><thead><tr><th>Chapter</th><th>Score</th><th>%</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card" id="missedCard">
+      <h3 style="margin-bottom:12px;">Missed Questions</h3>
+      <div id="missedList"></div>
+    </div>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script src="assets/data/bank.js"></script>
+<script src="assets/shared.js"></script>
+<script src="assets/quiz.js"></script>
+<script>document.querySelector('nav.top a[data-page="quiz"]').classList.add("active");</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheat Sheets · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>24 condensed per-chapter references</p>
+  </header>
+  <nav class="top">
+    <a href="index.html" data-page="home">Home</a>
+    <a href="quiz.html" data-page="quiz">Quiz</a>
+    <a href="flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="infographics.html" data-page="infographics">Infographics</a>
+    <a href="labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div id="menu">
+    <div class="card">
+      <h2 style="margin-bottom:6px;">Cheat Sheets</h2>
+      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Condensed per-chapter references (<span id="sheetCount"></span> available).</p>
+      <div class="grid" id="sheetGrid"></div>
+    </div>
+  </div>
+
+  <div id="sheetView" class="hidden">
+    <div class="topRow">
+      <span class="pill" id="sheetTitle"></span>
+      <button class="btn secondary" style="padding:6px 14px; font-size:.85rem;" onclick="goHome()">Back</button>
+    </div>
+    <div class="card sheet" id="sheetBody"></div>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script src="assets/data/cheats.js"></script>
+<script src="assets/shared.js"></script>
+<script src="assets/cheatsheets.js"></script>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>
