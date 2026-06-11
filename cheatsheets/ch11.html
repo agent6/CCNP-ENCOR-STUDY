@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 11 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>BGP</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 11 — BGP</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> The configure/verify half of <strong>3.2.c — configure and verify eBGP between directly connected neighbors (best path selection algorithm and neighbor relationships)</strong>. Ch 12 covers best-path; this one owns sessions, states, advertisement, and summarization. Expect <code>show bgp ipv4 unicast summary</code> exhibits.</p>
+<hr />
+<h2>Identity card</h2>
+<ul>
+<li>Path-vector EGP over <strong>TCP 179</strong> — reliability, sequencing, multi-hop all come free from TCP.</li>
+<li><strong>No dynamic neighbor discovery.</strong> Peers are explicitly configured by IP on both sides; the inbound packet's source IP must match the configured neighbor statement or it's discarded.</li>
+<li>Built for scale/stability (Internet ≈ 940k+ IPv4 prefixes): incremental updates only, no periodic refresh.</li>
+<li><strong>ASNs:</strong> 16-bit originally; RFC 4893 extends to 32-bit. <strong>Private ranges: 64512–65534 and 4,200,000,000–4,294,967,294.</strong> Public ASNs come from IANA (requires public range, multihoming, unique policy — else use your provider's).</li>
+</ul>
+<h2>Path attribute categories</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Rules</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Well-known mandatory</strong></td>
+<td>Every implementation understands it AND it rides with every prefix (AS_Path, next-hop, origin)</td>
+</tr>
+<tr>
+<td>Well-known discretionary</td>
+<td>Understood by all, optional in advertisements (local pref)</td>
+</tr>
+<tr>
+<td>Optional transitive</td>
+<td>Not required to understand; passes between ASes</td>
+</tr>
+<tr>
+<td>Optional non-transitive</td>
+<td>Not required; stripped at AS boundary (MED)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Loop prevention = AS_Path:</strong> a router that sees its own ASN in a received AS_Path discards the route.</p>
+<h2>Sessions: iBGP vs eBGP</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>iBGP</th>
+<th>eBGP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peer ASN</td>
+<td>Same</td>
+<td>Different</td>
+</tr>
+<tr>
+<td>AD</td>
+<td><strong>200</strong></td>
+<td><strong>20</strong></td>
+</tr>
+<tr>
+<td>TTL</td>
+<td>255 (multi-hop fine)</td>
+<td><strong>1</strong> — directly connected unless ebgp-multihop/ttl-security</td>
+</tr>
+<tr>
+<td>On advertise</td>
+<td>next hop unchanged</td>
+<td><strong>next hop rewritten to self + own ASN prepended to AS_Path</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Multi-hop sessions need a real route to the peer (static/IGP) — <strong>a default route is not sufficient</strong>.</li>
+<li>Transit AS needs <strong>iBGP full mesh</strong> (e.g., R2–R3–R4) — mid routers must know the routes or they blackhole traffic. Redistributing BGP→IGP is NOT the fix: IGPs can't hold Internet scale (~20k route comfort vs 940k+), can't carry path attributes, can't express BGP policy. IGP→BGP redistribution is safe.</li>
+</ul>
+<h2>The four message types</h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>OPEN</strong></td>
+<td>Establish: version, ASN, <strong>hold time</strong> (lower of the two proposals wins; ≥3 s or 0), <strong>RID</strong> (must be nonzero), capabilities</td>
+</tr>
+<tr>
+<td><strong>KEEPALIVE</strong></td>
+<td>Every ⅓ of hold time — defaults: hold <strong>180 s</strong> / keepalive <strong>60 s</strong></td>
+</tr>
+<tr>
+<td><strong>UPDATE</strong></td>
+<td>Advertise NLRI + PAs and/or withdraw routes; also resets the hold timer</td>
+</tr>
+<tr>
+<td><strong>NOTIFICATION</strong></td>
+<td>Error → session closes</td>
+</tr>
+</tbody>
+</table>
+<h2>Neighbor states (FSM)</h2>
+<p><strong>Idle → Connect → (Active) → OpenSent → OpenConfirm → Established</strong></p>
+<ul>
+<li><strong>Idle:</strong> waiting/starting; repeated failures back off (ConnectRetryTimer doubles).</li>
+<li><strong>Connect:</strong> TCP three-way handshake in progress. Initiator uses random source port → destination 179 (<code>show tcp brief</code> tells you who initiated).</li>
+<li><strong>Active:</strong> TCP failed, trying again — "actively retrying," NOT established. Idle↔Active cycling = reachability/config problem (wrong IP/ASN, TTL, ACL).</li>
+<li><strong>OpenSent/OpenConfirm:</strong> OPENs exchanged and validated (version, source IP matches neighbor config, ASN matches remote-as, unique nonzero RIDs, auth) → KEEPALIVE → <strong>Established</strong> (routes exchange via UPDATE).</li>
+</ul>
+<h2>Configuration</h2>
+<pre><code>router bgp 65100
+ bgp router-id 192.168.1.1                 ! best practice; sessions reset on change
+ neighbor 10.12.1.2 remote-as 65200
+ !
+ address-family ipv4
+  network 10.12.1.0 mask 255.255.255.0
+  neighbor 10.12.1.2 activate
+</code></pre>
+<ul>
+<li>RID selection mirrors OSPF (manual &gt; highest up loopback &gt; highest up interface).</li>
+<li>IOS XE <strong>auto-activates the IPv4 AF by default</strong> — <code>no bgp default ipv4-unicast</code> disables that for clean multi-AF configs (then activate is mandatory).</li>
+<li><strong>network statement ≠ interface enablement:</strong> it installs a prefix into the BGP table only if an <strong>exact prefix+mask match exists in the RIB</strong> (from any source). Sets origin <strong>i</strong>, weight 32768; connected → next hop 0.0.0.0; learned route → RIB next hop, MED = IGP metric.</li>
+<li><code>redistribute</code> works too — origin becomes <strong>?</strong> (incomplete).</li>
+</ul>
+<h2>The three BGP tables</h2>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Adj-RIB-In</strong></td>
+<td>Routes as received, pre-policy (purged after processing to save RAM)</td>
+</tr>
+<tr>
+<td><strong>Loc-RIB</strong></td>
+<td>THE BGP table — local + received routes; validity/next-hop check → best-path → RIB</td>
+</tr>
+<tr>
+<td><strong>Adj-RIB-Out</strong></td>
+<td>Post-outbound-policy routes, per neighbor (<code>show bgp ... neighbors X advertised-routes</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>BGP advertises only its best path</strong> — neighbors never see your alternates.</p>
+<h2>Verification decoder</h2>
+<ul>
+<li><code>show bgp ipv4 unicast summary</code> — <strong>State/PfxRcd: a NUMBER = Established</strong>; a word (Idle/Active) = down. Neighbor timers/capabilities: <code>show bgp ipv4 unicast neighbors &lt;ip&gt;</code>.</li>
+<li><code>show bgp ipv4 unicast</code> codes: <code>*</code> valid, <code>&gt;</code> best, <code>s</code> suppressed, blank Network field = another path for the prefix above. Columns: Next Hop (0.0.0.0/:: = locally originated), Metric = <strong>MED</strong>, LocPrf, Weight (32768 = local), Path + origin (<strong>i</strong> network stmt, <strong>e</strong> EGP, <strong>?</strong> redistributed).</li>
+<li><code>show ip route bgp</code> — eBGP routes land as <code>B [20/0]</code>.</li>
+</ul>
+<h2>Summarization (aggregation)</h2>
+<p>Two ways: <strong>static</strong> (Null0 static + network statement — always advertised, even if components die) or <strong>dynamic</strong>:</p>
+<p><code>aggregate-address &lt;network&gt; &lt;mask&gt; [summary-only] [as-set]</code> (under the AF)</p>
+<ul>
+<li>Created only while ≥1 component exists; originator installs a <strong>Null0 discard route</strong>; the aggregating router becomes the route's originator.</li>
+<li>Default = summary AND components advertised. <strong>summary-only</strong> suppresses components (they show <code>s&gt;</code> locally).</li>
+<li>Plain aggregation loses path detail → <strong>atomic-aggregate</strong> flag set; AS_Path now starts at the aggregator (downstream sees only the aggregating AS — loop-prevention info lost).</li>
+<li><strong>as-set</strong> copies component ASNs into an AS_SET <code>{65100,65300}</code> — counts as ONE hop. ⚠ Side effect: any AS listed in the AS_SET will REJECT the aggregate (sees itself = loop) — summarizing routes that include the neighbor's own networks makes the summary vanish at that neighbor.</li>
+</ul>
+<h2>MP-BGP / IPv6</h2>
+<ul>
+<li>MP-BGP (RFC 2858/4760) adds <strong>AFI/SAFI</strong>: IPv4 unicast = AFI 1/SAFI 1, IPv6 unicast = AFI 2/SAFI 1. Each AF has its own database and policy on one TCP session; capabilities negotiated in OPEN.</li>
+<li>IPv6 config = same skeleton + <strong><code>address-family ipv6</code> + <code>neighbor X activate</code> (mandatory)</strong>; IPv6-only routers must set the RID manually.</li>
+<li>Peer over <strong>global unicast</strong> addresses — link-local peering breaks if hardware/MAC changes regenerate the address.</li>
+<li>Table quirks: next hop <code>::</code> = locally originated; RIB next hops resolve recursively to <strong>link-local (FE80::)</strong> addresses.</li>
+<li>IPv6 summarization is hex math: the hextet "23" is 0x23 = decimal 35 → needs 6 bits → 2001:db8::/58 covers :0 through :3F.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Private ASNs: <strong>64512–65534</strong> and <strong>4.2B–4,294,967,294</strong> (DIKTA 1). Recognized-by-all + always-attached = <strong>well-known mandatory</strong> (DIKTA 2).</li>
+<li>No dynamic peer discovery (DIKTA 3: false). Sessions can be multi-hop (DIKTA 4: false). IPv4 AF activation is automatic by default (DIKTA 5: false) — but the <strong>IPv6 AF must be initialized</strong> (DIKTA 10: true).</li>
+<li>Timers/capabilities per peer: <code>show bgp &lt;afi&gt; &lt;safi&gt; neighbors</code> (DIKTA 6). <strong>Three</strong> tables (DIKTA 7). Only the best path is advertised (DIKTA 8: false on "all paths"). Flap-hiding summary = <code>aggregate-address ... summary-only</code> (DIKTA 9).</li>
+<li>Hold-time negotiation takes the LOWER value; keepalive = hold/3 (180/60 defaults).</li>
+<li>"Active" state = actively failing to connect; State/PfxRcd numeric = up.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

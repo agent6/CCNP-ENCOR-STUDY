@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 14 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Quality of Service</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 14 — Quality of Service</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>1.4 — INTERPRET QoS configurations</strong>. The verb matters: expect an MQC policy exhibit and questions about what happens to a given class. Read the MQC section and the priority-vs-bandwidth distinction until they're automatic.</p>
+<hr />
+<h2>The three enemies (why QoS exists)</h2>
+<p><strong>Lack of bandwidth · latency/jitter · packet loss.</strong> Latency budget: real-time traffic wants <strong>&lt; 150 ms</strong> (noticeably degrades past ~200 ms); never exceed 400 ms.</p>
+<table>
+<thead>
+<tr>
+<th>Latency component</th>
+<th>Fixed/Variable</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Propagation delay</td>
+<td>Fixed</td>
+<td>Distance ÷ (speed of light / refractive index ≈ 200,000 km/s in fiber)</td>
+</tr>
+<tr>
+<td>Serialization delay</td>
+<td>Fixed</td>
+<td>Packet bits ÷ link speed (1500 B on 1 Gbps ≈ 12 µs)</td>
+</tr>
+<tr>
+<td>Processing delay</td>
+<td>Fixed</td>
+<td>Input interface → output queue (CPU, switching mode, features)</td>
+</tr>
+<tr>
+<td><strong>Delay variation (jitter)</strong></td>
+<td>Variable</td>
+<td>Difference in latency between packets of one flow — caused by queuing; voice/video dejitter buffers absorb ~30 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Loss fixes: more bandwidth, congestion management/avoidance, policing (drop the junk), shaping (delay instead of drop — but shaping adds jitter, so not for real-time).</p>
+<h2>The three models</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>How</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Best effort</td>
+<td>No QoS</td>
+<td>Default</td>
+</tr>
+<tr>
+<td><strong>IntServ</strong></td>
+<td>Apps SIGNAL reservations via <strong>RSVP</strong> (PATH out, RESV back), per-flow state on every node, CAC</td>
+<td>Guarantees, but doesn't scale</td>
+</tr>
+<tr>
+<td><strong>DiffServ</strong></td>
+<td>Classify + mark; <strong>per-hop behaviors (PHB)</strong>, policy defined independently at each device</td>
+<td>The standard; no signaling, no flow state; not strictly end-to-end-guaranteed</td>
+</tr>
+</tbody>
+</table>
+<h2>MQC — the framework you must read fluently</h2>
+<pre><code>class-map match-all VOIP        ! match-all = AND (default); match-any = OR
+ match dscp ef
+ match access-group name VOICE
+policy-map EDGE
+ class VOIP
+  priority percent 30           ! the QoS ACTION
+ class class-default            ! implicit catch-all for unclassified traffic
+  fair-queue
+interface Gi0/1
+ service-policy output EDGE     ! nothing happens until applied with a direction
+</code></pre>
+<ul>
+<li><strong>class-map</strong> classifies (CoS, DSCP, ACL, <code>match protocol</code> = NBAR2 deep packet inspection — ~1500 apps, subport/URL/MIME matching, protocol packs without IOS upgrades).</li>
+<li><strong>policy-map</strong> acts per class; <strong>service-policy {input|output}</strong> applies; reusable across interfaces; one in + one out max per interface.</li>
+<li>Hierarchical (nested) policies: a child policy applied with <code>service-policy &lt;child&gt;</code> inside a parent's class (classic shape-then-queue design).</li>
+<li>Names are case sensitive.</li>
+</ul>
+<h2>Marking — the DSCP map</h2>
+<ul>
+<li><strong>L2:</strong> 802.1p <strong>CoS, 3 bits</strong> (0–7) in the 802.1Q tag — exists only on trunk links, lost at every L3 hop. <strong>L2.5:</strong> MPLS EXP. <strong>L3: DSCP, 6 bits = 64 values</strong> (survives end to end); IPP = old 3-bit field.</li>
+<li>Per-hop behaviors:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>PHB</th>
+<th>Pattern</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DF</strong></td>
+<td>000000 (0)</td>
+<td>Best effort</td>
+</tr>
+<tr>
+<td><strong>CS</strong></td>
+<td>xxx000 (CS0–CS7)</td>
+<td>IPP backward compatibility (CS×8 = decimal)</td>
+</tr>
+<tr>
+<td><strong>AF</strong></td>
+<td>aaadd0 — class a (1–4), drop precedence d (1–3)</td>
+<td>Bandwidth guarantee; <strong>decimal = 8x + 2y</strong> (AF41 = 8·4+2·1 = 34)</td>
+</tr>
+<tr>
+<td><strong>EF</strong></td>
+<td>101110 = <strong>46</strong></td>
+<td>Low loss/latency/jitter — voice; maps to IPP 5</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>AF drop logic: within a class, <strong>AFx3 drops first, then AFx2, then AFx1</strong> (WRED uses the drop precedence). AF4 is not "better" than AF1 — classes are independent queues.</li>
+<li><strong>Scavenger = CS1</strong> — <em>less</em> than best effort (P2P, gaming, streaming entertainment).</li>
+<li>Memorize: EF 46 · AF41 34 · AF31 26 · AF21 18 · AF11 10 · CS3 24 · CS6 48.</li>
+<li><strong>Trust boundary:</strong> mark/classify as close to the endpoint as possible; switches trust or re-mark. IP phones mark their voice EF/CoS 5 and <strong>zero out the attached PC's markings</strong> by default.</li>
+<li>Wireless (WLC per-WLAN): <strong>Platinum = voice (EF) · Gold = video (AF41) · Silver = best effort (default) · Bronze = background (AF11)</strong>.</li>
+</ul>
+<h2>Policing vs shaping</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Policer</strong></th>
+<th><strong>Shaper</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Excess traffic</td>
+<td><strong>Drop or mark down</strong> immediately</td>
+<td><strong>Buffer and delay</strong></td>
+</tr>
+<tr>
+<td>Direction</td>
+<td>Inbound or outbound</td>
+<td><strong>Egress only</strong></td>
+</tr>
+<tr>
+<td>Where</td>
+<td>Network edge</td>
+<td><strong>SP-facing interfaces</strong> (match the SLA before they police you)</td>
+</tr>
+<tr>
+<td>Side effects</td>
+<td>TCP retransmissions</td>
+<td>Added delay/jitter (avoid for real-time)</td>
+</tr>
+</tbody>
+</table>
+<p>Markdown convention: exceeders go AFx1 → AFx2 → AFx3, then WRED drops the high precedences first network-wide.</p>
+<p><strong>Token bucket math:</strong> tokens (1 token = 1 byte) fill at <strong>CIR</strong>; bucket size = <strong>Bc</strong>; <strong>Tc = (Bc / CIR) × 1000 ms</strong> (recommended 8–125 ms). Packet needs its size in tokens or it's non-conforming. Defaults: Bc = greater of 1500 bytes or CIR/32; Be = Bc.</p>
+<p><strong>Policer flavors:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Buckets/rates</th>
+<th>Results</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single-rate two-color</td>
+<td>1 bucket (Bc)</td>
+<td>conform / exceed</td>
+</tr>
+<tr>
+<td><strong>srTCM</strong> (RFC 2697)</td>
+<td>Bc + Be (Be fills from Bc overflow)</td>
+<td>conform / exceed / violate</td>
+</tr>
+<tr>
+<td><strong>trTCM</strong> (RFC 2698)</td>
+<td>Bc@CIR + Be@<strong>PIR</strong> (independent)</td>
+<td>conform / exceed / violate — <strong>violate (PIR) checked FIRST</strong>; allows sustained excess rate</td>
+</tr>
+</tbody>
+</table>
+<p><code>police [cir] &lt;bps&gt; [bc bytes] [pir bps] [be bytes] conform-action X exceed-action Y violate-action Z</code> — defaults: conform transmit, exceed/violate drop; actions include set-dscp-transmit (markdown).</p>
+<h2>Congestion management (queuing)</h2>
+<p>Triggered when the interface <strong>Tx-ring fills</strong> (faster-in-than-out, or many-to-one). Legacy: FIFO (one queue), round robin (no priority), WRR (weights), CQ (16 queues), <strong>PQ (strict priority — starves lower queues)</strong>, WFQ (fair per flow, no guarantees).</p>
+<p>Modern (MQC):</p>
+<ul>
+<li><strong>CBWFQ</strong> — up to 256 class queues; <code>bandwidth</code> = <strong>minimum guarantee during congestion</strong> (no latency promise → data, not voice). Queue full → tail drop at queue-limit.</li>
+<li><strong>LLQ = CBWFQ + a strict-priority queue</strong> — <code>priority</code> traffic is serviced first BUT is <strong>conditionally policed to its rate during congestion</strong> so it can't starve the other classes (the fix for legacy PQ). All priority classes share ONE physical PQ (two with <code>priority level 1|2</code>).</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>priority &lt;kbps&gt;</code> / <code>priority percent N</code></td>
+<td>LLQ with conditional policer (congestion only)</td>
+</tr>
+<tr>
+<td><code>bandwidth &lt;kbps&gt;</code> / <code>percent</code> / <code>remaining percent</code></td>
+<td>CBWFQ minimum guarantee</td>
+</tr>
+<tr>
+<td><code>shape average &lt;rate&gt;</code></td>
+<td>Class-based shaping (max rate; can pair with bandwidth for min+max)</td>
+</tr>
+<tr>
+<td><code>fair-queue</code></td>
+<td>Flow-based fairness inside a queue</td>
+</tr>
+<tr>
+<td><code>queue-limit</code></td>
+<td>Adjust tail-drop depth</td>
+</tr>
+<tr>
+<td><code>random-detect [dscp-based]</code></td>
+<td>WRED (default is precedence-based — use dscp-based with DSCP marking)</td>
+</tr>
+</tbody>
+</table>
+<p>Coexistence rules worth knowing: <code>priority</code> cannot share a class with bandwidth/shape/fair-queue/random-detect; random-detect and fair-queue require bandwidth or shape in the class; <code>bandwidth percent</code> can't share a policy with un-policed strict priority, but <code>bandwidth remaining percent</code> can.</p>
+<h2>Congestion avoidance</h2>
+<ul>
+<li>Default = <strong>tail drop</strong> → all new packets dropped when the queue fills → <strong>TCP global synchronization</strong> (all sessions back off and surge together, sawtooth utilization).</li>
+<li><strong>RED</strong> drops random packets early as the queue grows. <strong>WRED</strong> = Cisco's RED weighted by IPP/DSCP — low-priority/high-drop-precedence dies first (AFx3 → AFx2 → AFx1). <strong>ECN</strong> extension marks instead of drops for ECN-capable endpoints.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>QoS problems = bandwidth, latency/jitter, loss (DIKTA 1). Latency types: propagation, serialization, processing (fixed) + delay variation (variable) (DIKTA 2).</li>
+<li>The signaling model = <strong>IntServ/RSVP</strong> (DIKTA 4); most deployed = <strong>DiffServ</strong> (DIKTA 5); "expedited forwarding" is a PHB, not a model (DIKTA 3).</li>
+<li>Inside a policy map it's <strong><code>class NAME</code></strong> (not class-map) (DIKTA 6); apply with <strong><code>service-policy {input|output} NAME</code></strong> (DIKTA 7).</li>
+<li>Classify at the <strong>edge</strong>, never the core (DIKTA 8). DSCP is <strong>6 bits/64 values</strong>, not 8 (DIKTA 9). Marking action = <strong><code>set dscp ef</code></strong> or <code>set ip dscp ef</code> (DIKTA 10).</li>
+<li>Interpret-the-policy reflexes: <code>priority</code> = LLQ strict + policed under congestion; <code>bandwidth</code> = minimum guarantee, no latency promise; <code>police</code> = hard rate, drops/re-marks now; <code>shape</code> = buffers to a max rate.</li>
+<li>trTCM checks violate→exceed→conform (reverse of srTCM); PIR ≥ CIR; Be ≥ Bc.</li>
+<li>CoS dies at the first routed hop — map it into DSCP at the trust boundary.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

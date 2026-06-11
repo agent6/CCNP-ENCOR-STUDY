@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 12 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Advanced BGP: Best Path</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 12 — Advanced BGP: Best Path</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> The other half of <strong>3.2.c — the best path selection algorithm</strong>. Memorize the algorithm order cold; everything else here (filtering, route maps, communities) is supporting context the exam draws scenario questions from.</p>
+<hr />
+<h2>THE Best-Path Algorithm (memorize this order)</h2>
+<p>Longest prefix match happens first at the ROUTER level (before BGP attributes matter at all). Then BGP compares paths for the same prefix:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Attribute</th>
+<th>Wins</th>
+<th>Scope / direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Weight</strong></td>
+<td>Highest</td>
+<td>Cisco-only, 16-bit, never leaves the router; influences outbound</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Local preference</strong></td>
+<td>Highest (default 100)</td>
+<td>AS-wide via iBGP, never sent to eBGP peers; influences outbound exit</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Locally originated</strong></td>
+<td>network/redistributed &gt; locally aggregated &gt; peer-learned</td>
+<td>—</td>
+</tr>
+<tr>
+<td>4</td>
+<td>AIGP</td>
+<td>Lowest metric</td>
+<td>Optional; single-admin multi-AS designs; AIGP path beats non-AIGP</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Shortest AS_Path</strong></td>
+<td>Fewest hops</td>
+<td>Prepending lengthens it — influences inbound</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Origin</strong></td>
+<td>i (IGP) &gt; e (EGP) &gt; ? (incomplete)</td>
+<td>network stmt = i; redistribution = ?</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Lowest MED</strong></td>
+<td>Lowest (missing = 0)</td>
+<td>Suggests entry point to the NEIGHBORING AS; compared only between paths from the same AS by default; influences inbound</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>eBGP over iBGP</strong></td>
+<td>external &gt; confederation &gt; internal</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Lowest IGP metric to next hop</td>
+<td>Closest exit</td>
+<td>Hot-potato routing</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Oldest eBGP session</td>
+<td>Stability tiebreak</td>
+<td>Non-deterministic by design</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Lowest advertising <strong>RID</strong></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Minimum cluster list length</td>
+<td>Fewest RR hops</td>
+<td>—</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Lowest neighbor address</td>
+<td>Final tiebreak (iBGP)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Memory hook for 1–8: <strong>W</strong>e <strong>L</strong>ove <strong>O</strong>ranges <strong>A</strong>S <strong>O</strong>range <strong>M</strong>akes <strong>E</strong>xcellent juice (Weight, LocalPref, Originated, AS_Path, Origin, MED, External-over-internal).</p>
+<p>Quick tools: <code>show bgp ipv4 unicast &lt;net&gt; bestpath</code> and <code>... best-path-reason</code> (prints "Lower weight," "Longer AS path," etc. per losing path).</p>
+<p>Recalculation triggers: next-hop reachability change, eBGP-facing interface failure, redistribution change, new/withdrawn paths.</p>
+<h2>Influence cheat table</h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Knob</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Steer MY outbound (this router)</td>
+<td>Weight</td>
+<td>Inbound route map / per neighbor</td>
+</tr>
+<tr>
+<td>Steer AS-wide outbound</td>
+<td>Local preference</td>
+<td>Inbound at the edge, propagates via iBGP</td>
+</tr>
+<tr>
+<td>Deter inbound on a link</td>
+<td>AS_Path prepend</td>
+<td>Outbound advertisement</td>
+</tr>
+<tr>
+<td>Suggest inbound entry to adjacent AS</td>
+<td>MED (lower preferred)</td>
+<td>Outbound</td>
+</tr>
+<tr>
+<td>Guarantee deterministic inbound</td>
+<td><strong>Longest match</strong>: summary from all edges + specific prefix from the preferred edge</td>
+<td>— (immune to neighbor policy)</td>
+</tr>
+</tbody>
+</table>
+<h2>Multihoming &amp; transit</h2>
+<ul>
+<li>Resiliency ladder: one router/one SP link → two links same SP → two SPs → two routers + two SPs (iBGP between edge routers).</li>
+<li>⚠ <strong>Accidental transit AS:</strong> multihomed enterprise re-advertising SP-learned routes becomes a path for strangers' traffic (its short AS_Path looks attractive). Fix = <strong>outbound filtering: advertise only locally originated routes</strong> — AS_Path ACL <code>permit ^$</code> applied out to all eBGP peers.</li>
+<li>Branch designs: filter outbound at branches so they advertise only LAN routes — keeps failover <strong>deterministic</strong> (symmetric, predictable) and stops a branch becoming an undersized transit during SP failures. Planned transit belongs at data centers.</li>
+</ul>
+<h2>Conditional matching toolbox</h2>
+<ul>
+<li><strong>Extended ACLs for BGP:</strong> source fields match the <strong>network</strong>, destination fields match the <strong>mask</strong> (e.g., <code>permit ip 10.0.0.0 0.0.255.0 255.255.255.0 0.0.0.0</code> = any 10.0.x.0/24).</li>
+<li><strong>Prefix lists:</strong> high-order bit pattern/count + optional <code>ge</code>/<code>le</code>. Rule: bit-count &lt; ge ≤ le. Examples: <code>10.0.0.0/8 ge 22 le 26</code> = anything starting "10." with /22–/26 length. No params = exact match. Sequences auto-increment by 5; IPv6 version identical (hex!).</li>
+<li><strong>Regex for AS_Path</strong> (<code>show bgp ipv4 unicast regexp ...</code>):</li>
+<li><code>^$</code> locally originated · <code>^200_</code> learned FROM AS 200 · <code>_200$</code> ORIGINATED in AS 200 · <code>_200_</code> passes THROUGH AS 200</li>
+<li><code>_</code>=space, <code>^</code>=start, <code>$</code>=end, <code>.</code>=any char, <code>*</code>=zero+, <code>+</code>=one+</li>
+</ul>
+<h2>Route maps</h2>
+<p>Four parts: <strong>sequence, match criteria, permit/deny action, optional set</strong>. Rules to burn in:</p>
+<ul>
+<li>No action specified → <strong>permit</strong>; no sequence → +10; <strong>no match statement → matches everything</strong>; routes matching no sequence → <strong>implicit deny</strong>.</li>
+<li>One <code>match</code> line with multiple values = <strong>OR</strong>. Multiple different <code>match</code> lines in a sequence = <strong>AND</strong>.</li>
+<li>A <strong>deny in the referenced ACL/prefix-list</strong> just excludes the route from THAT sequence (it falls through to later sequences) — it doesn't drop it.</li>
+<li><code>continue</code> lets processing carry on past a match (rarely used).</li>
+<li>Apply per neighbor: <code>neighbor X route-map NAME {in|out}</code>; best practice = separate in/out policies per neighbor.</li>
+</ul>
+<h2>The four BGP filtering methods (per neighbor, in/out)</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Command</th>
+<th>Matches on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Distribute list</td>
+<td><code>neighbor X distribute-list ACL {in\|out}</code></td>
+<td>ACL (network+mask trick)</td>
+</tr>
+<tr>
+<td>Prefix list</td>
+<td><code>neighbor X prefix-list NAME {in\|out}</code></td>
+<td>Prefix/length</td>
+</tr>
+<tr>
+<td>Filter list</td>
+<td><code>neighbor X filter-list &lt;as-path-acl&gt; {in\|out}</code></td>
+<td>AS_Path regex (<code>ip as-path access-list 1 permit ^$</code>)</td>
+</tr>
+<tr>
+<td>Route map</td>
+<td><code>neighbor X route-map NAME {in\|out}</code></td>
+<td>Anything + can SET attributes</td>
+</tr>
+</tbody>
+</table>
+<p>⚠ Distribute list and prefix list cannot both be applied to the same neighbor in the same direction.</p>
+<p><strong>Applying changes:</strong> hard reset <code>clear ip bgp &lt;ip|*&gt;</code> (tears session down) vs <strong>soft reset</strong> <code>clear bgp ipv4 unicast &lt;ip|*&gt; soft [in|out]</code> (route refresh — non-disruptive, preferred).</p>
+<h2>BGP communities</h2>
+<ul>
+<li><strong>Optional transitive</strong> PA; 32-bit tag, "new format" AS:value (<code>ip bgp-community new-format</code>).</li>
+<li><strong>Not sent by default</strong> — enable per neighbor: <code>neighbor X send-community [both]</code>.</li>
+<li>Well-known: <strong>Internet</strong> (advertise everywhere), <strong>No_Advertise</strong> (no peer at all), <strong>No_Export</strong> (no eBGP peer; iBGP OK), <strong>Local-AS</strong> (not even confederation-external).</li>
+<li>Match: <code>ip community-list 1-99</code> (standard) / 100–500 (expanded, regex) → <code>match community N</code> in a route map. View: <code>show bgp ipv4 unicast community 333:333</code>.</li>
+<li>Set: <code>set community 10:23 [additive]</code> — without <strong>additive</strong>, existing communities are OVERWRITTEN.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Recite it: <strong>Weight → LocalPref → locally originated → AIGP → AS_Path → Origin → MED → eBGP&gt;iBGP → IGP metric → oldest → RID</strong>. Weight/LocPref highest win; AS_Path/Origin/MED lowest-or-shortest win.</li>
+<li>Weight and LocalPref steer <strong>outbound</strong>; prepending and MED steer <strong>inbound</strong>. LocalPref stays inside the AS; MED crosses only to the adjacent AS; weight never leaves the router.</li>
+<li>Longest prefix match trumps every BGP attribute — and is the only inbound steering an SP can't override with policy.</li>
+<li>Prevent transit AS = AS_Path ACL <code>^$</code> outbound. Routes from neighbor AS only = <code>^65200_</code>; originated in AS = <code>_65200$</code>.</li>
+<li>Route map traps: missing match = match-all; implicit deny at the end; multiple values on one line OR, separate lines AND; ACL deny ≠ route drop.</li>
+<li>Origin preference is i &gt; e &gt; ? — a network-statement route beats the same route redistributed.</li>
+<li>MED needs same-AS paths to compare; missing MED = 0 on IOS XE.</li>
+<li>SPs typically reject prefixes longer than /24 (IPv4) or /48 (IPv6).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

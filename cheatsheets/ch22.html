@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 22 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Enterprise Network Architecture</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 22 — Enterprise Network Architecture</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>1.1.a — high-level enterprise network design (2-tier, 3-tier, fabric, cloud)</strong> and <strong>1.1.b — high availability techniques (redundancy, FHRP, SSO)</strong>. Design-judgment questions: when to add a core, which HA tech fits which failure, and what each access-layer design trades away.</p>
+<hr />
+<h2>Hierarchical LAN design — why and what</h2>
+<p>Modular layers that replicate: <strong>simplified design, scalability, better performance, easier troubleshooting, fault containment</strong> (changes touch a subset, not a flat full mesh). NOT the model for modern data centers — those use <strong>leaf–spine</strong> for east–west traffic; hierarchical fits north–south flows.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Nickname</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Access</strong></td>
+<td><strong>The network edge</strong></td>
+<td>Endpoint connectivity (wired/wireless), VLAN segmentation, <strong>QoS trust boundary</strong>, port security. Access switches are NOT interconnected to each other — inter-switch traffic goes through distribution. Critical single-homed endpoints → redundant supervisors</td>
+</tr>
+<tr>
+<td><strong>Distribution</strong></td>
+<td>Aggregation</td>
+<td>Aggregates access switches; <strong>the L2/L3 boundary</strong> — STP fault domain stops here, routing <strong>summarization</strong> toward the core starts here. Deployed in <strong>pairs (two per building block)</strong>, interconnected L2 or L3. Placed per building to cut long fiber runs</td>
+</tr>
+<tr>
+<td><strong>Core</strong></td>
+<td>Backbone</td>
+<td>Interconnects distribution blocks; fast, simple, highly available. Reduces mesh complexity from <strong>N×(N−1) to N links</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two layers suffice for a single building; three when the campus spans buildings — same modular services either way.</p>
+<h2>Network blocks (PINs) hanging off the core/distribution</h2>
+<ul>
+<li><strong>WAN edge:</strong> remote sites/branches + <strong>dedicated cloud interconnects</strong> (AWS/Azure/GCP direct connections).</li>
+<li><strong>Internet edge:</strong> general Internet, e-commerce, remote-access VPN, and cloud access <em>without</em> dedicated circuits. (Cloud reachability = WAN edge AND Internet edge.)</li>
+<li><strong>Data center/server room:</strong> business apps; modern ones use leaf–spine.</li>
+<li><strong>Network services:</strong> WLC, ISE, CUCM, collaboration managers.</li>
+</ul>
+<h2>Two-tier vs three-tier (1.1.a)</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Two-tier (collapsed core)</strong></th>
+<th><strong>Three-tier</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What</td>
+<td>Core + distribution merged into one switch pair</td>
+<td>Dedicated core layer</td>
+</tr>
+<tr>
+<td>When</td>
+<td>Smaller campus, single building, cost-sensitive</td>
+<td><strong>More than two distribution pairs</strong>: multi-building campus, growing WAN/Internet/DC density, fiber sprawl back to one collapsed core</td>
+</tr>
+<tr>
+<td>Trade</td>
+<td>Cheaper; plan for future scale before choosing</td>
+<td>More boxes, clean scaling</td>
+</tr>
+</tbody>
+</table>
+<h2>High availability design (1.1.b)</h2>
+<p><strong>Network level:</strong> redundant devices/links at every layer, no single point of failure, simplify with clustering tech, monitor proactively. <strong>System level:</strong> redundant power/fans/supervisors, hot-swap/OIR hardware, <strong>SSO/NSF (+GR or NSR)</strong>, fast failure detection (BFD, UDLD), <strong>FHRPs</strong> (HSRP/VRRP/GLBP).</p>
+<h3>The SSO/NSF/GR/NSR family (the testable core)</h3>
+<ul>
+<li><strong>SSO</strong> — dual route processors; active RP <strong>checkpoints config, line-card state, and L2 protocol state</strong> to standby. Switchover keeps interfaces up and the box running, but L3 adjacencies still reset.</li>
+<li><strong>NSF</strong> — checkpoints the <strong>FIB</strong> so the data plane keeps forwarding on CEF entries while the control plane recovers. <strong>Not separately configurable — enabled automatically with SSO</strong> (hence "SSO/NSF").</li>
+<li>Problem without help: neighbors see the adjacency drop and route around you. Two fixes:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Graceful Restart (GR)</strong></th>
+<th><strong>NSR</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard?</td>
+<td>RFC 4724, standards-based</td>
+<td>Cisco internal</td>
+</tr>
+<tr>
+<td>Mechanism</td>
+<td><strong>Routing protocol EXTENSIONS</strong> tell neighbors "keep forwarding to me, my adjacency will blip"</td>
+<td>Active RP continuously checkpoints <strong>adjacency + TCP state</strong> to standby — neighbors never notice</td>
+</tr>
+<tr>
+<td>Neighbor requirement</td>
+<td>Neighbor must be <strong>GR-aware</strong> (helper)</td>
+<td><strong>None</strong> — works with GR-unaware peers</td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>Light</td>
+<td>Heavy ongoing checkpointing (CPU/memory)</td>
+</tr>
+</tbody>
+</table>
+<p>Router categories: <strong>SSO/NSF-capable</strong> (dual RP, preserves FIB) · <strong>GR-aware/helper</strong> (supports the extensions; doesn't need dual RPs) · <strong>GR-unaware</strong>. Scaled best practice: <strong>GR with aware neighbors, NSR for the unaware ones</strong>. Cisco docs/CLI say "NSF" when they mean GR — read carefully.</p>
+<h2>Access-layer design options</h2>
+<table>
+<thead>
+<tr>
+<th>Design</th>
+<th>Mechanics</th>
+<th>Trade-offs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L2 access (STP-based)</strong></td>
+<td>Distribution = IP gateway; FHRP pair</td>
+<td>Keep each VLAN on ONE access switch = loop-free; spanning VLANs across switches = blocked links + loop risk. HSRP/VRRP use one uplink (manual odd/even VLAN balancing); GLBP load-balances but <strong>loop-free topologies only</strong></td>
+</tr>
+<tr>
+<td><strong>L3 routed access</strong></td>
+<td>L2/L3 boundary moves INTO the access switch; routed point-to-point uplinks</td>
+<td><strong>No FHRP, no STP, both uplinks forwarding</strong>, ping/traceroute troubleshooting, fast IGP convergence. Can't span VLANs across access switches; L3 access switches cost more</td>
+</tr>
+<tr>
+<td><strong>Simplified campus</strong></td>
+<td>Clustering: <strong>VSS / StackWise Virtual</strong> (distribution/core pairs → one logical switch), <strong>StackWise</strong> (access stacks). <strong>MEC</strong> (multichassis EtherChannel) and cross-stack EtherChannel span the physical boxes</td>
+<td>Fewer boxes, no FHRP needed, STP reduced to a failsafe, all uplinks active, hub-and-spoke logical topology, <strong>VLANs can span access switches safely</strong>, interchassis SSO/NSF failover</td>
+</tr>
+<tr>
+<td><strong>SD-Access</strong></td>
+<td>Fabric (VXLAN/LISP) + Catalyst Center automation</td>
+<td>The 1.1.a "fabric" option — detail in Ch 23</td>
+</tr>
+</tbody>
+</table>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Hierarchical model = scalable, simple, performant, fast fault isolation — but <strong>not</strong> the data center answer (leaf–spine).</li>
+<li>Access layer = "<strong>network edge</strong>"; distribution switches come in <strong>pairs (max two per block)</strong>.</li>
+<li><strong>NSF cannot be enabled without SSO</strong> — they're a unit. <strong>GR is the one needing routing protocol extensions</strong>; NSR is self-contained and CPU-hungry.</li>
+<li>Collapsed core = <strong>two-tier</strong>. End users reach cloud providers via <strong>WAN edge</strong> (dedicated interconnects) and <strong>Internet edge</strong>.</li>
+<li>Simplified campus = clustering + stacking + <strong>VSS + StackWise Virtual</strong> (daisy-chaining is the distractor); its EtherChannel forms: <strong>MEC</strong> across VSS/SWV pairs, cross-stack across StackWise members.</li>
+<li>Routed access kills both STP AND FHRP needs but can't span VLANs; simplified campus achieves VLAN spanning loop-free.</li>
+<li>Distribution layer's two-sided job: stop STP (L2 side), summarize routes (L3 side).</li>
+<li>Core math: N links instead of N×(N−1) interconnects.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

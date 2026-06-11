@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cheat Sheets · ENCOR 350-401 Study App</title>
 <link rel="stylesheet" href="assets/app.css">
+<link rel="prefetch" href="quiz.html">
+<link rel="prefetch" href="flashcards.html">
+<link rel="prefetch" href="cheatsheets.html">
+<link rel="prefetch" href="infographics.html">
+<link rel="prefetch" href="labs.html">
+
 </head>
 <body>
 <div class="wrap">
@@ -21,28 +27,40 @@
     <a href="labs.html" data-page="labs">Labs</a>
   </nav>
 
-  <div id="menu">
-    <div class="card">
-      <h2 style="margin-bottom:6px;">Cheat Sheets</h2>
-      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Condensed per-chapter references (<span id="sheetCount"></span> available).</p>
-      <div class="grid" id="sheetGrid"></div>
+  <div class="card">
+    <h2 style="margin-bottom:6px;">Cheat Sheets</h2>
+    <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Condensed per-chapter references (24 available). Each opens as its own page — bookmarkable and printable.</p>
+    <div class="grid">
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch01.html"><span class="num">Ch 1</span> Packet Forwarding <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch02.html"><span class="num">Ch 2</span> Spanning Tree Protocol <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch03.html"><span class="num">Ch 3</span> Advanced STP Tuning <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch04.html"><span class="num">Ch 4</span> Multiple Spanning Tree Protocol <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch05.html"><span class="num">Ch 5</span> VLAN Trunks and EtherChannel Bundles <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch06.html"><span class="num">Ch 6</span> IP Routing Essentials <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch07.html"><span class="num">Ch 7</span> EIGRP <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch08.html"><span class="num">Ch 8</span> OSPF <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch09.html"><span class="num">Ch 9</span> Advanced OSPF <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch10.html"><span class="num">Ch 10</span> OSPFv3 <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch11.html"><span class="num">Ch 11</span> BGP <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch12.html"><span class="num">Ch 12</span> Advanced BGP: Best Path <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch13.html"><span class="num">Ch 13</span> Multicast <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch14.html"><span class="num">Ch 14</span> Quality of Service <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch15.html"><span class="num">Ch 15</span> IP Services <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch16.html"><span class="num">Ch 16</span> Overlay Tunnels <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch22.html"><span class="num">Ch 22</span> Enterprise Network Architecture <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch23.html"><span class="num">Ch 23</span> Fabric Technologies: SD-Access &amp; Catalyst SD-WAN <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch24.html"><span class="num">Ch 24</span> Network Assurance <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch25.html"><span class="num">Ch 25</span> Secure Network Access Control <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch26.html"><span class="num">Ch 26</span> Device Access Control &amp; Infrastructure Security <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch27.html"><span class="num">Ch 27</span> Virtualization <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch28.html"><span class="num">Ch 28</span> Network Programmability <span class="cnt">cheat sheet</span></a>
+      <a class="chapBtn" style="display:block; text-decoration:none;" href="cheatsheets/ch29.html"><span class="num">Ch 29</span> Automation Tools <span class="cnt">cheat sheet</span></a>
     </div>
-  </div>
-
-  <div id="sheetView" class="hidden">
-    <div class="topRow">
-      <span class="pill" id="sheetTitle"></span>
-      <button class="btn secondary" style="padding:6px 14px; font-size:.85rem;" onclick="goHome()">Back</button>
-    </div>
-    <div class="card sheet" id="sheetBody"></div>
   </div>
 
 
   <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
 </div>
-<script src="assets/data/cheats.js"></script>
-<script src="assets/shared.js"></script>
-<script src="assets/cheatsheets.js"></script>
 <script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
 </body>
 </html>

@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz · ENCOR 350-401 Study App</title>
 <link rel="stylesheet" href="assets/app.css">
+<link rel="prefetch" href="quiz.html">
+<link rel="prefetch" href="flashcards.html">
+<link rel="prefetch" href="cheatsheets.html">
+<link rel="prefetch" href="infographics.html">
+<link rel="prefetch" href="labs.html">
+<script src="assets/data/bank.js" defer></script>
+<script src="assets/shared.js" defer></script>
+<script src="assets/quiz.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -24,9 +32,9 @@
   <div id="menu">
     <div class="card">
       <h2 style="margin-bottom:6px;">Full Bank</h2>
-      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Every chapter, <span id="totalCount"></span> questions.</p>
-      <button class="btn" onclick="startQuiz('all', false)">Start All Chapters</button>
-      <button class="btn secondary" onclick="startQuiz('all', true)" style="margin-left:8px;">Random 50</button>
+      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">Every chapter, 218 questions.</p>
+      <button class="btn" data-start="all">Start All Chapters</button>
+      <button class="btn secondary" data-start="random50" style="margin-left:8px;">Random 50</button>
       <div class="checkRow">
         <input type="checkbox" id="shuffleChk" checked>
         <label for="shuffleChk">Shuffle question order</label>
@@ -34,7 +42,32 @@
     </div>
     <div class="card">
       <h2 style="margin-bottom:4px;">Quiz by Chapter</h2>
-      <div class="grid" id="chapterGrid"></div>
+      <div class="grid" id="chapterGrid">
+        <button class="chapBtn" data-ch="1"><span class="num">Ch 1</span> Packet Forwarding <span class="cnt">5 q</span></button>
+        <button class="chapBtn" data-ch="2"><span class="num">Ch 2</span> Spanning Tree Protocol <span class="cnt">9 q</span></button>
+        <button class="chapBtn" data-ch="3"><span class="num">Ch 3</span> Advanced STP Tuning <span class="cnt">8 q</span></button>
+        <button class="chapBtn" data-ch="4"><span class="num">Ch 4</span> Multiple Spanning Tree Protocol <span class="cnt">6 q</span></button>
+        <button class="chapBtn" data-ch="5"><span class="num">Ch 5</span> VLAN Trunks and EtherChannel Bundles <span class="cnt">11 q</span></button>
+        <button class="chapBtn" data-ch="6"><span class="num">Ch 6</span> IP Routing Essentials <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="7"><span class="num">Ch 7</span> EIGRP <span class="cnt">8 q</span></button>
+        <button class="chapBtn" data-ch="8"><span class="num">Ch 8</span> OSPF <span class="cnt">12 q</span></button>
+        <button class="chapBtn" data-ch="9"><span class="num">Ch 9</span> Advanced OSPF <span class="cnt">9 q</span></button>
+        <button class="chapBtn" data-ch="10"><span class="num">Ch 10</span> OSPFv3 <span class="cnt">6 q</span></button>
+        <button class="chapBtn" data-ch="11"><span class="num">Ch 11</span> BGP <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="12"><span class="num">Ch 12</span> Advanced BGP: Best Path <span class="cnt">7 q</span></button>
+        <button class="chapBtn" data-ch="13"><span class="num">Ch 13</span> Multicast <span class="cnt">11 q</span></button>
+        <button class="chapBtn" data-ch="14"><span class="num">Ch 14</span> Quality of Service <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="15"><span class="num">Ch 15</span> IP Services <span class="cnt">13 q</span></button>
+        <button class="chapBtn" data-ch="16"><span class="num">Ch 16</span> Overlay Tunnels <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="22"><span class="num">Ch 22</span> Enterprise Network Architecture <span class="cnt">7 q</span></button>
+        <button class="chapBtn" data-ch="23"><span class="num">Ch 23</span> Fabric Technologies: SD-Access &amp; Catalyst SD-WAN <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="24"><span class="num">Ch 24</span> Network Assurance <span class="cnt">14 q</span></button>
+        <button class="chapBtn" data-ch="25"><span class="num">Ch 25</span> Secure Network Access Control <span class="cnt">8 q</span></button>
+        <button class="chapBtn" data-ch="26"><span class="num">Ch 26</span> Device Access Control &amp; Infrastructure Security <span class="cnt">10 q</span></button>
+        <button class="chapBtn" data-ch="27"><span class="num">Ch 27</span> Virtualization <span class="cnt">6 q</span></button>
+        <button class="chapBtn" data-ch="28"><span class="num">Ch 28</span> Network Programmability <span class="cnt">12 q</span></button>
+        <button class="chapBtn" data-ch="29"><span class="num">Ch 29</span> Automation Tools <span class="cnt">6 q</span></button>
+      </div>
     </div>
   </div>
 
@@ -81,9 +114,6 @@
 
   <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
 </div>
-<script src="assets/data/bank.js"></script>
-<script src="assets/shared.js"></script>
-<script src="assets/quiz.js"></script>
 <script>document.querySelector('nav.top a[data-page="quiz"]').classList.add("active");</script>
 </body>
 </html>

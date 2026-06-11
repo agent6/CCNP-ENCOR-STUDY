@@ -3,17 +3,12 @@ let session = null;
 const show = makeShow(["menu","quiz","results"]);
 function goHome(){ session = null; show("menu"); }
 
-const total = BANK.reduce((s,c)=>s+c.questions.length,0);
-document.getElementById("totalCount").textContent = total;
-
-const grid = document.getElementById("chapterGrid");
-BANK.forEach(ch => {
-  const b = document.createElement("button");
-  b.className = "chapBtn";
-  b.innerHTML = `<span class="num">Ch ${ch.num}</span> ${ch.title.replace(/\s*\([^)]*\)\s*$/, "")} <span class="cnt">${ch.questions.length} q</span>`;
-  b.onclick = () => startQuiz(ch.num, false);
-  grid.appendChild(b);
+/* grids are pre-rendered at build time — just attach handlers */
+document.querySelectorAll("#chapterGrid .chapBtn").forEach(b => {
+  b.onclick = () => startQuiz(+b.dataset.ch, false);
 });
+document.querySelector('[data-start="all"]').onclick = () => startQuiz("all", false);
+document.querySelector('[data-start="random50"]').onclick = () => startQuiz("all", true);
 
 function buildPool(scope){
   let pool = [];

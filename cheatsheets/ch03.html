@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 3 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Advanced STP Tuning</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 3 — Advanced STP Tuning</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Directly serves topic <strong>3.1.c</strong> — the exam topic names "Spanning Tree enhancements such as <strong>root guard and BPDU guard</strong>" explicitly. The protection-feature comparison table below is the money slide; expect scenario questions about which guard goes where and what each does when triggered.</p>
+<hr />
+<h2>Deliberate root bridge placement</h2>
+<p>Never leave root election to default priorities. Two ways to set priority:</p>
+<ul>
+<li><code>spanning-tree vlan X priority &lt;0–61440&gt;</code> — manual, <strong>increments of 4096 only</strong></li>
+<li><code>spanning-tree vlan X root {primary | secondary} [diameter D]</code> — a macro:</li>
+<li><strong>primary → 24576</strong> (and if some switch is already lower, the script goes lower still to win)</li>
+<li><strong>secondary → 28672</strong></li>
+<li><code>diameter</code> = max L2 hops from root; tunes timers, which propagate via the root's BPDUs (no need to set timers elsewhere)</li>
+</ul>
+<p>Best practice: hardest possible lockdown = <strong>priority 0 on primary, 4096 on secondary, plus root guard</strong> on ports toward everything else. Root usually belongs at the L2/L3 boundary (distribution/core), minimizing hops and sized for cross-switch traffic.</p>
+<p>Verify: <code>show spanning-tree vlan 1</code> — remember displayed priority = configured + VLAN (24576 + 1 = 24577).</p>
+<h2>Steering the topology</h2>
+<p><strong>Port cost</strong> (affects YOUR path selection, configured on the receiving switch):
+<code>spanning-tree [vlan X] cost &lt;value&gt;</code> — lower a port's cost to make it the root path / designated; raise to push it to blocking. Omitting <code>vlan</code> changes all VLANs.
+Key mechanic (repeat from Ch 2, tested as true/false): <strong>the advertised root path cost does NOT include the egress port's cost</strong> — cost is added by the receiver on ingress.</p>
+<p><strong>Port priority</strong> (tiebreaker for parallel links to the same switch, configured on the <strong>upstream/downstream-facing</strong> switch — the one closer to the root controls the downstream switch's choice):
+<code>spanning-tree [vlan X] port-priority &lt;value&gt;</code> — <strong>lower is preferred</strong>, default 128. Shows up in <code>Prio.Nbr</code> (e.g., 64.6).</p>
+<p>Tiebreak order recap: cost → advertising bridge priority → advertising bridge MAC → <strong>port priority</strong> → port number.</p>
+<h2>L2 forwarding loops — symptoms &amp; causes</h2>
+<p>No TTL at Layer 2 → loops run forever: CPU spike, memory exhaustion, MAC table churn, app slowness, switch crash.</p>
+<p>Telltale syslog: <code>%SW_MATM-4-MACFLAP_NOTIF: Host ... is flapping between port X and port Y</code> → investigate STP on every switch carrying that VLAN.</p>
+<p>Common causes: STP disabled, load balancer sending one MAC out multiple ports, hypervisor vSwitch bridging two uplinks (vSwitches don't run STP), end-user hub/dumb switch.</p>
+<h2>The protection features (know this table cold)</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Put it on</th>
+<th>Trigger</th>
+<th>Action</th>
+<th>Recovery</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Root guard</strong></td>
+<td>Designated ports toward switches that must never be root</td>
+<td><strong>Superior</strong> BPDU received</td>
+<td>Port → <strong>root-inconsistent</strong> (acts like listening, no forwarding)</td>
+<td><strong>Automatic</strong> when superior BPDUs stop</td>
+</tr>
+<tr>
+<td><strong>BPDU guard</strong></td>
+<td>PortFast/host-facing access ports</td>
+<td><strong>Any</strong> BPDU received</td>
+<td>Syslog + port → <strong>err-disabled</strong></td>
+<td>Manual shut/no shut, or errdisable recovery</td>
+</tr>
+<tr>
+<td><strong>BPDU filter</strong></td>
+<td>(Rarely; avoid)</td>
+<td>—</td>
+<td>Stops sending/processing BPDUs</td>
+<td>n/a — removes loop protection</td>
+</tr>
+<tr>
+<td><strong>Loop guard</strong></td>
+<td>Root/alternate ports (uplinks); NEVER on PortFast ports</td>
+<td>BPDUs <strong>stop arriving</strong></td>
+<td>Port → <strong>loop-inconsistent</strong> (BKN, *LOOP_Inc) instead of becoming designated</td>
+<td><strong>Automatic</strong> when BPDUs resume</td>
+</tr>
+<tr>
+<td><strong>UDLD</strong></td>
+<td>Fiber/SFP links</td>
+<td>Echo of its own IDs not returned</td>
+<td>Normal: mark undetermined, stay up · <strong>Aggressive: 8 retries @1 s → err-disable</strong></td>
+<td>udld recovery (default 5 min)</td>
+</tr>
+</tbody>
+</table>
+<h2>PortFast</h2>
+<ul>
+<li>Skips listening/learning → immediate forwarding (helps DHCP/PXE) and <strong>suppresses TCN generation</strong> for host ports.</li>
+<li>Receiving a BPDU strips PortFast from the port (it reverts to normal states). Makes the port an <strong>RSTP edge port</strong>.</li>
+<li>Config: per-port <code>spanning-tree portfast</code> · global <code>spanning-tree portfast default</code> (then <code>spanning-tree portfast disable</code> per port to exempt) · <code>spanning-tree portfast trunk</code> only for single-host trunks (hypervisor/server NIC with VLANs).</li>
+<li>Verify: port type shows <strong>P2p Edge</strong>; <code>show spanning-tree interface X detail</code> → "The port is in the portfast mode".</li>
+</ul>
+<h2>BPDU guard details</h2>
+<ul>
+<li>Global pattern (the standard design): <code>spanning-tree portfast bpduguard default</code> — applies to all PortFast ports; exempt one with <code>spanning-tree bpduguard disable</code>.</li>
+<li>Trip sequence in syslog: <code>%SPANTREE-2-BLOCK_BPDUGUARD</code> → <code>%PM-4-ERR_DISABLE</code> → line protocol down. <code>show interfaces status</code> shows <strong>err-disabled</strong>.</li>
+<li><strong>Error Recovery service:</strong> <code>errdisable recovery cause bpduguard</code> + <code>errdisable recovery interval &lt;30–86400&gt;</code> (default <strong>300 s</strong>). Check with <code>show errdisable recovery</code>. If BPDUs are still arriving, the port re-trips immediately after each recovery.</li>
+</ul>
+<h2>BPDU filter details (handle with care)</h2>
+<ul>
+<li><strong>Global</strong> (<code>spanning-tree portfast bpdufilter default</code>): PortFast ports send ~10–12 BPDUs after link-up, then go quiet — but the port still reacts to received superior BPDUs. Failsafe-ish.</li>
+<li><strong>Per-interface</strong> (<code>spanning-tree bpdufilter enable</code>): sends and processes <strong>nothing</strong>, ever — loop detection is gone on that port. If the far end runs BPDU guard, the far end may err-disable. Most designs don't need filter at all.</li>
+</ul>
+<h2>Unidirectional fiber problems</h2>
+<p>One broken strand = link stays "up/up" but BPDUs flow one way → downstream switch ages out its root port info and unblocks a port → <strong>forwarding loop</strong>. Two fixes:</p>
+<p><strong>Loop guard:</strong> <code>spanning-tree loopguard default</code> (global) or <code>spanning-tree guard loop</code> (interface). On BPDU loss the port goes BKN *LOOP_Inc rather than forwarding. List affected ports per VLAN: <code>show spanning-tree inconsistentports</code>. Conflicts with PortFast logic — keep it off edge ports.</p>
+<p><strong>UDLD:</strong> sends packets carrying its system ID/port ID; neighbor echoes them back; failure to see your own ID echoed = unidirectional.
+- Modes: <strong>normal</strong> (alert only, port stays active) vs <strong>aggressive</strong> (8 packets at 1 s intervals, then err-disable).
+- Config: <code>udld enable [aggressive]</code> globally (applies to SFP ports), <code>udld port [aggressive]</code> per interface, <code>udld port disable</code> to exempt, <code>udld recovery [interval ...]</code>.
+- Verify: <code>show udld neighbors</code> → state should be <strong>Bidirectional</strong>; <code>show udld &lt;int&gt;</code> for detail.
+- Must run on <strong>both ends</strong> of the link.</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Priority increments = <strong>4096</strong> (DIKTA 1). root primary = 24576, secondary = 28672.</li>
+<li>Advertised path cost <strong>excludes</strong> the egress port cost — receiver adds ingress cost (DIKTA 2: false).</li>
+<li><strong>Lower</strong> port priority is preferred (DIKTA 3: true).</li>
+<li>BPDU guard = syslog + <strong>err-disabled</strong> (DIKTA 4). Root guard = superior BPDU → <strong>root-inconsistent</strong> (DIKTA 5).</li>
+<li>UDLD exists for <strong>one-way fiber links</strong> (DIKTA 6).</li>
+<li>Distinguish the two "inconsistent" states: root-inconsistent (root guard, superior BPDU arrived) vs loop-inconsistent (loop guard, BPDUs stopped). Both self-recover; err-disable (BPDU guard/UDLD aggressive) does not.</li>
+<li>Guard placement mental model: <strong>root guard faces down</strong> (toward switches that shouldn't be root), <strong>loop guard faces up</strong> (on your root/alternate uplinks), <strong>BPDU guard faces out</strong> (toward hosts).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

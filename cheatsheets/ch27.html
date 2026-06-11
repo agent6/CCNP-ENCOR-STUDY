@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 27 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Virtualization</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 27 — Virtualization</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>2.1 — describe device virtualization technologies: (a) hypervisor type 1 and 2, (b) virtual machine, (c) virtual switching</strong>. Describe-level. The NFV/ENFV half supports the broader virtualization story and supplies several easy definition questions.</p>
+<hr />
+<h2>Why virtualize servers</h2>
+<p>Bare-metal servers (one OS, one app, one user) historically ran at ~10–25% CPU utilization. VMs and containers reclaim that waste.</p>
+<h2>Virtual machines &amp; hypervisors (2.1.a / 2.1.b)</h2>
+<ul>
+<li><strong>VM = a software emulation of a PHYSICAL server with an operating system</strong> — virtual CPU, RAM, NIC, disk; the app can't tell the difference. The <strong>hypervisor</strong> creates VMs and abstracts the hardware so many VMs run concurrently.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Hypervisor</th>
+<th>Runs on</th>
+<th>Examples</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Type 1</strong></td>
+<td><strong>Bare metal</strong> (directly on hardware)</td>
+<td>ESXi/vSphere, Hyper-V, XenServer, <strong>KVM</strong></td>
+<td>Data center standard</td>
+</tr>
+<tr>
+<td><strong>Type 2</strong></td>
+<td><strong>On a host OS</strong></td>
+<td>VMware Fusion/Workstation, VirtualBox</td>
+<td>Client/desktop</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>VM migration moves a running VM between hosts with transactional integrity → zero-downtime hardware maintenance and HA (failed host's VMs respawn elsewhere).</li>
+</ul>
+<h2>Containers (the contrast set)</h2>
+<ul>
+<li><strong>A container = an isolated environment where a containerized app runs</strong> — the app plus exactly the dependencies (bins/libs) it needs. NOT "a lightweight VM": containers <strong>share the host OS kernel</strong> and include <strong>no guest OS</strong>.</li>
+<li><strong>Container image</strong> = the file (app + dependencies) created by a container engine; it becomes a container when run → extreme portability, no "works on my machine" drift.</li>
+<li>Startup: VM must boot a guest OS (minutes); container leverages the already-running kernel (seconds).</li>
+<li><strong>Container engines: Docker</strong> (dominant), <strong>rkt</strong>, <strong>LXD</strong>, Linux-VServer, Open Container Initiative, Windows Containers. (A "vSphere hypervisor" is the distractor.)</li>
+</ul>
+<h2>Virtual switching (2.1.c)</h2>
+<ul>
+<li><strong>vSwitch = a software version of a physical LAYER 2 Ethernet switch</strong> — connects VM vNICs to each other and to the physical NICs (pNICs).</li>
+<li>Rules worth knowing: <strong>multiple vSwitches per host are supported</strong>, but traffic cannot flow directly vSwitch-to-vSwitch, and two vSwitches can't share one pNIC (in the book's example, inter-vSwitch traffic transits a virtual firewall VNF).</li>
+<li><strong>Distributed virtual switching</strong> aggregates the vSwitches of a server cluster into one logical switch: centralized config, policies/statistics that migrate with live VM moves, cluster-wide consistency.</li>
+<li><strong>Containers need vSwitches too</strong> (virtual bridges): Docker creates <strong>Docker0</strong> (default 172.17.0.0/16), giving each container a veth/eth0 and a private IP — same-node containers talk; cross-node reachability needs routing/overlays or an orchestrator (<strong>Kubernetes</strong>).</li>
+<li>Popular vSwitches: <strong>Open vSwitch (OVS)</strong>, VMware VSS/VDS/NSX, Hyper-V Virtual Switch, Libvirt.</li>
+</ul>
+<h2>NFV — the ETSI framework</h2>
+<p><strong>NFV</strong> = ETSI's architectural framework for decoupling <strong>network functions (NF)</strong> from proprietary appliances and running them as software on standard <strong>x86</strong> servers. Benefits echo virtualization generally: lower capex/opex, faster time-to-market, elasticity, vendor openness.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VNF</strong></td>
+<td>The virtualized network function itself — typically a VM on a hypervisor (Catalyst 8000V router, ASA virtual / FTD virtual firewall, vWAAS, 9800-CL WLC) — L4–7 AND L2/L3 functions</td>
+</tr>
+<tr>
+<td><strong>NFVI</strong></td>
+<td>All hardware + software hosting the VNFs</td>
+</tr>
+<tr>
+<td><strong>VIM</strong></td>
+<td>Manages NFVI resources (compute/storage/network), lifecycle, and <strong>service chaining</strong></td>
+</tr>
+<tr>
+<td>EM/EMS</td>
+<td>Per-VNF FCAPS management</td>
+</tr>
+<tr>
+<td><strong>MANO</strong></td>
+<td>NFV <strong>orchestrator</strong> (creates/maintains/tears down end-to-end VNF services) + VNF manager</td>
+</tr>
+<tr>
+<td>OSS/BSS</td>
+<td>SP-grade operations and business systems</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Service chaining</strong> = connecting two or more VNFs in sequence (LB → firewall → WAN-opt → router) to build a service.</p>
+<p><strong>VNF performance I/O ladder</strong> (how VNF traffic bypasses bottlenecks): standard <strong>OVS</strong> (kernel-space switching) → <strong>OVS-DPDK</strong> (user-space fast path, polls the NIC) → <strong>PCI passthrough</strong> (VNF owns the whole pNIC) → <strong>SR-IOV</strong> — the pNIC presents <strong>VFs (virtual functions)</strong> to VNFs and a <strong>PF (physical function)</strong>, with a hardware virtual Ethernet bridge; multiple VNFs share one NIC at near-line rate. Traffic patterns matter: north–south (in/out via pNIC) vs east–west (VNF-to-VNF chains).</p>
+<h2>Cisco Enterprise NFV (ENFV)</h2>
+<p>Collapse the branch hardware stack (router, firewall, WLC, WAN-opt…) into VNFs on one x86 box. Four parts mapped to ETSI:</p>
+<ol>
+<li><strong>MANO = Cisco DNA/Catalyst Center</strong> — network profiles per branch (interfaces, VNFs + CPU/memory + service-chain parameters, config templates), Plug and Play zero-touch onboarding.</li>
+<li><strong>VNFs</strong> — Cisco (Catalyst 8000V, vEdge, ASAv/FTDv, vWAAS, 9800-CL, ThousandEyes, Meraki vMX) + broad third-party support (Palo Alto, Fortinet, F5, Windows/Linux servers…).</li>
+<li><strong>NFVIS</strong> — the host OS: <strong>standard Linux</strong> packaged with <strong>KVM hypervisor + OVS vSwitch</strong>, VM lifecycle management (ESC-Lite: bring-up, monitoring, auto-restart, alarms), PnP client, REST/CLI/HTTPS/NETCONF orchestration interfaces, local web portal, RBAC, resource manager.</li>
+<li><strong>Hardware</strong> — x86 hosts: <strong>ENCS</strong> (Enterprise Network Compute System) and Catalyst 8200 Edge uCPE.</li>
+</ol>
+<p>Benefits: fewer boxes/truck rolls, minutes-fast service rollout, central management, VM-style flexibility (snapshots, moves, upgrades).</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>VM = software emulation of a <strong>physical</strong> server <strong>with an OS</strong> (DIKTA 1); container = <strong>isolated runtime environment</strong>, not a lightweight VM (DIKTA 2); engines = <strong>Docker, rkt, LXD</strong> (DIKTA 3).</li>
+<li>vSwitch = software <strong>Layer 2</strong> switch (DIKTA 4); a host can run <strong>multiple</strong> vSwitches (DIKTA 5: false that only one); <strong>containers DO need vSwitches/bridges</strong> to communicate (DIKTA 6: false).</li>
+<li><strong>VNF</strong> = the virtual function itself; <strong>NFV</strong> = the ETSI framework; <strong>NFVI</strong> = the infrastructure; <strong>NFVIS</strong> = Cisco's Linux-based host OS (DIKTA 7, 8, 12).</li>
+<li>VNF-to-VNF chains = <strong>service chaining</strong> (DIKTA 9). The VF/PF I/O technology = <strong>SR-IOV</strong> (DIKTA 10). ENFV's orchestrator = <strong>DNA/Catalyst Center</strong> (DIKTA 11).</li>
+<li>Type 1 vs Type 2 in one line: bare metal vs hosted-on-an-OS.</li>
+<li>Containers share the kernel → seconds to start; VMs boot a guest OS → minutes.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

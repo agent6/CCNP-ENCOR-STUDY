@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 8 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>OSPF</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 8 — OSPF</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Core of <strong>3.2.b — configure simple OSPFv2 environments</strong> (neighbor adjacency, point-to-point and broadcast network types, passive-interface) and half of the <strong>3.2.a</strong> EIGRP-vs-OSPF comparison. Heavy exhibit territory: neighbor states, <code>show ip ospf interface brief</code>, DR elections.</p>
+<hr />
+<h2>Identity card</h2>
+<ul>
+<li>Link-state IGP (OSPFv2 = RFC 2328/IPv4; OSPFv3 = RFC 5340/IPv6). <strong>IP protocol 89.</strong></li>
+<li>Multicast: <strong>224.0.0.5 AllSPFRouters</strong> (MAC 01:00:5E:00:00:05) and <strong>224.0.0.6 AllDRouters</strong> (MAC ...:06).</li>
+<li>LSAs flood unchanged → every router in an <strong>area</strong> holds an identical <strong>LSDB</strong> → each runs <strong>Dijkstra SPF</strong> with itself as the root of its own shortest-path tree (SPTs differ per router; the LSDB doesn't).</li>
+<li>Two-tier hierarchy: <strong>Area 0 = backbone</strong>; all other areas must attach to it and transit through it. Areas hide internal topology from outside, shrinking flooding/CPU/memory.</li>
+<li><strong>Process ID is locally significant</strong> — neighbors can run process 1 and process 1234. Multiple processes on one router keep separate databases (no route sharing without redistribution).</li>
+</ul>
+<h2>The five packet types</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Packet</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Hello</strong></td>
+<td>Discover + maintain neighbors</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>DBD</strong> (database description)</td>
+<td>Summarize LSDB contents during adjacency setup</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>LSR</strong> (link-state request)</td>
+<td>Ask for specific missing/stale LSAs</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>LSU</strong> (link-state update)</td>
+<td>Deliver the LSAs (answers LSRs, floods changes)</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>LSAck</strong></td>
+<td>Make flooding reliable</td>
+</tr>
+</tbody>
+</table>
+<h2>Router ID</h2>
+<p>Selection order: <strong>manual <code>router-id</code></strong> &gt; highest IP on an <em>up</em> loopback &gt; highest IP on an <em>up</em> physical interface. Chosen at process start; never changes until <strong><code>clear ip ospf process</code></strong> restarts it. Always set it manually — the topology is built on RIDs.</p>
+<h2>Neighbor states (memorize the ladder)</h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Down</td>
+<td>No hellos heard</td>
+</tr>
+<tr>
+<td>Attempt</td>
+<td>NBMA only — manually configured neighbor, trying</td>
+</tr>
+<tr>
+<td>Init</td>
+<td>Hello received, but they haven't seen <em>us</em> yet</td>
+</tr>
+<tr>
+<td><strong>2-Way</strong></td>
+<td>Bidirectional (we're in their neighbor list). <strong>DR/BDR election happens here.</strong> Resting state between DROTHERs — normal!</td>
+</tr>
+<tr>
+<td><strong>ExStart</strong></td>
+<td>Decide primary/secondary for DB sync. <strong>Stuck here = MTU mismatch</strong></td>
+</tr>
+<tr>
+<td>Exchange</td>
+<td>Trading DBD packets</td>
+</tr>
+<tr>
+<td>Loading</td>
+<td>Sending LSRs for missing LSAs</td>
+</tr>
+<tr>
+<td><strong>Full</strong></td>
+<td>Fully adjacent, synchronized</td>
+</tr>
+</tbody>
+</table>
+<h2>Adjacency requirements (the troubleshooting checklist)</h2>
+<p>Unique RIDs · same subnet + matching mask (except P2P network types/virtual links) · <strong>matching MTU</strong> · matching area ID · matching DR settings for the segment · <strong>matching hello/dead timers</strong> · matching authentication · matching area-type flags (stub/NSSA). <em>(Contrast with EIGRP: OSPF timers MUST match; EIGRP's needn't.)</em></p>
+<h2>Enabling OSPF — two ways</h2>
+<ol>
+<li><strong>Network statement:</strong> <code>network &lt;ip&gt; &lt;wildcard&gt; area &lt;id&gt;</code> — selects interfaces by matching their primary IP; it does NOT "advertise networks" directly (the enabled interface's prefix enters the LSDB). Most-specific (longest match) statement wins area assignment. <code>network 0.0.0.0 255.255.255.255 area 0</code> = everything.</li>
+<li><strong>Interface mode:</strong> <code>ip ospf &lt;pid&gt; area &lt;id&gt;</code> — explicit per interface; <strong>takes precedence over network statements</strong>; picks up secondary addresses unless <code>secondaries none</code>.</li>
+</ol>
+<p><strong>Passive interface:</strong> subnet stays in the LSDB/advertised, but no hellos sent and no OSPF packets processed — no adjacency possible. Per port (<code>passive-interface Gi0/2</code>) or flip the default (<code>passive-interface default</code> + <code>no passive-interface Gi0/1</code>). Standard hygiene for host-facing segments.</p>
+<h2>Verification trio</h2>
+<ul>
+<li><code>show ip ospf interface brief</code> — PID, area, cost, <strong>State</strong> (DR/BDR/DROTH/LOOP), <strong>Nbrs F/C</strong> (Full / seen-2-Way count).</li>
+<li><code>show ip ospf neighbor</code> — Pri, state/role, dead-time countdown, neighbor's interface IP. <code>2WAY/DROTHER</code> between two non-DR/BDR routers = working as designed.</li>
+<li><code>show ip route ospf</code> — <code>O</code> routes, <code>[110/metric]</code>.</li>
+</ul>
+<h2>Default route advertisement</h2>
+<p><code>default-information originate [always] [metric X] [metric-type Y]</code> under the process. Requires a default route in the RIB unless <strong><code>always</code></strong> is used. Shows up downstream as <strong>O*E2</strong> — an <strong>external</strong> route, not inter-area (classic true/false trap).</p>
+<h2>Cost (the OSPF metric)</h2>
+<p><strong>cost = reference bandwidth ÷ interface bandwidth</strong>, default reference = <strong>100 Mbps</strong> → T1 = 64, Ethernet = 10, <strong>Fast/Gig/10Gig all = 1</strong> — the reason to raise it: <code>auto-cost reference-bandwidth &lt;mbps&gt;</code> (set identically on EVERY router). Manual override per interface: <code>ip ospf cost &lt;1–65535&gt;</code> (16-bit LSA field caps interface cost; the cumulative path metric can exceed it).</p>
+<h2>Timers</h2>
+<ul>
+<li>Defaults: <strong>hello 10 / dead 40</strong> on broadcast and point-to-point; <strong>30 / 120</strong> on non-broadcast and point-to-multipoint. Dead = 4 × hello; changing hello auto-adjusts dead.</li>
+<li><code>ip ospf hello-interval</code> / <code>ip ospf dead-interval</code> per interface. Both ends must match.</li>
+<li>Dead timer hits 0 → neighbor down → LSA flood → SPF rerun area-wide.</li>
+</ul>
+<h2>DR/BDR — why and how</h2>
+<p>Multi-access segments would need n(n−1)/2 adjacencies; the <strong>DR</strong> acts as a pseudonode so everyone fully peers only with the DR and BDR. Update flow: router sends LSA to <strong>224.0.0.6</strong> (DR/BDR listen) → DR acks unicast → DR floods to all via <strong>224.0.0.5</strong>.</p>
+<p><strong>Election</strong> (at the tail of 2-Way, after a wait timer = dead interval on fresh segments):</p>
+<ol>
+<li>Highest <strong>interface priority</strong> (default 1; <strong>0 = never participates</strong>)</li>
+<li>Tie → highest <strong>RID</strong></li>
+<li><strong>No preemption.</strong> A better router joining later changes nothing until the DR/BDR fails or <code>clear ip ospf process</code> runs. BDR is promoted on DR failure, then a new BDR is elected (BDR exists to make that handoff fast).</li>
+</ol>
+<p><code>ip ospf priority 0–255</code> — design placement with priority, never by juggling RIDs. Expect the exhibit trap: priority 100 router shown as BDR because the election already happened — restart required to realize the design.</p>
+<h2>Network types</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Default on</th>
+<th>DR?</th>
+<th>Hello/Dead</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Broadcast</strong></td>
+<td>Ethernet</td>
+<td>Yes</td>
+<td>10/40</td>
+</tr>
+<tr>
+<td>Non-broadcast (NBMA)</td>
+<td>Frame Relay main/multipoint</td>
+<td>Yes</td>
+<td>30/120</td>
+</tr>
+<tr>
+<td><strong>Point-to-point</strong></td>
+<td>Serial (HDLC/PPP), GRE tunnels, FR p2p subifs</td>
+<td>No</td>
+<td>10/40</td>
+</tr>
+<tr>
+<td>Point-to-multipoint</td>
+<td>(never default; hub-spoke; advertises /32s, next hop rewritten)</td>
+<td>No</td>
+<td>30/120</td>
+</tr>
+<tr>
+<td>Loopback</td>
+<td>Loopback interfaces</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Two routers on an Ethernet link? <code>ip ospf network point-to-point</code> skips the DR election and wait timer → faster adjacency, simpler SPF. Neighbor output shows <code>FULL/ -</code> (hyphen = no DR on link).</li>
+<li><strong>Loopback quirk:</strong> loopback network type always advertises the address as <strong>/32</strong> regardless of the configured mask. To advertise the real prefix (e.g., /24), set the loopback to <code>ip ospf network point-to-point</code>.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Protocol <strong>89</strong>, <strong>five</strong> packet types, <strong>224.0.0.5</strong> + MAC 01:00:5E:00:00:05 (DIKTA 1–3).</li>
+<li>The network statement is NOT the only enablement method — interface <code>ip ospf X area Y</code> works too (DIKTA 4: false). Process IDs need not match (DIKTA 5: false).</li>
+<li><code>default-information originate</code> produces an <strong>external</strong> (E2) route, not inter-area (DIKTA 6: false).</li>
+<li>Serial point-to-point links elect <strong>no DR</strong> at all (DIKTA 7: false). Reference bandwidth = <strong>100 Mbps</strong> (DIKTA 8).</li>
+<li>Block DR candidacy: <strong><code>ip ospf priority 0</code></strong> (DIKTA 9). A loopback at 10.123.4.1/30 advertises as <strong>10.123.4.1/32</strong> (DIKTA 10).</li>
+<li>Stuck-state decoder: ExStart/Exchange = MTU; Init = one-way hellos; 2WAY between DROTHERs = fine; Down with config present = check passive-interface/timers/area.</li>
+<li>vs EIGRP (3.2.a): OSPF = cost from bandwidth only, timers must match, areas/two-tier, ECMP only; EIGRP = bandwidth+delay, timers free, flat AS + summarization anywhere, UCMP via variance.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

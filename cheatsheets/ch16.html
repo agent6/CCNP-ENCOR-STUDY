@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 16 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Overlay Tunnels</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 16 — Overlay Tunnels</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Three topics: <strong>2.2.b (configure and verify GRE and IPsec tunneling)</strong> at config depth, plus <strong>2.3.a (LISP)</strong> and <strong>2.3.b (VXLAN)</strong> at describe depth. GRE/IPsec is hands-on; LISP/VXLAN is roles, ports, and packet formats.</p>
+<hr />
+<h2>GRE (2.2.b — configure/verify)</h2>
+<ul>
+<li>IP protocol <strong>47</strong>; carries any protocol (multiprotocol, multicast, IGPs) over IP — the foundation of most VPN designs. Adds <strong>24 bytes</strong> of overhead (GRE+IP); GRE+AES+SHA-1 can add 62–77 bytes — hence the <code>ip mtu 1400</code> convention on tunnels.</li>
+<li>Config recipe: <code>interface tunnel100</code> → <code>tunnel source &lt;int|ip&gt;</code> → <code>tunnel destination &lt;ip&gt;</code> → <code>ip address ...</code> + optional <code>bandwidth</code> (virtual interfaces need it for IGP metrics), <code>keepalive [10 s ×3 default]</code>, <code>ip mtu 1400</code>.</li>
+<li>Line protocol comes up when a <strong>route to the tunnel destination exists</strong> (keepalives add real bidirectional verification).</li>
+<li>The overlay hides the underlay: traceroute shows the tunnel as <strong>one hop</strong>; the passenger TTL decrements once regardless of transit hops (GRE outer TTL defaults to 255).</li>
+<li>Verify: <code>show interfaces tunnel100</code> (source/destination, GRE/IP protocol, keepalive).</li>
+</ul>
+<p>⚠ <strong>Recursive routing:</strong> advertising the underlay (tunnel endpoints) into the IGP running over the tunnel makes the router try to reach the tunnel destination <em>through the tunnel</em>: syslog <code>%TUN-5-RECURDOWN — temporarily disabled due to recursive routing</code>, tunnel flaps in a loop. Fix: keep the tunnel-endpoint prefixes out of the overlay routing protocol.</p>
+<h2>IPsec building blocks</h2>
+<p><strong>Four security services:</strong> peer authentication (PSK or certificates), confidentiality (encryption), integrity (HMAC hashes), replay detection (sequence numbers). Modern picks: <strong>AES</strong> (DES/3DES deprecated), <strong>SHA</strong> (MD5 deprecated), DH group <strong>14+</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Proto #</th>
+<th>Gives you</th>
+<th>NAT traversal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ESP</strong></td>
+<td><strong>50</strong></td>
+<td>Encryption + integrity + auth</td>
+<td><strong>Yes (NAT-T)</strong></td>
+</tr>
+<tr>
+<td>AH</td>
+<td>51</td>
+<td>Integrity/auth only — no encryption</td>
+<td><strong>No</strong> — avoid</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Modes:</strong> <strong>tunnel</strong> (encrypts the entire original packet, adds a new IPsec IP header — provides the overlay) vs <strong>transport</strong> (protects only the payload; original header still routes — used under GRE so the GRE header does the overlay work).</p>
+<h2>IKE — v1 vs v2</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>IKEv1</th>
+<th>IKEv2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1 (mgmt SA)</td>
+<td>Main mode (6 msgs) or aggressive (3)</td>
+<td>SA_INIT + IKE_AUTH</td>
+</tr>
+<tr>
+<td>Phase 2 (IPsec SA)</td>
+<td><strong>Quick mode</strong></td>
+<td>CREATE_CHILD_SA</td>
+</tr>
+<tr>
+<td>Total to establish</td>
+<td>9 (main) / 6 (aggressive)</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>PSK, RSA certs — both sides same method</td>
+<td>adds <strong>EAP</strong> (remote access!), ECDSA, <strong>asymmetric</strong> auth</td>
+</tr>
+<tr>
+<td>Extras</td>
+<td>—</td>
+<td>NGE crypto (AES-GCM, SHA-256+), <strong>anti-DoS</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>VPN solution lineup (know the one-liners)</h2>
+<table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Claim to fame</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Site-to-site IPsec</td>
+<td><strong>Multivendor</strong>, low scale, config-heavy</td>
+</tr>
+<tr>
+<td><strong>DMVPN</strong></td>
+<td>Cisco; <strong>mGRE + NHRP + IPsec</strong>; hub-and-spoke with on-demand spoke-to-spoke tunnels</td>
+</tr>
+<tr>
+<td><strong>GET VPN</strong></td>
+<td>Cisco; <strong>tunnel-less</strong> (keeps original IP header), any-to-any over <strong>private WAN/MPLS</strong>, native multicast/QoS</td>
+</tr>
+<tr>
+<td><strong>FlexVPN</strong></td>
+<td>Cisco's <strong>IKEv2-only</strong> unified framework (site-to-site + remote access + spoke-to-spoke)</td>
+</tr>
+<tr>
+<td>Remote access</td>
+<td>TLS/DTLS or IKEv2; per-user VPN</td>
+</tr>
+</tbody>
+</table>
+<h2>GRE over IPsec — two config styles (2.2.b)</h2>
+<ol>
+<li><strong>Crypto map</strong> (legacy): crypto ACL <code>permit gre host &lt;src&gt; host &lt;dst&gt;</code> → <code>crypto isakmp policy</code> (encryption/hash/auth/group) → <code>crypto isakmp key &lt;psk&gt; address &lt;peer&gt;</code> → <code>crypto ipsec transform-set ... + mode transport</code> → <code>crypto map VPN 10 ipsec-isakmp</code> (match address / set peer / set transform-set) → <strong>applied to the PHYSICAL interface</strong>.</li>
+<li>
+<p><strong>IPsec profile</strong> (preferred): same ISAKMP policy/key/transform-set → <code>crypto ipsec profile P { set transform-set }</code> → <strong><code>tunnel protection ipsec profile P</code> on the TUNNEL interface</strong>. No crypto ACL needed; the two styles interoperate.</p>
+</li>
+<li>
+<p>Use <strong>transport mode</strong> under GRE to avoid double IP-header overhead ("GRE over IPsec"); tunnel mode re-wraps the whole GRE packet ("IPsec over GRE"). Either way the wire shows protocol <strong>50</strong>.</p>
+</li>
+<li><strong>VTI</strong> (<code>tunnel mode ipsec ipv4</code>): IPsec-native tunnel interface — drops the GRE header entirely (less overhead) but carries IP only.</li>
+<li>Verify: <code>show interface tunnel100 | i protocol</code> (GRE/IP vs IPSEC/IP), IGP adjacency over the tunnel, <code>show crypto ipsec sa</code>.</li>
+</ol>
+<h2>LISP (2.3.a — describe)</h2>
+<p><strong>Identity/location split:</strong> <strong>EID</strong> = the endpoint's IP (stays the same when it moves) · <strong>RLOC</strong> = the underlay address of the site router (changes with location). Control plane works like <strong>DNS — a pull model</strong>: ask only for what you need, instead of pushing every route everywhere.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ITR</strong></td>
+<td>Encapsulates traffic leaving the LISP site (sends map requests)</td>
+</tr>
+<tr>
+<td><strong>ETR</strong></td>
+<td>De-encapsulates inbound; <strong>registers its EID prefixes with the MS</strong> (map register / map notify)</td>
+</tr>
+<tr>
+<td>xTR</td>
+<td>ITR + ETR</td>
+</tr>
+<tr>
+<td><strong>PITR / PETR</strong></td>
+<td>Same functions for traffic to/from <strong>non-LISP</strong> sites (negative map reply steers the ITR to the PETR)</td>
+</tr>
+<tr>
+<td><strong>MS</strong></td>
+<td>Stores the EID-to-RLOC mapping database</td>
+</tr>
+<tr>
+<td><strong>MR</strong></td>
+<td>Receives map requests from ITRs, finds the answering ETR</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Data plane: IP-in-IP/UDP, <strong>destination port 4341</strong>; control plane messages use <strong>4342</strong>. The LISP shim header carries a 24-bit <strong>instance ID</strong> for VRF-style segmentation. Any IPv4/IPv6 RLOC↔EID combination works.</li>
+<li>Flow: ETR registers EIDs → ITR's packet misses the RIB (default route) → encapsulated map request to MR → MS/mapping system forwards to the authoritative ETR → <strong>map reply</strong> with EID→RLOC → ITR caches and forwards.</li>
+<li>Nuance: ETRs are <strong>not</strong> the only map-reply senders — an ETR can set the proxy-reply bit so the <strong>MS answers on its behalf</strong>.</li>
+</ul>
+<h2>VXLAN (2.3.b — describe)</h2>
+<p>Why: classic L2 hits walls — 12-bit VLAN ID (~4000 segments), giant MAC tables from VMs/containers, STP-blocked links, no ECMP, painful host mobility.</p>
+<ul>
+<li><strong>MAC-in-IP/UDP</strong> encapsulation, <strong>UDP destination port 4789</strong> (pre-standard Linux used 8472 — interop gotcha).</li>
+<li><strong>VNI = 24 bits → ~16 million segments</strong>, carried in the VXLAN shim header; segments L2 AND L3 traffic.</li>
+<li><strong>VTEP</strong> = the tunnel endpoint doing encap/decap; has a <strong>local LAN interface</strong> (bridges hosts) and an <strong>IP interface</strong> (underlay-facing, identifies the VTEP).</li>
+<li>⚠ The VXLAN spec defines <strong>only the data plane</strong> — no control plane is specified (deployments pair it with multicast flood-and-learn, or LISP/BGP EVPN as in SD-Access/data centers).</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>GRE = proto <strong>47</strong>, +24 bytes; IPsec: <strong>ESP 50</strong> (encrypts, NAT-friendly) vs AH 51 (no encryption, breaks NAT).</li>
+<li>IKEv1 <strong>quick mode</strong> builds the IPsec SA (main/aggressive build the IKE SA); IKEv2 does it all in <strong>4 messages</strong> and adds EAP/anti-DoS.</li>
+<li>Crypto map → physical interface; <strong><code>tunnel protection ipsec profile</code> → tunnel interface</strong> (the modern answer).</li>
+<li>Recursive routing = tunnel destination learned through the tunnel; %TUN-5-RECURDOWN flapping.</li>
+<li>LISP splits addresses into <strong>EIDs and RLOCs</strong>; data <strong>4341</strong> / control <strong>4342</strong>; ITR encap, ETR decap+register, MS/MR = the "DNS"; proxy roles bridge non-LISP sites.</li>
+<li>VXLAN = UDP <strong>4789</strong>, <strong>24-bit VNI</strong> (16M), VTEPs at the edges, <strong>data plane only</strong> per the spec.</li>
+<li>Mode logic: transport under GRE (avoid double headers); tunnel mode when IPsec itself must provide the overlay; VTI when you want IPsec-only with an interface model.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

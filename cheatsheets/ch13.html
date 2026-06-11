@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 13 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Multicast</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 13 — Multicast</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>3.3.d — describe multicast protocols, such as RPF check, PIM SM, IGMP v2/v3, SSM, bidir, and MSDP</strong>. This chapter covers RPF, PIM-SM, and IGMP thoroughly; SSM and bidir get light treatment; <strong>MSDP is NOT in the book — supplement with Cisco docs</strong> (RP-to-RP Source-Active messages over TCP linking PIM domains).</p>
+<hr />
+<h2>Why multicast</h2>
+<p>One-to-many delivery: one stream, replicated only where the tree forks. Unicast = per-receiver sessions and N× bandwidth on shared links. Broadcast = everyone's CPU processes it + IP directed broadcast invites DDoS. Multicast: server keeps ONE session; uninterested hosts drop frames at the NIC (or never see them with IGMP snooping). Vocabulary: stream, <strong>group address (G)</strong>, receivers, multicast distribution tree (MDT).</p>
+<h2>Addressing</h2>
+<p><strong>224.0.0.0/4</strong> (Class D, first bits 1110). The blocks that matter:</p>
+<table>
+<thead>
+<tr>
+<th>Block</th>
+<th>Range</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local network control</td>
+<td><strong>224.0.0.0/24</strong></td>
+<td>Link-local, never forwarded (TTL 1)</td>
+</tr>
+<tr>
+<td>Internetwork control</td>
+<td>224.0.1.0/24</td>
+<td>Forwardable control: NTP 224.0.1.1, <strong>Auto-RP 224.0.1.39/.40</strong></td>
+</tr>
+<tr>
+<td><strong>SSM</strong></td>
+<td><strong>232.0.0.0/8</strong></td>
+<td>Source-Specific Multicast default range</td>
+</tr>
+<tr>
+<td>GLOP</td>
+<td>233.0.0.0/8</td>
+<td>16-bit ASN baked into middle octets (233.X.Y.0/24)</td>
+</tr>
+<tr>
+<td><strong>Admin-scoped</strong></td>
+<td><strong>239.0.0.0/8</strong></td>
+<td>Private — the RFC 1918 of multicast</td>
+</tr>
+</tbody>
+</table>
+<p>Well-known: .1 all-hosts · .2 all-routers · .5/.6 OSPF · .9 RIPv2 · .10 EIGRP · <strong>.13 all-PIM-routers</strong> · .18 VRRP · .22 IGMPv3 reports · .102 HSRPv2/GLBP.</p>
+<p><strong>L2 mapping:</strong> MAC = <strong>01:00:5E</strong> + 0 (25th bit) + low 23 bits of the group IP. 5 IP bits are lost → <strong>32 group addresses share one MAC</strong> (239.255.1.1 and 239.127.1.1 both → 01:00:5E:7F:01:01).</p>
+<h2>IGMP (receiver ⇄ local router)</h2>
+<p>IP protocol 2, <strong>TTL 1</strong>, router-alert option. Runs between hosts and the LHR.</p>
+<p><strong>IGMPv2 message set:</strong> membership report ("IGMP join"), leave group (sent to 224.0.0.2), general query (router → 224.0.0.1, max response time default 10 s), group-specific query (follows a leave to check for remaining members).</p>
+<ul>
+<li>Hosts randomize report timers and <strong>suppress duplicates</strong> if another member answers first.</li>
+<li><strong>Querier election: LOWEST interface IP wins</strong> (note the contrast: PIM DR = highest). Non-queriers re-elect after 2× query interval (120 s) of silence.</li>
+</ul>
+<p><strong>IGMPv3:</strong> adds <strong>source filtering</strong> — reports carry INCLUDE (only these sources) or EXCLUDE (all but these) lists. Required for <strong>SSM</strong> (the receiver names the source, so no RP needed). Backward compatible with v2; empty-exclude = v2 behavior.</p>
+<p><strong>IGMP snooping</strong> (RFC 4541): the switch inspects IGMP joins and forwards group traffic only out member ports (multicast MACs are never source MACs, so the CAM never learns them otherwise → unknown-multicast flooding). 224.0.0.0/24 traffic still floods. Alternative: static MAC entries.</p>
+<h2>Trees: SPT vs RPT</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Source tree (<strong>SPT</strong>)</th>
+<th>Shared tree (<strong>RPT</strong>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>State</td>
+<td><strong>(S,G)</strong></td>
+<td><strong>(*,G)</strong></td>
+</tr>
+<tr>
+<td>Root</td>
+<td>The source</td>
+<td>The <strong>RP</strong></td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>One tree per source — more state</td>
+<td>One per group — less state</td>
+</tr>
+<tr>
+<td>Path</td>
+<td>Optimal</td>
+<td>Possibly longer; carries ALL sources for G (bandwidth + security downside)</td>
+</tr>
+</tbody>
+</table>
+<h2>PIM essentials</h2>
+<ul>
+<li>"Protocol independent" = RPF checks use whatever populates the unicast RIB. IP protocol <strong>103</strong>; hellos every <strong>30 s</strong> to <strong>224.0.0.13</strong>.</li>
+<li>Modes: Dense, <strong>Sparse</strong>, Sparse-Dense, <strong>SSM</strong>, <strong>Bidir</strong> (DM+SM = "any-source multicast").</li>
+<li>Key messages: hello · <strong>register</strong> (FHR → RP, unicast) · <strong>register-stop</strong> (RP → FHR, unicast) · join/prune (224.0.0.13) · bootstrap · assert · C-RP advertisement.</li>
+<li>Roles: <strong>FHR</strong> (attached to source; registers it) · <strong>LHR</strong> (attached to receivers; sends joins) · RPF interface/neighbor (toward source or RP) · IIF in, OIF/OIL out · MRIB (mroute table) → MFIB (hardware forwarding).</li>
+</ul>
+<h2>PIM Dense Mode (flood and prune)</h2>
+<p>Implicit join: flood everywhere, routers without receivers send <strong>prunes</strong> (out the RPF interface, and out non-RPF interfaces receiving duplicates). <strong>Prunes expire after 3 minutes → periodic reflood.</strong> (S,G) state persists everywhere regardless. Fine for labs/small dense networks; not recommended in production.</p>
+<h2>PIM Sparse Mode (explicit join) — the exam's main event</h2>
+<p><strong>Receiver side:</strong> IGMP join → LHR sends <strong>(*,G) PIM join hop-by-hop toward the RP</strong> → shared tree (RPT) built RP→LHR.</p>
+<p><strong>Source side:</strong> source transmits → <strong>FHR encapsulates the data in unicast register messages</strong> through a register tunnel to the RP.
+- Interested receivers exist → RP forwards the data down the RPT and sends an <strong>(S,G) join toward the source</strong>, building an SPT FHR→RP; once native traffic arrives, RP sends <strong>register-stop</strong>.
+- No receivers → RP replies register-stop immediately (FHR stays quiet, re-registers periodically).</p>
+<p><strong>SPT switchover:</strong> Cisco default = the LHR switches to the source tree <strong>upon the very first packet</strong> received down the shared tree (<code>ip pim spt-threshold 0</code>): it (S,G)-joins toward the source via its own shortest path, then prunes (S,G) off the RPT. Disable per group or globally if desired.</p>
+<p><strong>Designated router:</strong> elected per LAN by PIM hellos — <strong>highest DR priority (default 1), tie = highest IP</strong>. FHR-side DR does the registering; LHR-side DR sends the joins (prevents duplicate registers/joins from multi-router LANs). Hold time 3.5× hello = 105 s.</p>
+<h2>RPF check (loop prevention)</h2>
+<p>Accept a multicast packet ONLY if it arrives on the interface the unicast RIB would use to reach the source — <strong>(S,G) state checks against the source IP; (*,G) state checks against the RP</strong>. Wrong interface → drop. Equal-cost tie → highest neighbor IP. Joins/prunes are also sent via RPF lookups (S,G joins toward source; *,G joins toward RP).</p>
+<p><strong>PIM forwarder / assert:</strong> duplicate flows hit a shared LAN (e.g., two routers with different IGPs both forwarding) → routers exchange <strong>assert</strong> messages carrying AD + metric to the source. Winner: <strong>lowest AD → lowest metric → highest IP</strong>; loser prunes its OIF (re-asserts every 3 min). Routine in DM; rare in SM.</p>
+<h2>Rendezvous points (3 ways to learn the RP)</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>How</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Static</strong></td>
+<td>Same RP address configured on every router</td>
+<td>Simple; no failover, no load splitting, full reconfig to change</td>
+</tr>
+<tr>
+<td><strong>Auto-RP</strong> (Cisco)</td>
+<td><strong>C-RPs</strong> announce themselves on <strong>224.0.1.39</strong> (every 60 s); <strong>mapping agents</strong> listen, pick the highest-IP C-RP per range, advertise group-to-RP mappings on <strong>224.0.1.40</strong>; all routers listen to .40</td>
+<td>Multiple RPs/ranges, backup RPs; multiple MAs act independently</td>
+</tr>
+<tr>
+<td><strong>BSR</strong> (standard, RFC 5059)</td>
+<td>C-BSRs elect a BSR (highest priority, tie highest IP); <strong>C-RPs unicast advertisements to the BSR</strong>; BSR floods the whole RP set hop-by-hop to <strong>224.0.0.13</strong> (TTL 1); <strong>each router runs the same hash to elect the RP</strong> (lower priority preferred, tie highest IP)</td>
+<td>The BSR does NOT pick the RP — routers do. Don't run Auto-RP and BSR together</td>
+</tr>
+</tbody>
+</table>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Multicast = <strong>one-to-many</strong> (DIKTA 1); the essential protocol pair = <strong>PIM + IGMP</strong> (DIKTA 2).</li>
+<li>Admin-scoped block = <strong>239.0.0.0/8</strong> (DIKTA 3); multicast MACs start <strong>01:00:5E</strong> (DIKTA 4).</li>
+<li>Receivers join by sending an <strong>unsolicited membership report (IGMP join)</strong> (DIKTA 5). IGMPv3's difference = the <strong>source-filtering membership report</strong> (DIKTA 6) — and it IS backward compatible with v2 (DIKTA 7: false).</li>
+<li>Stop L2 multicast flooding = <strong>IGMP snooping</strong> (DIKTA 8).</li>
+<li><strong>SPT = source-rooted, RPT = shared/RP-rooted</strong> (DIKTA 9). LHR receiving an IGMP join → <strong>PIM join toward the RP</strong> (DIKTA 10). FHR with active source and no receivers → unicasts registers until the RP's <strong>register-stop</strong> (DIKTA 11).</li>
+<li>Election directions trip people: IGMP querier = <strong>lowest IP</strong>; PIM DR = <strong>highest priority/IP</strong>; assert winner = lowest AD/metric, then highest IP; Auto-RP/BSR C-RP ties = highest IP.</li>
+<li>32:1 MAC overlap; PIM = protocol 103 / IGMP = protocol 2; both TTL 1 for link-local messages.</li>
+<li>⚠ Supplement for 3.3.d: <strong>MSDP</strong> (inter-domain RP peering, SA messages) and a deeper pass on <strong>bidir PIM</strong> (shared-tree-only, no SPT/(S,G), for many-to-many) — both named in the blueprint, both thin or absent here.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

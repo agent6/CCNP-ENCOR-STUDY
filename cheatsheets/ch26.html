@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 26 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Device Access Control &amp; Infrastructure Security</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 26 — Device Access Control &amp; Infrastructure Security</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Two configure-and-verify topics: <strong>5.1 (device access control — lines and local user authentication, AAA)</strong> and <strong>5.2 (infrastructure security features — ACLs, CoPP)</strong>, with ZBFW and hardening as supporting material. Expect config exhibits: who can reach the vty lines, which password type, what CoPP does to a class.</p>
+<hr />
+<h2>ACLs (5.2.a)</h2>
+<ul>
+<li>Sequential ACEs, top-down, first match wins, <strong>implicit deny at the end</strong> — add <code>permit any</code> if you only meant to filter some traffic.</li>
+<li><strong>Wildcard mask</strong> = inverse of subnet mask (255.255.255.255 − mask): /16 → 0.0.255.255. Shortcuts: <code>any</code> = 0.0.0.0 255.255.255.255; <code>host x.x.x.x</code> = wildcard 0.0.0.0.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Numbers</th>
+<th>Matches</th>
+<th>Apply with</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>1–99, 1300–1999</td>
+<td>Source only</td>
+<td><code>ip access-group &lt;acl&gt; {in\|out}</code></td>
+</tr>
+<tr>
+<td>Extended</td>
+<td>100–199, 2000–2699</td>
+<td>Protocol + src/dst + ports (eq/lt/gt, established)</td>
+<td>same</td>
+</tr>
+<tr>
+<td>Named</td>
+<td><code>ip access-list standard\|extended NAME</code></td>
+<td>Either style; preferred for readability</td>
+<td>same</td>
+</tr>
+<tr>
+<td><strong>PACL</strong></td>
+<td>L2 switch ports</td>
+<td>IPv4 or MAC ACLs; <strong>inbound only</strong>; can't filter L2 control (CDP/STP/DTP…)</td>
+<td><code>ip access-group &lt;acl&gt; in</code> on the switchport</td>
+</tr>
+<tr>
+<td><strong>VACL</strong></td>
+<td>VLANs (bridged AND routed traffic)</td>
+<td><code>vlan access-map NAME seq</code> → <code>match ip address ACL</code> + <code>action forward\|drop [log]</code></td>
+<td><code>vlan filter MAP vlan-list</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>One inbound + one outbound ACL per interface. Processing order (routed traffic): <strong>PACL → inbound VACL → inbound SVI ACL → outbound SVI ACL → outbound VACL</strong>. A RADIUS-pushed <strong>dACL overrides the static PACL</strong>.</li>
+</ul>
+<h2>Lines &amp; passwords (5.1.a)</h2>
+<ul>
+<li>Three CLI paths: <strong>console (cty)</strong>, <strong>aux</strong> (modem — disable with <code>no exec</code> / <code>transport input none</code>), <strong>vty</strong> (Telnet/SSH only — virtual).</li>
+<li><strong>Password types:</strong> 0 = plaintext · <strong>7 = service password-encryption (trivially reversible — weakest "encrypted" type)</strong> · 5 = MD5 (<code>enable secret</code>) · 8 = PBKDF2-SHA256 · <strong>9 = scrypt (strongest)</strong>. Use <code>username X algorithm-type scrypt secret ...</code>.</li>
+<li><strong><code>login</code></strong> = line password authentication; <strong><code>login local</code></strong> = username/password authentication from the local database.</li>
+<li><strong>Privilege levels:</strong> 0 (only disable/enable/exit/help/logout), 1 (user EXEC &gt;), 15 (privileged #). Custom 2–14 via <code>privilege &lt;mode&gt; level &lt;n&gt; &lt;command&gt;</code> + <code>username X privilege &lt;n&gt;</code> — assigning a multi-word command also grants its leading keywords. Verify with <code>show privilege</code>.</li>
+<li><strong>Restrict vty sources:</strong> ACL + <strong><code>access-class &lt;acl&gt; in</code></strong> under <code>line vty</code> (NOT ip access-group).</li>
+<li><strong>Restrict protocols:</strong> <code>transport input {all | none | telnet | ssh | telnet ssh}</code>; each vty accepts one user, evaluated from vty 0 upward; out of free vtys = "connection refused."</li>
+<li><strong>SSH setup:</strong> hostname (not Router) → <code>ip domain-name</code> → <code>crypto key generate rsa</code> (modulus ≥768 for v2; modern IOS XE wants ≥2048) → <code>ip ssh version 2</code> (banishes the "SSH 1.99" dual mode) → <code>login local</code> + <code>transport input ssh</code>.</li>
+<li>Timeouts: <code>exec-timeout m s</code> (idle, default 10 min; <code>exec-timeout 0 0</code> disables — lab only) and <code>absolute-timeout</code> (cuts the session even if active; pair with <code>logout-warning</code>).</li>
+</ul>
+<h2>AAA (5.1.b)</h2>
+<p><strong>Authentication</strong> (who) → <strong>Authorization</strong> (what you may do) → <strong>Accounting</strong> (what you did — the function that logs executed commands).</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>TACACS+</strong></th>
+<th><strong>RADIUS</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>Cisco-developed, open</td>
+<td>IETF</td>
+</tr>
+<tr>
+<td>Transport</td>
+<td><strong>TCP 49</strong></td>
+<td>UDP 1812/1813</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td><strong>Entire payload</strong></td>
+<td>Password only</td>
+</tr>
+<tr>
+<td>AAA functions</td>
+<td><strong>Separated</strong> — per-command authorization, any time during a session</td>
+<td>Combined — all authorization comes back in the single accept</td>
+</tr>
+<tr>
+<td>Carries EAP?</td>
+<td>No</td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Best for</td>
+<td><strong>Device administration</strong></td>
+<td><strong>Secure network access (802.1X)</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Config skeleton: <code>aaa new-model</code> → server definitions → method lists like <code>aaa authentication login default group &lt;ISE-TACACS&gt; local</code> (<strong>always end with <code>local</code> fallback</strong> — used when servers are unreachable, not when they reject) → <code>aaa authorization exec ...</code>, <code>aaa authorization commands 15 ...</code>, <code>aaa accounting commands 15 ...</code>.</li>
+<li>⚠ <code>aaa authorization exec default ...</code> does NOT cover the console — console authorization needs the separate <code>aaa authorization console</code> command (classic true/false trap).</li>
+</ul>
+<h2>Zone-Based Firewall</h2>
+<ul>
+<li><strong>Stateful</strong> firewall built into IOS XE (vs stateless ACLs) — inspects L4–7, tracks sessions, permits return traffic automatically.</li>
+<li>Interfaces join <strong>zones</strong>; same-zone traffic flows freely; inter-zone traffic is dropped until a policy allows it. Two system zones: <strong>self</strong> (the router's own IPs — management/control traffic; permitted by default until you police it) and <strong>default</strong> (catch-all for unassigned interfaces, must be enabled to use in policies).</li>
+<li>Config chain (MQC-style): <code>class-map type inspect [match-any|match-all]</code> (match ACLs/protocols) → <code>policy-map type inspect</code> with actions <strong>inspect</strong> (stateful, return traffic allowed), <strong>pass</strong> (one-way; needs a mirror-image zone pair for return — fits ESP/GRE), <strong>drop [log]</strong> (default via class-default) → <strong><code>zone-pair security NAME source X destination Y</code></strong> + <code>service-policy type inspect</code> → <code>zone-member security X</code> on interfaces.</li>
+<li>Zone pairs are <strong>directional</strong> — and don't forget a <strong>self-to-outside</strong> policy or the router's own pings/tunnels die after you police outside-to-self.</li>
+<li>Verify: <code>show policy-map type inspect zone-pair</code> (per-class packet counts, session table).</li>
+</ul>
+<h2>CoPP (5.2.b)</h2>
+<ul>
+<li>A <strong>QoS (MQC) policy applied to the control plane</strong> — protects the route processor/CPU from floods while rate-limiting expected punted traffic. Supports <strong>input and output</strong> policies (input is typical).</li>
+<li>Build: ACLs per traffic family (ICMP/traceroute, IPsec/GRE, routing — BGP/OSPF/EIGRP/PIM multicast, management — SSH/SNMP/NTP, DHCP) → class maps → policy map with <code>police &lt;rate&gt; conform-action transmit exceed-action ...</code> → <code>control-plane</code> + <code>service-policy input POLICY</code>.</li>
+<li>⚠ Baselining strategy: set <strong>violate-action transmit</strong> on vital classes first, watch the counters, tighten later — guessing rates and dropping BGP/SSH is a self-inflicted outage. Keep <strong>class-default policed but allowed</strong> to surface unknown traffic; ACL counters still increment for visibility even though classification (not blocking) is their job here.</li>
+</ul>
+<h2>Device hardening</h2>
+<p>Disable what you don't use, especially on public-facing interfaces: <strong>no cdp enable / no lldp transmit / no lldp receive</strong> (stop leaking topology), <code>no ip redirects</code>, <code>no ip proxy-arp</code> (MitM vector), <code>no service config</code> (TFTP autoload), <code>no mop enabled</code>, <code>no service pad</code>, plus <code>service tcp-keepalives-in/out</code> to reap orphaned sessions.</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Interface ACL = <code>ip access-group</code>; <strong>vty ACL = <code>access-class</code></strong> — swapping them is the classic wrong answer.</li>
+<li>Weakest listed password type = <strong>7</strong> (that's what <code>service password-encryption</code> produces); strongest = <strong>9/scrypt</strong>. <code>login</code> = line password, <code>login local</code> = username DB.</li>
+<li>Privilege 0 command set: <strong>disable, enable, exit, help, logout</strong>.</li>
+<li>SSH-only vty = <code>transport input ssh</code> (optionally + an ACL via access-class).</li>
+<li>Logging executed commands = <strong>accounting</strong>. Device-admin protocol of choice = <strong>TACACS+</strong> (TCP 49, full encryption, command-level authorization); RADIUS owns 802.1X because it carries EAP.</li>
+<li>ZBFW = <strong>stateful + integrated into IOS XE</strong>; system zones = <strong>self and default</strong>; pass ≠ inspect (pass is one-way and stateless).</li>
+<li>The CPU-protection feature = <strong>CoPP</strong>; it supports input AND output policies (true).</li>
+<li>Hardening pair the exam loves: disable <strong>CDP and LLDP</strong>.</li>
+<li>AAA console authorization is separate; <code>local</code> fallback fires on server <em>unreachability</em>, not rejection.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

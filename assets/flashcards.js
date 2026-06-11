@@ -2,16 +2,11 @@ let fc = null;
 const show = makeShow(["menu","cards"]);
 function goHome(){ fc = null; show("menu"); }
 
-const flashTotal = FLASH.reduce((s,c)=>s+c.cards.length,0);
-document.getElementById("flashCount").textContent = flashTotal;
-const flashGrid = document.getElementById("flashGrid");
-FLASH.forEach(ch => {
-  const b = document.createElement("button");
-  b.className = "chapBtn";
-  b.innerHTML = `<span class="num">Ch ${ch.num}</span> ${ch.title} <span class="cnt">${ch.cards.length} cards</span>`;
-  b.onclick = () => startCards(ch.num);
-  flashGrid.appendChild(b);
+/* grid is pre-rendered at build time — just attach handlers */
+document.querySelectorAll("#flashGrid .chapBtn").forEach(b => {
+  b.onclick = () => startCards(+b.dataset.ch);
 });
+document.querySelector('[data-cards="all"]').onclick = () => startCards("all");
 
 function startCards(scope){
   let deck = [];

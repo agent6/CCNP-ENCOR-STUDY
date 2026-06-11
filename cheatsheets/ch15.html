@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 15 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>IP Services</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 15 — IP Services</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Three exam topics in one chapter: <strong>3.3.a (interpret NTP and PTP configurations)</strong>, <strong>3.3.b (configure NAT/PAT)</strong>, <strong>3.3.c (configure FHRPs — HSRP, VRRP)</strong>, plus FHRP/redundancy support for 1.1.b. The FHRP comparison table and NAT terminology are the highest-yield items.</p>
+<hr />
+<h2>NTP (3.3.a — interpret)</h2>
+<ul>
+<li><strong>UDP 123</strong>, client/server hierarchy. Why sync matters: certificates, key exchange, log/event correlation, troubleshooting.</li>
+<li><strong>Stratum</strong> = distance from the authoritative clock: stratum 1 = directly attached to the reference; a client of stratum 1 = stratum 2 — even across multiple router hops (NTP is an application). Valid through 15; 16 = unsynchronized.</li>
+<li>Sync is SLOW: seconds of accuracy in a few polls; tens of ms takes hours/days (client "drifts toward" the server).</li>
+<li>Config decode: <code>ntp server &lt;ip&gt; [prefer] [source &lt;int&gt;]</code> — multiple servers allowed for redundancy, <strong>the client synchronizes to ONE (best/preferred) server, not all of them</strong>. <code>ntp master [stratum]</code> = act as authoritative server. A router that has synced can serve time downstream.</li>
+<li>Verify: <code>show ntp status</code> (sync state, stratum, reference).</li>
+</ul>
+<h2>PTP (3.3.a — interpret)</h2>
+<ul>
+<li><strong>IEEE 1588</strong>; PTPv2 (1588-2008) is <strong>NOT backward compatible with PTPv1</strong>. Sub-microsecond accuracy for industrial/measurement networks (e.g., utility billing); low overhead; adjusts clocks dynamically to ride out queuing/buffering delay.</li>
+<li>Hierarchy: <strong>Grand Master</strong> (best clock, chosen via Announce messages / Best Master Clock logic) → <strong>boundary clocks</strong> (sync upstream, re-serve downstream) → clients. <strong>Transparent clocks</strong> sit in-path and correct for their own residence delay.</li>
+<li>Two message families:</li>
+<li><strong>Event messages (timestamped):</strong> Sync, Delay_Request, Pdelay_Request, Pdelay_Response — these carry/trigger the timestamps used to compute path delay.</li>
+<li><strong>General messages (not timestamped):</strong> Announce (master election), Follow_Up, Delay_Response, Management, Signaling — build/maintain the topology.</li>
+<li>Switch modes: <strong>boundary</strong>, <strong>forward</strong> (pass PTP multicast through), <strong>transparent</strong> (default on industrial switches). <code>ptp mode boundary</code>; verify <code>show ptp clock</code>, <code>show ptp port</code> ("Port state FAULTY: FALSE" = healthy).</li>
+</ul>
+<h2>Object tracking (the FHRP companion)</h2>
+<ul>
+<li><code>track 1 ip route 192.168.3.3/32 reachability</code> or <code>track 2 interface Gi0/1 line-protocol</code>; verify <code>show track</code>.</li>
+<li>FHRPs reference the object and <strong>decrement priority</strong> when it goes down (<code>standby 10 track 1 decrement 20</code> / VRRPv3 <code>track 1 decrement 20</code>) — decrement enough to fall below the peer's priority. Typical use: track the WAN uplink so the gateway role fails over with it.</li>
+</ul>
+<h2>FHRPs (3.3.c) — the comparison table</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>HSRP</strong></th>
+<th><strong>VRRP</strong></th>
+<th><strong>GLBP</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard?</td>
+<td><strong>Cisco</strong></td>
+<td><strong>IETF open</strong></td>
+<td><strong>Cisco</strong></td>
+</tr>
+<tr>
+<td>Roles</td>
+<td>Active / Standby</td>
+<td>Master / Backup</td>
+<td><strong>AVG + up to 4 AVFs</strong></td>
+</tr>
+<tr>
+<td>Preempt default</td>
+<td><strong>OFF</strong></td>
+<td><strong>ON</strong></td>
+<td>OFF (gateway role)</td>
+</tr>
+<tr>
+<td>Multicast</td>
+<td>v1: 224.0.0.2 · v2: <strong>224.0.0.102</strong></td>
+<td>224.0.0.18</td>
+<td>224.0.0.102</td>
+</tr>
+<tr>
+<td>Virtual MAC</td>
+<td>v1 <strong>0000.0C07.ACxx</strong> · v2 0000.0C9F.Fxxx</td>
+<td><strong>0000.5E00.01xx</strong></td>
+<td>0007.B400.xxyy (per AVF)</td>
+</tr>
+<tr>
+<td>Groups</td>
+<td>v1: 0–255 · v2: 0–4095</td>
+<td>0–255</td>
+<td>0–1023</td>
+</tr>
+<tr>
+<td>Timers</td>
+<td>hello 3 s / hold 10 s (v2 adds msec)</td>
+<td>advertisement 1 s</td>
+<td>hello 3 s / hold 10 s</td>
+</tr>
+<tr>
+<td>Load balancing</td>
+<td>Only via multiple groups</td>
+<td>Only via multiple groups</td>
+<td><strong>Built in</strong></td>
+</tr>
+<tr>
+<td>Config</td>
+<td><code>standby 10 ip 172.16.10.1</code></td>
+<td><code>vrrp 20 ip 172.16.20.1</code></td>
+<td><code>glbp 30 ip 172.16.30.1</code></td>
+</tr>
+</tbody>
+</table>
+<p>Election: <strong>highest priority (default 100), tie → highest interface IP.</strong> No preemption (HSRP/GLBP) means the first router up keeps the role until it fails — add <code>preempt</code> for deterministic design.</p>
+<ul>
+<li><strong>HSRP</strong> options: <code>standby &lt;id&gt; {priority|preempt|timers|authentication|mac-address|track}</code>. Verify <code>show standby [brief]</code> (P column = preempt). Multiple groups with alternating priorities = poor-man's load balancing.</li>
+<li><strong>VRRP</strong> legacy: <code>vrrp &lt;id&gt; ip/priority/preempt</code>. <strong>VRRPv3</strong>: <code>fhrp version vrrp v3</code> → <code>vrrp &lt;id&gt; address-family ipv4</code> → nested <code>address</code>, <code>priority</code>, <code>track ... decrement</code>. v2 and v3 are not compatible (a <code>vrrpv2</code> compat command exists). Verify <code>show vrrp [brief]</code>.</li>
+<li><strong>GLBP</strong>: the <strong>AVG answers ARP requests for the VIP</strong> and hands out different <strong>AVF virtual MACs</strong> per host → load balancing without changing host configs. AVG fails → standby AVG; AVF fails → another router inherits its vMAC. Methods: <strong>round-robin (default), weighted</strong> (<code>glbp 30 load-balancing weighted</code> + <code>glbp 30 weighting 80</code>), <strong>host-dependent</strong> (same host always gets the same AVF). Verify <code>show glbp [brief]</code> — the row with Fwd "-" is the AVG; Fwd 1/2 rows are AVFs.</li>
+</ul>
+<h2>NAT (3.3.b — configure)</h2>
+<p>RFC 1918 space: <strong>10/8, 172.16/12, 192.168/16</strong> — never routed on the Internet; NAT makes them appear public.</p>
+<p><strong>The four terms</strong> (memorize against a diagram):</p>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Inside local</strong></td>
+<td>The host's real private IP (10.x address on your LAN)</td>
+</tr>
+<tr>
+<td><strong>Inside global</strong></td>
+<td>Your host as the outside sees it (the translated public IP)</td>
+</tr>
+<tr>
+<td>Outside local</td>
+<td>The remote host as YOUR inside sees it (differs only with outside NAT)</td>
+</tr>
+<tr>
+<td>Outside global</td>
+<td>The remote host's real public IP</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Three types:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Mapping</th>
+<th>Config core</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Static</strong></td>
+<td>One-to-one, permanent</td>
+<td><code>ip nat inside source static &lt;local&gt; &lt;global&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Pooled</strong></td>
+<td>One-to-one, dynamic from a pool</td>
+<td><code>ip nat pool P &lt;start&gt; &lt;end&gt; prefix-length X</code> + <code>ip nat inside source list ACL pool P</code></td>
+</tr>
+<tr>
+<td><strong>PAT (overload)</strong></td>
+<td><strong>Many-to-one</strong> via unique source ports</td>
+<td><code>ip nat inside source list ACL interface Gi0/0 overload</code> (or pool + overload)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Always mark interfaces first: <code>ip nat outside</code> / <code>ip nat inside</code>. The ACL defines WHO gets translated.</li>
+<li><strong>Pooled NAT exhaustion = dropped packets</strong> ("failed to allocate address" in <code>debug ip nat detailed</code>) until entries time out — <strong>default dynamic timeout 24 hours</strong>; tune with <code>ip nat translation timeout</code>; flush with <code>clear ip nat translation *</code> (disrupts active sessions).</li>
+<li>PAT keeps flows distinct by rewriting source ports — translation table shows the same inside global IP with unique ports per inside local host.</li>
+<li>Outside static NAT (<code>ip nat outside source static</code>) exists mainly for <strong>overlapping address space</strong> (mergers) — rare.</li>
+<li>Verify: <strong><code>show ip nat translations</code></strong> — read columns left to right: Inside global | Inside local | Outside local | Outside global.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>NTP accuracy concept = <strong>stratum</strong> (DIKTA 1); a client with many servers syncs to <strong>one</strong>, not all (DIKTA 2: false).</li>
+<li><strong>PTPv2 is not backward compatible</strong> with PTPv1 (DIKTA 3: false).</li>
+<li>FHRPs solve static-default-route/single-gateway limits (DIKTA 4). Cisco-proprietary pair = <strong>HSRP and GLBP</strong>; VRRP is the standard (DIKTA 5).</li>
+<li>HSRP VIP syntax = <strong><code>standby 1 ip 10.1.1.1</code></strong> (DIKTA 6). The FHRP with built-in load balancing = <strong>GLBP</strong> (DIKTA 7).</li>
+<li>Translation table = <strong><code>show ip nat translations</code></strong> (DIKTA 8). 10.1.1.1 on your LAN = <strong>inside local</strong> (DIKTA 9). Dynamic NAT entries age out after <strong>24 hours</strong> (DIKTA 10).</li>
+<li>Preemption defaults are THE trick pair: HSRP off, VRRP on. vMAC patterns: 0000.0C07.ACxx (HSRPv1) vs 0000.5E00.01xx (VRRP) — group number in hex at the end.</li>
+<li>GLBP's magic is in ARP: one VIP, different vMAC answers per host.</li>
+<li>Exhibit reflexes: <code>show standby brief</code> empty P column = no preempt → higher priority router can sit in Standby; same logic appeared in the Ch 15 scenario questions in your question bank.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

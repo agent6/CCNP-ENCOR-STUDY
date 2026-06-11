@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 25 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Secure Network Access Control</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 25 — Secure Network Access Control</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>5.4 — describe the components of network security design: (a) threat defense, (b) endpoint security, (c) next-generation firewall, (d) TrustSec and MACsec</strong>. Describe-level: know what each product/technology does and how the pieces relate. TrustSec's three phases and MACsec's scope are the most quizzed details.</p>
+<hr />
+<h2>Cisco SAFE framework (5.4.a)</h2>
+<p><strong>SAFE</strong> = Cisco's Secure Architectural Framework: secure each <strong>PIN</strong> (place in the network) — <strong>branch, campus, data center, edge</strong> (highest risk; Internet ingress/egress), <strong>cloud, WAN</strong> — note the Internet itself is NOT a PIN.</p>
+<p><strong>Secure domains</strong> evaluated per PIN: management, security intelligence, <strong>compliance</strong> (PCI DSS, HIPAA), <strong>segmentation</strong>, <strong>threat defense</strong> (visibility via telemetry + file reputation + context), secure services (VPN/encryption). "Segregation" is the distractor.</p>
+<p><strong>Attack continuum:</strong> <strong>before</strong> (know assets, harden — firewalls, NAC, identity) → <strong>during</strong> (detect/block — NGIPS, NGFW, malware/email/web security) → <strong>after</strong> (scope/contain/remediate — AMP retrospection, Secure Network Analytics).</p>
+<h2>The security product cast (5.4.a/b — one-liners to know cold)</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>One-liner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cisco Talos</strong></td>
+<td>The Cisco <strong>threat intelligence</strong> organization — feeds reputation/signatures to everything</td>
+</tr>
+<tr>
+<td><strong>Secure Malware Analytics</strong> (Threat Grid)</td>
+<td><strong>Sandbox</strong> static + dynamic (behavioral) file analysis; evades sandbox-detection tricks; Glovebox for manual interaction</td>
+</tr>
+<tr>
+<td><strong>AMP / Secure Endpoint</strong> (5.4.b)</td>
+<td>Endpoint malware defense <strong>beyond point-in-time</strong>: file reputation/disposition from AMP Cloud (clean/malicious/unknown — connectors send hashes, not signatures), sandboxing, <strong>retrospection</strong> — verdicts can change on files already allowed; connectors for endpoints, email, web, networks, Meraki</td>
+</tr>
+<tr>
+<td><strong>Secure Client</strong> (AnyConnect)</td>
+<td>Modular VPN client (TLS/IKEv2) + posture modules (ISE/HostScan) + Umbrella roaming + flow visibility</td>
+</tr>
+<tr>
+<td><strong>Umbrella</strong> (OpenDNS)</td>
+<td><strong>DNS-layer security</strong> — blocks malicious domains before the connection ever forms; cloud-delivered, deploy by pointing DHCP/DNS at it</td>
+</tr>
+<tr>
+<td><strong>Secure Web Appliance (WSA)</strong></td>
+<td>Web proxy/gateway: reputation scores (−10…+10), URL filtering + dynamic content analysis, AV scanning, DLP, file retrospection</td>
+</tr>
+<tr>
+<td><strong>Secure Email (ESA)</strong></td>
+<td>Email gateway: antispam, reputation, AMP for attachments</td>
+</tr>
+<tr>
+<td><strong>Secure Network Analytics</strong> (Stealthwatch)</td>
+<td><strong>NetFlow-based</strong> behavioral threat detection — agentless; Manager + Flow Collectors (+ Flow Sensors, UDP Director, ETA for encrypted traffic w/o decryption)</td>
+</tr>
+<tr>
+<td><strong>Secure Cloud Analytics</strong></td>
+<td>SaaS flavor; monitors AWS/GCP/Azure via VPC flow logs</td>
+</tr>
+<tr>
+<td><strong>ISE</strong></td>
+<td>Policy decision point: RADIUS (802.1X/MAB/WebAuth), TACACS+ device admin, profiling, posture, guest portals, TrustSec SGT policy, <strong>pxGrid</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>pxGrid:</strong> the context-sharing bus (IETF framework) — <strong>ISE is the pxGrid controller</strong>; without ISE there is no pxGrid. v2.0 uses WebSocket/REST+STOMP.</p>
+<h2>NGFW &amp; NGIPS (5.4.c)</h2>
+<ul>
+<li><strong>NGIPS</strong> (FirePOWER): signature + context-aware IPS with threat intelligence from Talos.</li>
+<li><strong>NGFW = stateful firewall + application visibility/control + NGIPS + AMP + identity awareness.</strong> Cisco Secure Firewall runs ASA image, ASA+FirePOWER services, or the unified <strong>FTD</strong> image.</li>
+<li>Management: <strong>FMC</strong> (centralized, multi-device event/policy correlation), FDM (single small box), Cisco Defense Orchestrator; FTD has no full CLI config (setup/troubleshooting only).</li>
+</ul>
+<h2>802.1X / NAC</h2>
+<p>Components: <strong>EAP</strong> (the framework), EAP method, <strong>EAPoL</strong> (L2 transport supplicant↔switch), <strong>RADIUS</strong> (authenticator↔server).</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Device</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Supplicant</strong></td>
+<td>Software on the endpoint (native OS, Secure Client)</td>
+</tr>
+<tr>
+<td><strong>Authenticator</strong></td>
+<td>Switch/WLC — relays EAPoL↔RADIUS, opens the port on accept; <strong>blind to the EAP method</strong></td>
+</tr>
+<tr>
+<td><strong>Authentication server</strong></td>
+<td>RADIUS server = ISE; returns accept/deny + authorization (dACL, VLAN, SGT)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>EAP methods:</strong></p>
+<ul>
+<li><strong>EAP-TLS</strong> — certificates BOTH sides; most secure, hardest to deploy.</li>
+<li><strong>PEAP</strong> — server-side cert builds a TLS tunnel; inner methods: <strong>MSCHAPv2</strong> (AD-friendly, most common), GTC (OTP/LDAP), even inner EAP-TLS.</li>
+<li><strong>EAP-FAST</strong> — Cisco's PEAP alternative; <strong>PACs</strong> for fast reauth/roaming; <strong>the one that supports EAP chaining</strong> (machine AND user authenticated in one session).</li>
+<li>EAP-TTLS — like PEAP but also carries legacy inner methods (PAP/CHAP). EAP-MD5 — no mutual auth, avoid.</li>
+</ul>
+<p><strong>Fallbacks:</strong> <strong>MAB</strong> (authenticate by MAC for agentless devices — printers/IoT; ISE profiling builds the identity) and <strong>WebAuth</strong> (browser portal for guests; local or central). Typical port order: 802.1X → MAB → WebAuth.</p>
+<h2>TrustSec (5.4.d)</h2>
+<p>Replace IP/VLAN-based policy with <strong>Scalable Group Tags</strong>. Three phases (the DIKTA list): <strong>classification → propagation → enforcement</strong>.</p>
+<ol>
+<li><strong>Classification:</strong> SGT assigned <strong>dynamically</strong> (ISE authorization via 802.1X/MAB/WebAuth) or <strong>statically</strong> (IP/subnet/VLAN/interface/port mappings — data centers without dot1x); ISE can also serve a central IP-to-SGT database.</li>
+<li><strong>Propagation:</strong> <strong>inline tagging</strong> (16-bit SGT in the L2 frame's Cisco MetaData — needs TrustSec-capable ASICs end to end; unsupported hardware DROPS tagged frames) or <strong>SXP</strong> (TCP peer-to-peer carrying IP-to-SGT bindings — <strong>speaker</strong> sends, <strong>listener</strong> receives; single- or multi-hop; ISE itself can speak SXP/pxGrid). ⚠ Tags do NOT extend to the endpoints themselves.</li>
+<li><strong>Enforcement:</strong> at <strong>egress</strong> — <strong>SGACLs</strong> on switches/routers (ISE policy matrix: source SGT row × destination SGT column → permit/deny/granular ACL) or <strong>SGFW</strong> rules on firewalls.</li>
+</ol>
+<h2>MACsec (5.4.d)</h2>
+<ul>
+<li><strong>IEEE 802.1AE — hop-by-hop Layer 2 encryption</strong>: encrypted on the wire, decrypted inside each switch (so QoS/SGT inspection still works) — contrast with IPsec's end-to-end L3 scope. Line-rate via onboard ASICs.</li>
+<li>Frame adds a 16-byte <strong>802.1AE header (EtherType 0x88e5)</strong> + 16-byte <strong>ICV</strong>; encrypts the payload INCLUDING the SGT; uses <strong>AES-GCM</strong> authenticated encryption.</li>
+<li>Keying: <strong>SAP</strong> (Cisco proprietary, switch-to-switch default) and <strong>MKA</strong> (the standard protocol; endpoint-to-switch and switch-to-switch).</li>
+<li><strong>Downlink MACsec</strong> = endpoint↔switch (MKA + MACsec-capable supplicant; ISE authorization can mandate/override encryption policy). <strong>Uplink MACsec</strong> = switch↔switch (SAP by default; dynamic mode needs 802.1X between switches).</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Framework = <strong>Cisco SAFE</strong>; PINs = branch/campus/DC/edge/cloud/WAN (Internet isn't one); secure domains include threat defense, segmentation, compliance — not "segregation."</li>
+<li>Threat intel = <strong>Talos</strong>; sandbox = <strong>Secure Malware Analytics</strong>; NetFlow-driven detection = <strong>Secure Network Analytics</strong>; no ISE → no <strong>pxGrid</strong>.</li>
+<li>EAP chaining = <strong>EAP-FAST</strong>. The authenticator never sees the EAP method.</li>
+<li>TrustSec phases: <strong>classification, propagation, enforcement</strong> (SGTs stop at the access device — endpoints never carry them).</li>
+<li>Inline tagging needs ASIC support end-to-end; SXP bridges the gaps (speaker→listener). Enforcement is <strong>egress</strong>, via SGACL matrix or SGFW.</li>
+<li>MACsec = 802.1AE, <strong>hop-by-hop L2</strong>, AES-GCM, keyed by <strong>MKA</strong> (standard) or SAP (Cisco); downlink vs uplink distinction.</li>
+<li>AMP's superpower = <strong>retrospection</strong> (post-facto verdict changes); Umbrella's = blocking at the <strong>DNS layer</strong> before connections form.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

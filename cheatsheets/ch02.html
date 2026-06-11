@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 2 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Spanning Tree Protocol</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 2 — Spanning Tree Protocol</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Core material for topic <strong>3.1.c — configure and verify common Spanning Tree Protocols (RSTP, MST)</strong>. This chapter is the 802.1D/RSTP foundation; Ch 3 covers the guard features and Ch 4 covers MST. Expect output-interpretation questions from <code>show spanning-tree</code>.</p>
+<hr />
+<h2>Why STP exists</h2>
+<p>Redundant L2 links = forwarding loops. L2 has <strong>no TTL</strong>, so broadcasts/unknown unicasts loop forever, MAC tables churn between ports, CPU/memory climb until the switch falls over. STP blocks redundant ports to build a loop-free tree.</p>
+<p><strong>STP flavors:</strong> 802.1D (original, one tree), PVST/PVST+ (Cisco, per-VLAN), 802.1W RSTP (fast convergence), 802.1S MST (instances). Catalyst switches run <strong>Rapid PVST+ (default on most), PVST+, or MST</strong> — all backward compatible with 802.1D.</p>
+<h2>BPDUs &amp; Bridge ID</h2>
+<ul>
+<li>BPDUs go to MAC <strong>01:80:c2:00:00:00</strong>, every <strong>2 s</strong> (hello).</li>
+<li><strong>Two BPDU types:</strong> Configuration BPDU (root/cost/bridge/port IDs, timers) and <strong>TCN</strong> BPDU (topology changes).</li>
+<li><strong>Bridge ID = system priority (default 32768) + sys-id-ext (12-bit VLAN ID) + system MAC.</strong>
+  That's why VLAN 1 shows priority <strong>32769</strong> and VLAN 10 shows <strong>32778</strong> — the VLAN number is added.</li>
+</ul>
+<h2>Root bridge election</h2>
+<ol>
+<li>Every switch boots believing it's root, advertising itself.</li>
+<li>On receiving a <strong>superior</strong> BPDU (lower priority, then lower MAC), the switch adopts that root and re-advertises with updated root path cost. Inferior BPDUs ignored.</li>
+<li>Result: lowest Bridge ID in the topology = root. <strong>All root-bridge ports are designated ports</strong> and forward.</li>
+</ol>
+<p>⚠ Default priorities everywhere → oldest switch (lowest MAC) wins. Always set priorities deliberately (Ch 3).</p>
+<h2>Path cost</h2>
+<p>Root path cost = sum of interface costs <strong>toward</strong> the root. The root advertises cost 0; <strong>the receiver adds its ingress port cost</strong> (the sender does not include its egress port).</p>
+<table>
+<thead>
+<tr>
+<th>Speed</th>
+<th>Short mode (default)</th>
+<th>Long mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10 Mbps</td>
+<td>100</td>
+<td>2,000,000</td>
+</tr>
+<tr>
+<td>100 Mbps</td>
+<td>19</td>
+<td>200,000</td>
+</tr>
+<tr>
+<td>1 Gbps</td>
+<td><strong>4</strong></td>
+<td>20,000</td>
+</tr>
+<tr>
+<td>10 Gbps</td>
+<td>2</td>
+<td>2,000</td>
+</tr>
+<tr>
+<td>20+ Gbps</td>
+<td>1</td>
+<td>1,000 → 2</td>
+</tr>
+</tbody>
+</table>
+<p>Long mode: <code>spanning-tree pathcost method long</code> — must match on <strong>every switch</strong> in the L2 domain.</p>
+<h2>Port roles &amp; tiebreakers</h2>
+<p><strong>Root port</strong> (one per switch, best path to root) — selection order on ties:</p>
+<ol>
+<li>Lowest root path cost</li>
+<li>Lowest advertising switch priority</li>
+<li>Lowest advertising switch MAC</li>
+<li>Lowest port priority (from advertising switch)</li>
+<li>Lowest port number (from advertising switch)</li>
+</ol>
+<p><strong>Designated port</strong> (one per segment). When two non-root switches face each other, the loser blocks, decided by: not-the-RP → lower path cost forwards → lower system priority → lower system MAC. The blocked side shows as <strong>Altn BLK</strong> (alternate).</p>
+<h2>802.1D states &amp; timers</h2>
+<p>Blocking → Listening (15 s) → Learning (15 s) → Forwarding = <strong>~30 s</strong> to forward. (Disabled = shutdown; Broken = detected problem, discards.)</p>
+<table>
+<thead>
+<tr>
+<th>Timer</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hello</td>
+<td>2 s</td>
+<td>BPDU advertisement interval</td>
+</tr>
+<tr>
+<td>Max Age</td>
+<td>20 s</td>
+<td>How long stored BPDU info stays valid after contact lost</td>
+</tr>
+<tr>
+<td>Forward delay</td>
+<td>15 s</td>
+<td>Duration of listening AND of learning</td>
+</tr>
+</tbody>
+</table>
+<p>Tune per VLAN: <code>spanning-tree vlan X max-age | hello-time | forward-time</code>.</p>
+<ul>
+<li><strong>Listening:</strong> sends/receives BPDUs only, no MAC learning.</li>
+<li><strong>Learning:</strong> adds MAC learning, still no forwarding.</li>
+</ul>
+<h2>Topology changes (TCN)</h2>
+<ol>
+<li>Switch detects link change → sends <strong>TCN out its root port</strong> toward the root (each upstream switch ACKs and relays).</li>
+<li>Root sets the <strong>Topology Change flag</strong> in its config BPDUs, flooded to everyone.</li>
+<li>All switches drop MAC aging from 300 s to the <strong>forward delay (15 s)</strong> — flushing stale entries (NOT all entries; active talkers survive).</li>
+<li>Side effect: temporary spike in unknown-unicast flooding.</li>
+</ol>
+<p>Troubleshoot with <code>show spanning-tree vlan X detail</code> → "Number of topology changes … last change occurred … from <interface>". A climbing TCN count = flapping port somewhere; chase it hop by hop. TCNs are per-VLAN, so big flat VLANs amplify the pain.</p>
+<h2>Convergence times to memorize (802.1D)</h2>
+<table>
+<thead>
+<tr>
+<th>Failure</th>
+<th>Recovery</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Link fails where the OTHER side was already blocking</td>
+<td>nothing to do; just TCN/flush</td>
+<td>~0 s</td>
+</tr>
+<tr>
+<td>Direct failure of a root-facing link (blocked port becomes RP)</td>
+<td>skip Max Age; listening + learning</td>
+<td><strong>30 s</strong></td>
+</tr>
+<tr>
+<td>Direct failure where downstream switch declares itself root</td>
+<td>Max Age on neighbor (20) + listening (15) + learning (15)</td>
+<td><strong>50 s</strong></td>
+</tr>
+<tr>
+<td><strong>Indirect</strong> failure (link up, BPDUs lost/corrupted)</td>
+<td>Max Age expiry (20) + listening + learning</td>
+<td><strong>50 s</strong></td>
+</tr>
+</tbody>
+</table>
+<h2>RSTP (802.1W)</h2>
+<p><strong>States collapse 5 → 3:</strong></p>
+<table>
+<thead>
+<tr>
+<th>802.1D</th>
+<th>RSTP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Disabled, Blocking, Listening</td>
+<td><strong>Discarding</strong></td>
+</tr>
+<tr>
+<td>Learning</td>
+<td>Learning</td>
+</tr>
+<tr>
+<td>Forwarding</td>
+<td>Forwarding</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Roles:</strong> Root, Designated, <strong>Alternate</strong> (backup path to root, ready to take over the RP role), <strong>Backup</strong> (backs up your own DP on a shared/hub segment).</p>
+<p><strong>Port types:</strong> <strong>Edge</strong> (host-facing = PortFast, forwards immediately), Non-edge (received a BPDU), <strong>Point-to-point</strong> (full-duplex link to another RSTP switch — half duplex falls back to 802.1D behavior).</p>
+<p><strong>Proposal/Agreement sync</strong> (replaces timer-based convergence):</p>
+<ol>
+<li>New link comes up full duplex → both switches propose being DP.</li>
+<li>Superior switch (lower BID) wins; inferior switch marks its port as RP, <strong>blocks all its other non-edge ports</strong> (sync), and sends an agreement.</li>
+<li>
+<p>Both ends go forwarding immediately; the process cascades downstream switch by switch.</p>
+</li>
+<li>
+<p>RSTP ages neighbor info after <strong>3 missed hellos (6 s)</strong> — not 20 s Max Age.</p>
+</li>
+<li>No RSTP handshake from the far end (e.g., a PC) → port behaves like 802.1D (hence hosts still see ~30 s delay without PortFast).</li>
+<li>The network forwards as it converges — no "wait for full convergence" requirement.</li>
+</ol>
+<h2>Command toolkit</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>show spanning-tree root</code></td>
+<td>Root BID, root path cost, timers, <strong>root port</strong> per VLAN (root port blank + cost 0 ⇒ you ARE the root)</td>
+</tr>
+<tr>
+<td><code>show spanning-tree [vlan X]</code></td>
+<td>Root section vs Bridge ID section (same = root; "This bridge is the root"), per-port Role/State/Cost/Type</td>
+</tr>
+<tr>
+<td><code>show spanning-tree interface X [detail]</code></td>
+<td>Per-VLAN state on one trunk; detail adds BPDU counters, transitions</td>
+</tr>
+<tr>
+<td><code>show spanning-tree vlan X detail</code></td>
+<td>TCN count, time, and source interface</td>
+</tr>
+</tbody>
+</table>
+<p>Output decode: Roles = Root/Desg/<strong>Altn</strong>/Back · States = FWD/BLK/LIS/LRN · Type <strong>P2p</strong> / <strong>P2p Edge</strong> (PortFast) · <code>*TYPE_Inc</code> = port mode/type mismatch with the neighbor (e.g., access vs trunk).</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li><strong>Two</strong> BPDU types; <strong>bridge priority</strong> (then MAC) elects the root; 1 Gbps short-mode cost = <strong>4</strong>; root bridge ports are all <strong>DP</strong>; listening lasts <strong>15 s</strong> (DIKTA 1–5).</li>
+<li>TC flag received → age out <strong>old</strong> MACs (set aging to forward delay) — not "flush everything" (DIKTA 6).</li>
+<li>RSTP has <strong>no blocking or listening</strong> state (DIKTA 7); 5 states → <strong>3</strong>, not 4 (DIKTA 8).</li>
+<li>RSTP forwards while converging (DIKTA 9).</li>
+<li>Missing VLAN on a trunk's STP output? Check the trunk <strong>allowed VLAN list</strong> first (ties back to Ch 1/Ch 5).</li>
+<li>BPDU advertised root path cost does NOT include the egress port — cost is added at ingress.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

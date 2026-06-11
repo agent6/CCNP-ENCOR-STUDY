@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 29 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Automation Tools</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 29 — Automation Tools</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> The final two exam topics: <strong>6.6 — construct an EEM applet to automate configuration, troubleshooting, or data collection</strong> and <strong>6.7 — compare agent vs. agentless orchestration tools</strong>. Construct-level for EEM (know the applet anatomy cold); compare-level for the tool lineup.</p>
+<hr />
+<h2>EEM — Embedded Event Manager (6.6)</h2>
+<p><strong>On-box automation</strong>: applets run locally on the IOS device — no external server needed. Logic = <strong>if EVENT then ACTIONS</strong> (one event statement, ordered actions).</p>
+<p><strong>Applet anatomy:</strong></p>
+<pre><code>event manager applet LOOP0
+ event syslog pattern &quot;Interface Loopback0.* down&quot; period 1
+ action 1.0 cli command &quot;enable&quot;
+ action 2.0 cli command &quot;config terminal&quot;
+ action 3.0 cli command &quot;interface loopback0&quot;
+ action 4.0 cli command &quot;shutdown&quot;
+ action 5.0 cli command &quot;no shutdown&quot;
+ action 6.0 syslog msg &quot;Recovered the interface&quot;
+</code></pre>
+<p>Rules that get tested:</p>
+<ul>
+<li><strong>Event types:</strong> <code>event syslog pattern</code> (regex match on log messages), <code>event cli pattern</code> (trigger when a command is typed — e.g., back up config on "write mem.<em>"), <code>event none</code> (</em><em>manual applets</em>* — run with <code>event manager run &lt;name&gt;</code>), plus timers/SNMP/track.</li>
+<li><strong>Actions execute in alphanumeric LABEL order</strong> — labels are strings, so 10.0 sorts after 1.0, not 9.0; use decimal gaps (1.0, 2.0…) so you can insert 1.5 later.</li>
+<li><strong>Start CLI actions with <code>enable</code> (and <code>config terminal</code> if configuring)</strong> — the applet starts in user EXEC.</li>
+<li>If AAA command authorization is on, add <code>event manager session cli username &lt;user&gt;</code> or the CLI actions fail.</li>
+<li><code>$_cli_result</code> embeds the output of executed CLI commands (e.g., into an email body); <code>action ... mail server ... to ... from ... subject ... body</code> sends email; common environment variables: <code>_email_server</code>, <code>_email_to</code>, <code>_email_from</code> (set via <code>event manager environment &lt;var&gt; &lt;value&gt;</code>).</li>
+<li>EEM can call <strong>Tcl scripts</strong> stored in flash (<code>action 1.1 cli command "tclsh flash:/ping.tcl"</code>).</li>
+<li>Troubleshoot with <code>debug event manager action cli</code> (or <code>... action mail</code>, <code>... all</code>).</li>
+</ul>
+<h2>Agent vs agentless (6.7) — the comparison table</h2>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th><strong>Puppet</strong></th>
+<th><strong>Chef</strong></th>
+<th><strong>Ansible</strong></th>
+<th><strong>SaltStack</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Architecture</td>
+<td>Puppet server + <strong>agents</strong></td>
+<td>Chef server + <strong>clients</strong></td>
+<td><strong>Control station + remote hosts</strong></td>
+<td>Salt master + <strong>minions</strong></td>
+</tr>
+<tr>
+<td>Agent?</td>
+<td><strong>Agent-based</strong> (pull)</td>
+<td><strong>Agent-based</strong> (pull)</td>
+<td><strong>AGENTLESS</strong> (push over SSH/WinRM)</td>
+<td>Agent-based (0MQ messaging)</td>
+</tr>
+<tr>
+<td>Language</td>
+<td>Puppet DSL</td>
+<td><strong>Ruby</strong> DSL</td>
+<td><strong>YAML</strong></td>
+<td>YAML / Python</td>
+</tr>
+<tr>
+<td>Terminology</td>
+<td><strong>Modules &amp; manifests</strong></td>
+<td><strong>Cookbooks &amp; recipes</strong></td>
+<td><strong>Playbooks &amp; plays</strong></td>
+<td><strong>Pillars &amp; grains</strong></td>
+</tr>
+<tr>
+<td>Agentless variant</td>
+<td><strong>Puppet Bolt</strong></td>
+<td>—</td>
+<td>(native)</td>
+<td><strong>Salt SSH</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Agentless tools: Ansible, Puppet Bolt, Salt SSH</strong> — nothing to install on the managed node; ideal for network gear that can't run agents.</li>
+<li>Vocabulary mapping: Chef cookbook ↔ Puppet module (collection of code); Chef recipe ↔ Puppet manifest (the deployed config code); Chef <strong>knife</strong> uploads cookbooks; Chef <strong>OHAI</strong> reports node state (≈ SaltStack <strong>grains</strong>); Chef's <strong>kitchen</strong> = pre-production testing.</li>
+<li>SaltStack specifics: <strong>masters/minions</strong>, fast parallel execution over <strong>0MQ</strong>, event-driven via <strong>reactors</strong> (on master) and <strong>beacons</strong> (on minions); <strong>grains</strong> = facts gathered FROM minions, <strong>pillars</strong> = data stored on the master FOR specific minions (good for secrets). Salt SSH uses <strong>roster files</strong> for agentless hosts (slower than 0MQ).</li>
+<li>Chef server deployments: Chef Solo (local), Client/Server, Hosted (cloud), Private (on-prem).</li>
+</ul>
+<h2>Ansible — the exam's agentless workhorse</h2>
+<ul>
+<li><strong>Control station pushes over SSH</strong> (WinRM for Windows); no admin account needed (sudo escalation); design goals: consistent, secure, reliable, minimal learning curve.</li>
+<li><strong>Playbook</strong> (a set of plays) → <strong>play</strong> (tasks applied to a host/group) → <strong>task</strong> (a call to a module like <code>ios_config</code> / <code>ios_command</code>).</li>
+<li>Written in <strong>YAML</strong>: starts with <strong><code>---</code></strong> (ends optionally with <code>...</code>), <code>#</code> comments, lists = <code>- item</code> lines, dictionaries = unquoted <code>key: value</code> pairs; indentation matters. (Validate at YAML Lint. "TAML" is a distractor.)</li>
+<li><strong>Inventory file</strong> = the host list, with bracketed groups (<code>[routers]</code>); a host can be in multiple groups.</li>
+<li>Run a playbook: <strong><code>ansible-playbook ConfigureInterface.yaml</code></strong>; other CLI: <code>ansible</code> (ad hoc modules), <code>ansible-docs</code>, <code>ansible-pull</code> (flip push→pull), <strong><code>ansible-vault</code></strong> (encrypt sensitive YAML).</li>
+<li>Reading PLAY RECAP: <code>ok=1 changed=1</code> = task succeeded and modified the device.</li>
+<li>Methodology shout-out: <strong>PPDIOO — Prepare, Plan, Design, Implement, Operate, Optimize</strong>.</li>
+</ul>
+<h2>Why automate (the soft answers)</h2>
+<p>Reduced human error, increased agility, lower opex, streamlined management — automation duplicates a <em>tested</em> best practice (and will just as faithfully duplicate a bad one). Tool choice follows the team's skills: Ruby shop → Chef; CLI/Python comfort → Ansible/SaltStack.</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>EEM = <strong>on-box</strong>; actions run in <strong>alphanumeric label order</strong>; CLI actions need <code>enable</code> first; <code>event none</code> applets run via <strong><code>event manager run</code></strong>; syslog AND CLI patterns can both trigger (regex).</li>
+<li>Agent-based = <strong>Puppet, Chef, SaltStack</strong> (masters/minions); agentless = <strong>Ansible, Puppet Bolt, Salt SSH</strong>.</li>
+<li>Chef speaks <strong>Ruby</strong>; Puppet/Chef/Ansible/SaltStack ALL scale to large deployments.</li>
+<li>Ansible: <strong>YAML playbooks starting with <code>---</code></strong>, executed with <strong><code>ansible-playbook &lt;file&gt;.yaml</code></strong>; control station + SSH; vault for secrets.</li>
+<li>Terminology match-ups are free points: modules/manifests (Puppet), cookbooks/recipes (Chef), playbooks/plays (Ansible), pillars/grains (SaltStack).</li>
+<li>PPDIOO = Prepare, Plan, Design, Implement, <strong>Operate</strong>, Optimize ("Observe" is the trap).</li>
+<li>GitHub/Puppet Forge value: version tracking, knowing who changed what, collaboration/sharing, faster project velocity.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flashcards · ENCOR 350-401 Study App</title>
 <link rel="stylesheet" href="assets/app.css">
+<link rel="prefetch" href="quiz.html">
+<link rel="prefetch" href="flashcards.html">
+<link rel="prefetch" href="cheatsheets.html">
+<link rel="prefetch" href="infographics.html">
+<link rel="prefetch" href="labs.html">
+<script src="assets/data/flash.js" defer></script>
+<script src="assets/shared.js" defer></script>
+<script src="assets/flashcards.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -24,9 +32,34 @@
   <div id="menu">
     <div class="card">
       <h2 style="margin-bottom:6px;">Flashcards</h2>
-      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;"><span id="flashCount"></span> term/definition cards. Tap to flip; "Again" recycles a card into the deck until you know it.</p>
-      <button class="btn" onclick="startCards('all')">Study All Cards</button>
-      <div class="grid" id="flashGrid" style="margin-top:16px;"></div>
+      <p style="color:var(--muted); font-size:.92rem; margin-bottom:14px;">326 term/definition cards. Tap to flip; "Again" recycles a card into the deck until you know it.</p>
+      <button class="btn" data-cards="all">Study All Cards</button>
+      <div class="grid" id="flashGrid" style="margin-top:16px;">
+        <button class="chapBtn" data-ch="1"><span class="num">Ch 1</span> Packet Forwarding <span class="cnt">13 cards</span></button>
+        <button class="chapBtn" data-ch="2"><span class="num">Ch 2</span> Spanning Tree Protocol <span class="cnt">13 cards</span></button>
+        <button class="chapBtn" data-ch="3"><span class="num">Ch 3</span> Advanced STP Tuning <span class="cnt">7 cards</span></button>
+        <button class="chapBtn" data-ch="4"><span class="num">Ch 4</span> Multiple Spanning Tree Protocol <span class="cnt">7 cards</span></button>
+        <button class="chapBtn" data-ch="5"><span class="num">Ch 5</span> VLAN Trunks and EtherChannel Bundles <span class="cnt">10 cards</span></button>
+        <button class="chapBtn" data-ch="6"><span class="num">Ch 6</span> IP Routing Essentials <span class="cnt">13 cards</span></button>
+        <button class="chapBtn" data-ch="7"><span class="num">Ch 7</span> EIGRP <span class="cnt">11 cards</span></button>
+        <button class="chapBtn" data-ch="8"><span class="num">Ch 8</span> OSPF <span class="cnt">13 cards</span></button>
+        <button class="chapBtn" data-ch="9"><span class="num">Ch 9</span> Advanced OSPF <span class="cnt">14 cards</span></button>
+        <button class="chapBtn" data-ch="10"><span class="num">Ch 10</span> OSPFv3 <span class="cnt">7 cards</span></button>
+        <button class="chapBtn" data-ch="11"><span class="num">Ch 11</span> BGP <span class="cnt">12 cards</span></button>
+        <button class="chapBtn" data-ch="12"><span class="num">Ch 12</span> Advanced BGP: Best Path <span class="cnt">9 cards</span></button>
+        <button class="chapBtn" data-ch="13"><span class="num">Ch 13</span> Multicast <span class="cnt">21 cards</span></button>
+        <button class="chapBtn" data-ch="14"><span class="num">Ch 14</span> Quality of Service <span class="cnt">17 cards</span></button>
+        <button class="chapBtn" data-ch="15"><span class="num">Ch 15</span> IP Services <span class="cnt">18 cards</span></button>
+        <button class="chapBtn" data-ch="16"><span class="num">Ch 16</span> Overlay Tunnels <span class="cnt">17 cards</span></button>
+        <button class="chapBtn" data-ch="22"><span class="num">Ch 22</span> Enterprise Network Architecture <span class="cnt">12 cards</span></button>
+        <button class="chapBtn" data-ch="23"><span class="num">Ch 23</span> Fabric Technologies: SD-Access &amp; Catalyst SD-WAN <span class="cnt">19 cards</span></button>
+        <button class="chapBtn" data-ch="24"><span class="num">Ch 24</span> Network Assurance <span class="cnt">21 cards</span></button>
+        <button class="chapBtn" data-ch="25"><span class="num">Ch 25</span> Secure Network Access Control <span class="cnt">18 cards</span></button>
+        <button class="chapBtn" data-ch="26"><span class="num">Ch 26</span> Device Access Control &amp; Infrastructure Security <span class="cnt">17 cards</span></button>
+        <button class="chapBtn" data-ch="27"><span class="num">Ch 27</span> Virtualization <span class="cnt">8 cards</span></button>
+        <button class="chapBtn" data-ch="28"><span class="num">Ch 28</span> Network Programmability <span class="cnt">17 cards</span></button>
+        <button class="chapBtn" data-ch="29"><span class="num">Ch 29</span> Automation Tools <span class="cnt">12 cards</span></button>
+      </div>
     </div>
   </div>
 
@@ -51,9 +84,6 @@
 
   <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
 </div>
-<script src="assets/data/flash.js"></script>
-<script src="assets/shared.js"></script>
-<script src="assets/flashcards.js"></script>
 <script>document.querySelector('nav.top a[data-page="flashcards"]').classList.add("active");</script>
 </body>
 </html>

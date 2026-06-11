@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 7 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>EIGRP</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 7 — EIGRP</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Feeds topic <strong>3.2.a — compare routing concepts of EIGRP and OSPF</strong> (path selection, path operations, metrics, load balancing). The successor/feasible-successor logic and topology-table reading are the most testable pieces — expect exhibit questions on <code>show ip eigrp topology</code>.</p>
+<hr />
+<h2>Identity card</h2>
+<ul>
+<li>Enhanced distance vector ("hybrid"); originally Cisco-proprietary, now RFC 7868.</li>
+<li><strong>IP protocol 88</strong>; multicast <strong>224.0.0.10</strong> (MAC <strong>01:00:5E:00:00:0A</strong>) when possible, unicast when needed.</li>
+<li>Beats classic DV with: composite metric (not hop count), neighbors/hellos, incremental triggered updates (full table only at adjacency), precomputed loop-free backups (DUAL), unequal-cost load balancing, 255-hop reach.</li>
+</ul>
+<p><strong>Autonomous system:</strong> each EIGRP process = one AS = one routing domain. Same AS ⇒ same metric formula, routes exchanged only within. A router can join multiple ASes (separate topology tables); routes do NOT leak between them without redistribution. Not related to BGP ASNs.</p>
+<h2>The five packet types</h2>
+<table>
+<thead>
+<tr>
+<th>Packet</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hello</strong></td>
+<td>Neighbor discovery + liveness</td>
+</tr>
+<tr>
+<td><strong>Update</strong></td>
+<td>Carry routing/reachability info</td>
+</tr>
+<tr>
+<td><strong>Query</strong></td>
+<td>Hunt for a path during convergence</td>
+</tr>
+<tr>
+<td><strong>Reply</strong></td>
+<td>Answer a query</td>
+</tr>
+<tr>
+<td><strong>Request</strong></td>
+<td>Pull specific info from neighbors</td>
+</tr>
+</tbody>
+</table>
+<h2>Core vocabulary (the heart of the chapter)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Successor route</strong></td>
+<td>Lowest-metric path to the destination</td>
+</tr>
+<tr>
+<td><strong>Successor</strong></td>
+<td>First next-hop router on that path</td>
+</tr>
+<tr>
+<td><strong>Feasible distance (FD)</strong></td>
+<td>Your locally calculated metric for the best path</td>
+</tr>
+<tr>
+<td><strong>Reported distance (RD)</strong></td>
+<td>The advertising neighbor's own FD (their cost from where they sit)</td>
+</tr>
+<tr>
+<td><strong>Feasibility condition</strong></td>
+<td><strong>RD &lt; FD</strong> ⇒ the neighbor is provably not routing through you ⇒ loop-free</td>
+</tr>
+<tr>
+<td><strong>Feasible successor (FS)</strong></td>
+<td>Backup path that passes the feasibility condition — usable instantly</td>
+</tr>
+</tbody>
+</table>
+<h2>Reading the topology table</h2>
+<pre><code>P 10.4.4.0/24, 1 successors, FD is 3328
+   via 10.13.1.3 (3328/3072), Gi0/1     ← successor (metric/RD)
+   via 10.14.1.4 (5376/2816), Gi0/2     ← RD 2816 &lt; FD 3328 ⇒ FEASIBLE SUCCESSOR
+</code></pre>
+<ul>
+<li>Parentheses = <strong>(total metric via this path / neighbor's RD)</strong>.</li>
+<li>FS test uses the <strong>RD vs the FD</strong>, never the total metrics against each other. RD ≥ FD (even equal) = not an FS.</li>
+<li><strong>P (passive) = stable/good. A (active) = DUAL is recomputing</strong> — counterintuitive: passive is what you want.</li>
+<li>Table holds: prefixes, the neighbors advertising each, their metrics (RD, hop count), and metric components (min bandwidth, total delay, load, reliability).</li>
+</ul>
+<h2>Metric (classic)</h2>
+<p>Simplified default formula (K1=K3=1, K2=K4=K5=0):</p>
+<p><strong>metric = 256 × ( 10⁷ / min-bandwidth(kbps) + total-delay / 10 )</strong></p>
+<ul>
+<li><strong>Bandwidth</strong> = the SLOWEST link in the path, referenced to 10 Gbps (10⁷ kbps). <strong>Delay</strong> = cumulative along the path, counted in tens of µs.</li>
+<li>K values must match between neighbors or no adjacency.</li>
+<li>Per-hop propagation: hop count +1, min bandwidth shrinks to the bottleneck, delay accumulates, RD updates.</li>
+<li><strong>Tune paths with interface <code>delay</code>, not <code>bandwidth</code></strong> — bandwidth changes ripple into QoS/other protocols (and only matters when it's the path minimum); delay always counts.</li>
+</ul>
+<p>Default metrics worth recognizing: Serial 64k = 40,512,000 · T1 = 2,170,031 · 10M Ethernet = 281,600 · FastE = 28,160 · <strong>GigE = 2816</strong> · 10GigE = 512.</p>
+<p><strong>Wide metrics:</strong> classic math can't tell 11 Gbps from 50 Gbps. Wide metrics scale by <strong>65,536</strong> (good to 655 Tbps), measure latency in <strong>picoseconds</strong>, and add <strong>K6</strong> (jitter/energy/extended). Backward compatible: adjacency forms when K1–K5 match and K6 unset; the wide-metric router rescales for classic peers.</p>
+<h2>Load balancing</h2>
+<ul>
+<li><strong>ECMP:</strong> multiple equal-metric successor routes install natively.</li>
+<li><strong>Unequal-cost (EIGRP-exclusive):</strong> <code>variance &lt;multiplier&gt;</code> — any <strong>feasible successor</strong> whose metric &lt; (FD × multiplier) installs too.</li>
+<li>Multiplier math: ceil(FS metric ÷ successor metric). E.g., 5376/3328 → variance 2.</li>
+<li>Only FS paths qualify — variance can never install a path that fails the feasibility condition.</li>
+<li>Traffic splits proportionally — see "traffic share count" per path in <code>show ip route &lt;prefix&gt;</code>.</li>
+</ul>
+<h2>Timers &amp; failure detection</h2>
+<table>
+<thead>
+<tr>
+<th>Interface class</th>
+<th>Hello</th>
+<th>Hold</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast (default)</td>
+<td><strong>5 s</strong></td>
+<td><strong>15 s</strong></td>
+</tr>
+<tr>
+<td>Slow (T1/64k and below)</td>
+<td>60 s</td>
+<td>180 s</td>
+</tr>
+</tbody>
+</table>
+<p>Hold = 3× hello, resets on every hello, counts down to 0 ⇒ neighbor declared dead ⇒ DUAL notified. (Timers do NOT need to match between neighbors — unlike OSPF.)</p>
+<h2>Convergence (DUAL in action)</h2>
+<p><strong>With a feasible successor:</strong> promotion is immediate — FS becomes successor, an update goes out with new metrics, downstream routers re-run DUAL locally. Sub-second, no route goes active.</p>
+<p><strong>Without an FS:</strong> route flips <strong>P → A (active)</strong> and the router sends <strong>queries with delay set to infinity</strong> to all neighbors, tracking a reply flag per neighbor per prefix. Receiving router logic:</p>
+<ul>
+<li>No route? Reply "no route."</li>
+<li>Query from a <strong>non-successor</strong>? Reply with its own attributes (it still has a good path) — this creates a <strong>query boundary</strong>.</li>
+<li>Query from its <strong>successor</strong>? Mark active too and propagate the query downstream.</li>
+</ul>
+<p>Replies cascade back; when the last outstanding reply arrives, the router computes, returns the route to passive, and answers its own upstream queries. (Unanswered queries = Stuck-in-Active territory; summarization keeps query scopes small.)</p>
+<h2>Summarization</h2>
+<ul>
+<li>Configured <strong>per interface</strong>, not under the process (classic true/false trap).</li>
+<li>Component routes inside the range are suppressed; only the summary advertises — and only while at least one component exists.</li>
+<li>Bonus beyond smaller tables: a summary creates a <strong>query boundary</strong>, shrinking the query domain and speeding convergence in large ASes.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Protocol <strong>88</strong>; <strong>five</strong> packet types; multicast <strong>224.0.0.10</strong> / MAC 01:00:5E:00:00:0A (DIKTA 1, 2, 5).</li>
+<li>Successor = the <strong>next-hop router</strong> of the lowest-metric path (the route itself is the successor <em>route</em>) (DIKTA 3).</li>
+<li>Topology table holds prefix, hop count, total delay, neighbor list — bandwidth stored is the <strong>minimum</strong>, not maximum (DIKTA 4).</li>
+<li>Steer EIGRP without touching other protocols: <strong>interface delay</strong> (DIKTA 6). Reference bandwidth = <strong>10 Gbps</strong> (DIKTA 7).</li>
+<li>Hello <strong>5 s</strong> on fast links (DIKTA 8). Stable route = <strong>passive</strong> (DIKTA 9). Path recomputation signal = <strong>query with delay = infinity</strong> (DIKTA 10). Summarization is per-interface, NOT automatic everywhere (DIKTA 11: false).</li>
+<li>FS condition in one breath: <em>backup's RD must beat my FD.</em></li>
+<li>vs OSPF for 3.2.a: EIGRP = DV logic + composite bandwidth/delay metric + UCMP + timers needn't match; OSPF = full-topology SPF + cost metric + ECMP only + timers must match.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

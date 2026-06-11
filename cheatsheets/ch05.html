@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 5 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>VLAN Trunks and EtherChannel Bundles</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 5 — VLAN Trunks and EtherChannel Bundles</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> This chapter carries TWO exam topics: <strong>3.1.a (troubleshoot static and dynamic 802.1Q trunking)</strong> and <strong>3.1.b (troubleshoot static and dynamic EtherChannels)</strong>. Both are <em>troubleshoot</em>-level verbs — expect exhibit questions on DTP mode combos, <code>show etherchannel summary</code> flags, and member-mismatch failures.</p>
+<hr />
+<h2>VTP — VLAN Trunking Protocol</h2>
+<p>Cisco-proprietary VLAN provisioning: create a VLAN once on a server, it propagates through the domain.</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Creates/edits VLANs?</th>
+<th>Forwards advertisements?</th>
+<th>Updates own DB from ads?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Server</strong></td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Client</strong></td>
+<td>No (no local VLAN config)</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><strong>Transparent</strong></td>
+<td>Local only</td>
+<td><strong>Yes (passes through)</strong></td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Off</strong></td>
+<td>Local only</td>
+<td>No</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p>(No "proxy" role — distractor alert.)</p>
+<ul>
+<li><strong>Versions:</strong> v1 (default) and v2 handle VLANs 1–1005 only; <strong>v3 supports 1–4094</strong> and requires a designated <strong><code>vtp primary</code></strong> server (exec command) to make changes — multiple servers can exist, only the primary edits.</li>
+<li><strong>Advertisement types:</strong> <strong>Summary</strong> (every 300 s or on change — carries version, domain, <strong>revision number</strong>, timestamp, but NOT VLAN details), <strong>Subset</strong> (the actual VLAN changes, sent after a change), <strong>Client request</strong> (switch with lower revision asks for the subset).</li>
+<li>Config order: <code>vtp version 3</code> → <code>vtp domain NAME</code> → <code>vtp mode server|client|transparent|off</code> → <code>vtp password X</code> (recommended) → <code>vtp primary</code> (v3 servers).</li>
+<li>Verify: <code>show vtp status</code> — version running, domain, operating mode, <strong>Configuration Revision</strong>, VLAN count.</li>
+</ul>
+<p>⚠ <strong>The classic VTP disaster:</strong> a switch added to the domain with a HIGHER revision number can overwrite the domain's VLAN database — catastrophic when its DB is missing VLANs (they're deleted everywhere, ports go inactive). <strong>Reset revision to 0 before connecting</strong> — changing the VTP domain name does this.</p>
+<h2>DTP — Dynamic Trunking Protocol</h2>
+<ul>
+<li>Negotiates trunking; advertises every <strong>30 s</strong>; <strong>VTP domain must match</strong> for negotiation to work.</li>
+<li>Default mode on Catalyst: <strong>dynamic auto</strong>.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>trunk</th>
+<th>desirable</th>
+<th>auto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>trunk</strong></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong>desirable</strong></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><strong>auto</strong></td>
+<td>✓</td>
+<td>✓</td>
+<td><strong>✗ no trunk</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Memory hook: someone has to initiate — <em>desirable/trunk talk, auto only listens.</em> Auto+auto = both wait forever = access port (<code>Operational Mode: static access</code> on both sides).</p>
+<ul>
+<li><code>show interfaces trunk</code> Mode column: <code>on</code> (static), <code>desirable</code>, <code>auto</code>.</li>
+<li><strong><code>switchport nonegotiate</code></strong> stops DTP frames entirely (verify: "Negotiation of Trunking: Off"). Best practice: statically set <code>switchport mode trunk|access</code> on both ends, nonegotiate on trunks.</li>
+</ul>
+<h2>EtherChannel fundamentals</h2>
+<ul>
+<li>IEEE <strong>802.3AD</strong> link aggregation: bundle physical <strong>member interfaces</strong> into one logical <strong>port channel</strong>. Works for <strong>access, trunk, or routed (L3)</strong> interfaces.</li>
+<li><strong>STP sees only the logical link</strong> — no blocked parallel ports, and a member failure causes <strong>no STP/routing topology change</strong> (as long as one member survives). Benefits to remember: more bandwidth + fewer topology changes.</li>
+<li>Bandwidth of Po = sum of active members (<code>show interface port-channel 1</code> → BW 2000000 Kbit/s for 2×1G); QoS/routing metrics adjust automatically.</li>
+</ul>
+<p>⚠ <strong>Why dynamic protocols beat mode <code>on</code>:</strong> static bundles have <strong>no health check</strong>. Across DWDM/taps/media converters, a far-side link failure isn't seen locally — the member stays "up," the hash keeps sending traffic into the void → sporadic packet loss. LACP/PAgP detect end-to-end liveness and pull the member.</p>
+<h2>PAgP vs LACP</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>PAgP</th>
+<th>LACP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard?</td>
+<td><strong>Cisco proprietary</strong></td>
+<td><strong>IEEE open standard</strong></td>
+</tr>
+<tr>
+<td>Initiating mode</td>
+<td><strong>desirable</strong></td>
+<td><strong>active</strong></td>
+</tr>
+<tr>
+<td>Listening mode</td>
+<td><strong>auto</strong></td>
+<td><strong>passive</strong></td>
+</tr>
+<tr>
+<td>Fails when</td>
+<td>auto + auto</td>
+<td>passive + passive</td>
+</tr>
+<tr>
+<td>Extras</td>
+<td>silent (default) vs <strong>non-silent</strong> (require PAgP packets — use switch-to-switch)</td>
+<td>fast rate, min-links, <strong>max-bundle</strong>, system/port priority</td>
+</tr>
+</tbody>
+</table>
+<p>Mode <code>on</code> = no protocol at all — must be <code>on</code> both sides; mixing <code>on</code> with LACP/PAgP never bundles (members suspend: "%ETC-5-L3DONTBNDL2 ... suspended: LACP currently not enabled on the remote port").</p>
+<p>Config: <code>channel-group &lt;id&gt; mode {on | active | passive | desirable | auto [non-silent]}</code> on the members. Set members' L2/L3 character first (<code>no switchport</code> for routed); <strong>all post-bundle config goes on the port-channel interface</strong>.</p>
+<h2>Reading <code>show etherchannel summary</code></h2>
+<p>Healthy = <strong>Po1(SU)</strong> with members <strong>(P)</strong>. Case-sensitive!</p>
+<table>
+<thead>
+<tr>
+<th>Logical flag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>U</strong></td>
+<td>in use, working</td>
+</tr>
+<tr>
+<td>D</td>
+<td>down</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>min-links not met → not in use (members show D/P but Po shows SM)</td>
+</tr>
+<tr>
+<td>S / R</td>
+<td>Layer 2 / Layer 3</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Member flag</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>P</strong></td>
+<td>bundled, forwarding</td>
+</tr>
+<tr>
+<td><strong>H</strong></td>
+<td>hot-standby (exceeds lacp max-bundle)</td>
+</tr>
+<tr>
+<td><strong>I</strong></td>
+<td>stand-alone — no LACP/PAgP heard from peer (peer is <code>on</code>/unconfigured)</td>
+</tr>
+<tr>
+<td><strong>s</strong></td>
+<td>suspended (incompatible with bundle)</td>
+</tr>
+<tr>
+<td>w</td>
+<td>waiting to hear from neighbor</td>
+</tr>
+<tr>
+<td>D</td>
+<td>down</td>
+</tr>
+</tbody>
+</table>
+<p>Counters check: <code>show lacp counters</code> / <code>show pagp counters</code> — Sent climbing while Recv stays 0 = far end isn't speaking the protocol. <code>show lacp neighbor</code>, <code>show pagp neighbor</code>, <code>show etherchannel port</code> (includes per-member <strong>Load</strong> in hex) for detail.</p>
+<h2>Advanced LACP knobs</h2>
+<ul>
+<li><strong><code>lacp rate fast</code></strong> — LACPDUs every <strong>1 s</strong> (dead in 3 s) vs default slow <strong>30 s</strong> (dead in 90 s). Must match on all interfaces both ends.</li>
+<li><strong><code>port-channel min-links N</code></strong> (on Po) — Po stays down until N members bundle (flag M/SM when unmet).</li>
+<li><strong><code>lacp max-bundle N</code></strong> (on Po) — cap active members; extras become <strong>hot-standby (H)</strong>. LACP only — <strong>PAgP has no max-links</strong> (DIKTA trap).</li>
+<li><strong><code>lacp system-priority</code></strong> — lower value = primary switch for the bundle = decides WHICH members are active.</li>
+<li><strong><code>lacp port-priority</code></strong> — on the primary switch, lower priority members win the active slots (tie → lower port number).</li>
+</ul>
+<h2>Member-interface consistency (the troubleshooting checklist)</h2>
+<p>Must match across all members: <strong>port type (L2/L3), port mode (access/trunk), native VLAN, allowed VLANs, speed, duplex, MTU (L3), load interval, storm control.</strong> Mismatch → member suspended (s) and <code>%EC-5-CANNOT_BUNDLE2</code>.</p>
+<p>Also verify: each member link connects the same two devices; members are up; mode pairing is legal (on+on, active+anything-LACP, desirable+auto/desirable); LACP/PAgP packets flow both directions.</p>
+<h2>Load balancing</h2>
+<ul>
+<li><strong>Per-flow hash, never per-packet round robin.</strong> Global setting: <code>port-channel load-balance &lt;hash&gt;</code>; view with <code>show etherchannel load-balance</code>.</li>
+<li>Hash inputs: src/dst MAC, IP, L4 port, and mixed combos (e.g., <code>src-dst-mixed-ip-port</code>).</li>
+<li>Design notes: hash is binary → use <strong>powers of 2</strong> member counts (2, 4, 8) for even spread; when one neighbor is a router, MAC-based hashing collapses (router MAC constant on every flow) → hash on IP/L4 instead.</li>
+<li>Uneven utilization? Check member Load values in <code>show etherchannel port</code>, then change the hash.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>VTP roles: server, client, transparent, off — <strong>no proxy</strong> (DIKTA 1). Summary ads do NOT carry VLAN details (DIKTA 2). Multiple VTP servers are allowed (DIKTA 3). Moved switch with higher revision <strong>deletes VLANs domain-wide</strong> (DIKTA 4).</li>
+<li>auto + auto ⇒ <strong>no trunk</strong> (DIKTA 5); <code>switchport nonegotiate</code> kills DTP (DIKTA 6).</li>
+<li>PAgP is <strong>not</strong> industry standard — LACP is (DIKTA 7). EtherChannel works on access, trunk, AND routed ports (DIKTA 8). Benefits = bandwidth + fewer topology changes (DIKTA 9).</li>
+<li>PAgP <strong>auto</strong> pairs only with <strong>desirable</strong> (DIKTA 10). Max member links is an <strong>LACP-only</strong> feature (DIKTA 11).</li>
+<li>LACP multicast 0180:C200:0002; PAgP multicast 0100:0CCC:CCCC.</li>
+<li>Po(SU)/(P) = healthy; (I) = peer not negotiating; (s) = mismatched member; (H) = max-bundle overflow; (SM)/(D) = min-links unmet.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

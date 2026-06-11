@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 28 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Network Programmability</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 28 — Network Programmability</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> The biggest automation chapter — <strong>4.6 (NETCONF/RESTCONF), 5.3 (REST API security), 6.1 (Python), 6.2 (JSON), 6.3 (YANG), 6.4 (Catalyst Center &amp; SD-WAN Manager APIs), 6.5 (REST response codes/payloads)</strong>. Expect "what does this response/snippet mean" questions more than configuration.</p>
+<hr />
+<h2>Why not CLI?</h2>
+<p>CLI weaknesses the exam cites: <strong>prone to human error/misconfiguration</strong> and <strong>device-by-device operation</strong> (doesn't scale), plus slow execution, per-platform syntax drift, and plaintext risk if Telnet. Programmatic interfaces fix consistency and scale.</p>
+<h2>API directions &amp; REST</h2>
+<ul>
+<li><strong>Northbound API</strong> = applications/GUI ↔ the controller (e.g., your browser to Catalyst Center — typically REST over TLS).</li>
+<li><strong>Southbound API</strong> = controller ↔ network devices (pushing changes down).</li>
+<li><strong>REST</strong> = API style using HTTP methods; consistent across vendors.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>HTTP verb</th>
+<th>CRUD</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>POST</strong></td>
+<td>CREATE</td>
+<td>Submit data (e.g., send login credentials)</td>
+</tr>
+<tr>
+<td><strong>GET</strong></td>
+<td>READ</td>
+<td>Retrieve data</td>
+</tr>
+<tr>
+<td><strong>PUT</strong></td>
+<td>UPDATE</td>
+<td><strong>Replace</strong> data</td>
+</tr>
+<tr>
+<td><strong>PATCH</strong></td>
+<td>UPDATE</td>
+<td><strong>Append/modify</strong> data</td>
+</tr>
+<tr>
+<td><strong>DELETE</strong></td>
+<td>DELETE</td>
+<td>Remove data</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CRUD = CREATE, READ, UPDATE, DELETE</strong> (watch the distractors: not "retrieve/restore/receive").</p>
+<h2>HTTP status codes (6.5 — memorize)</h2>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+<th>Typical cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>200 OK</strong></td>
+<td>Success</td>
+<td>GET/POST exchanged data</td>
+</tr>
+<tr>
+<td><strong>201 Created</strong></td>
+<td>Resource made</td>
+<td>Successful create via POST</td>
+</tr>
+<tr>
+<td><strong>400 Bad Request</strong></td>
+<td>Client-side error</td>
+<td>Malformed request</td>
+</tr>
+<tr>
+<td><strong>401 Unauthorized</strong></td>
+<td>Not authenticated</td>
+<td>Missing/expired token or credentials</td>
+</tr>
+<tr>
+<td><strong>403 Forbidden</strong></td>
+<td>Authenticated but not allowed</td>
+<td>Insufficient rights</td>
+</tr>
+<tr>
+<td><strong>404 Not Found</strong></td>
+<td>URL/resource doesn't exist</td>
+<td>Wrong URI</td>
+</tr>
+</tbody>
+</table>
+<p>Decoder reflex: 2xx success · 4xx your fault · (5xx server's fault). <strong>401 vs 403</strong> is the favorite pair.</p>
+<h2>Data formats (6.2)</h2>
+<ul>
+<li><strong>XML:</strong> tag-based — every <code>&lt;tag&gt;</code> needs a matching <code>&lt;/tag&gt;</code>; human- and machine-readable; used by NETCONF.</li>
+<li><strong>JSON:</strong> <strong>key/value pairs</strong> inside <code>{ }</code> objects (arrays in <code>[ ]</code>), keys and string values quoted, separated by commas. Cleaner and now dominant. Recognize valid JSON on sight:</li>
+</ul>
+<pre><code class="language-json">{ &quot;user&quot;: &quot;root&quot;, &quot;role&quot;: &quot;admin&quot;, &quot;ports&quot;: [1, 2, 3] }
+</code></pre>
+<h2>Controller APIs (6.4)</h2>
+<p><strong>Catalyst Center (DNA Center) — token workflow:</strong></p>
+<ol>
+<li><strong>POST</strong> to <code>.../api/system/v1/auth/token</code> using <strong>Basic Auth</strong> (username/password) + header <code>Content-Type: application/json</code>.</li>
+<li>Response = a <strong>Token</strong> (unique per authenticated session).</li>
+<li>Every later call (e.g., <strong>GET</strong> <code>.../api/v1/network-device</code> for the inventory) carries the token in the <strong><code>X-Auth-Token</code></strong> header. 200 OK + JSON payload = success.</li>
+</ol>
+<p><strong>SD-WAN Manager (vManage):</strong> authentication POST uses <strong><code>Content-Type: x-www-form-urlencoded</code></strong> (credentials as j_username/j_password) — the odd one out, and a DIKTA favorite.</p>
+<p><strong>REST API security (5.3):</strong> transport encryption (TLS/HTTPS), authenticate then use short-lived <strong>tokens</strong> rather than resending credentials, least-privilege authorization, rate limiting, and never hardcode credentials in scripts/repos. Test against sandboxes (DevNet) — an authenticated API DELETE is as real as a CLI delete.</p>
+<p><strong>Postman</strong> = the API test console: per-tab requests, a unique URL per API call, saved <strong>collections</strong>, history.</p>
+<h2>YANG (6.3)</h2>
+<ul>
+<li>The <strong>data modeling language</strong> that defines the structure/types of config and operational data — the schema that NETCONF and RESTCONF both operate on. Models are vendor-neutral (IETF/OpenConfig) or native (Cisco).</li>
+<li>Building blocks: <strong>module</strong> → <strong>container</strong> (grouping) → <strong>list</strong> → <strong>leaf</strong> (a single typed value). DIKTA pair: <strong>leaf and container</strong> are YANG model parts (not "method").</li>
+<li>Mental model: a nested shopping list — categories (containers) holding items (leaves).</li>
+</ul>
+<h2>NETCONF (4.6)</h2>
+<ul>
+<li><strong>SSH transport, port 830</strong>, payload = <strong>XML</strong> RPC messages, data structured by YANG. Session starts with a <strong>capabilities</strong> exchange.</li>
+<li>Operations: <strong>get</strong> (running config + state), <strong>get-config</strong> (a datastore's config), <strong>edit-config</strong> (CRUD changes into a datastore), <strong>copy-config</strong>, <strong>delete-config</strong>.</li>
+<li><strong>Datastores:</strong> running, startup, and <strong>candidate</strong> (stage + validate + commit before touching the live box).</li>
+</ul>
+<h2>RESTCONF (4.6)</h2>
+<ul>
+<li><strong>RFC 8040</strong> — RESTful access to the SAME YANG-modeled data: <strong>HTTPS</strong>, URIs under <strong><code>/restconf/data/...</code></strong>, payloads in <strong>JSON or XML</strong> (<code>application/yang-data+json</code>), methods GET/POST/PUT/DELETE/OPTIONS.</li>
+<li><strong>Complements NETCONF, doesn't replace it.</strong> Same models, different transport/encoding.</li>
+<li>Example read: GET <code>/restconf/data/Cisco-IOS-XE-native:native/logging/monitor/severity</code> → 200 + <code>{"Cisco-IOS-XE-native:severity": "critical"}</code>.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>NETCONF</th>
+<th>RESTCONF</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transport</td>
+<td>SSH (830)</td>
+<td>HTTPS</td>
+</tr>
+<tr>
+<td>Encoding</td>
+<td>XML only</td>
+<td>JSON or XML</td>
+</tr>
+<tr>
+<td>Style</td>
+<td>RPC operations, datastores</td>
+<td>REST verbs on YANG URIs</td>
+</tr>
+</tbody>
+</table>
+<h2>DevNet &amp; GitHub</h2>
+<ul>
+<li><strong>DevNet</strong> (developer.cisco.com): <strong>Documentation</strong> = the API references; <strong>Learn</strong> = guided labs; Technologies; <strong>Community</strong> = the place to ask questions; Events. Sandboxes (always-on/reserved) = safe practice targets.</li>
+<li><strong>GitHub:</strong> hosted version control — a <strong>repository stores code, shares it with other developers, and holds its documentation</strong> (README); tracks changes/commits, enables collaboration and peer review.</li>
+</ul>
+<h2>Python survival kit (6.1)</h2>
+<ul>
+<li>Reputation: one of the EASIEST languages to pick up (true/false bait).</li>
+<li>Reading a script: <code>#</code> = comment · triple quotes = multi-line string/docstring · <code>import json, requests</code> pulls in <strong>modules</strong> · <code>def name():</code> defines a function · indentation defines blocks.</li>
+<li><strong>Dictionary</strong> = JSON-like key/value structure: <code>dnac = {"host": "...", "port": 443, "username": "...", "password": "..."}</code> — access with <code>dnac["host"]</code>.</li>
+<li><strong>Condition:</strong> <code>if ENVIRONMENT_IN_USE == "sandbox":</code> (== compares; = assigns).</li>
+<li>The canonical API pattern: <code>response = requests.post(url, auth=HTTPBasicAuth(u,p), headers=headers, verify=False)</code> → <code>token = response.json()["Token"]</code> → later <code>requests.get(url, headers={"x-auth-token": token})</code> and loop <code>for item in data['response']:</code>.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>Authenticate to Catalyst Center = <strong>POST</strong> with <strong>Basic Auth</strong> to the Token API; then <strong>X-Auth-Token</strong> header everywhere (DIKTA 2, 10). vManage auth Content-Type = <strong>x-www-form-urlencoded</strong> (DIKTA 4).</li>
+<li>CRUD = CREATE/READ/UPDATE/DELETE (DIKTA 3); PUT replaces, PATCH appends.</li>
+<li>YANG parts = <strong>leaf + container</strong> (DIKTA 14). NETCONF = SSH/830/XML; RESTCONF = HTTPS//restconf/data/JSON-or-XML, and it does NOT replace NETCONF.</li>
+<li>CLI cons = error-prone + device-at-a-time (DIKTA 13). GitHub repo = store + share + document code (DIKTA 12). DevNet Documentation page = API references.</li>
+<li>JSON is the format with quoted key/value pairs in braces (DIKTA 5); Python is easy (DIKTA 1: false that it's difficult).</li>
+<li>Status pairs to keep straight: 200 vs 201 (ok vs created), 401 vs 403 (unauthenticated vs unauthorized).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

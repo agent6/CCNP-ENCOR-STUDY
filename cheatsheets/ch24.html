@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 24 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Network Assurance</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 24 — Network Assurance</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> The biggest single-chapter haul — <strong>4.1 (diagnose with debugs/conditional debugs/traceroute/ping/SNMP/syslog), 4.2 (Flexible NetFlow), 4.3 (SPAN/RSPAN/ERSPAN), 4.4 (IP SLA), 4.5 (Catalyst Center)</strong>. Nearly every question from domain 4 starts here; output interpretation is the dominant format.</p>
+<hr />
+<h2>ping (4.1)</h2>
+<ul>
+<li>Read the output: <code>!</code> = reply, <code>.</code> = timeout; success rate %, round-trip <strong>min/avg/max</strong>.</li>
+<li>Workhorse options: <code>repeat &lt;n&gt;</code> (long pings to watch recovery), <code>size 1500</code> + <code>df-bit</code> (MTU/tunnel-overhead testing), <code>source &lt;interface|ip&gt;</code> (test a specific path — otherwise the egress interface IP is used; interface names must be typed in full).</li>
+<li>Extended ping adds: ToS (184 decimal = EF — test QoS, though some SPs ignore marked ICMP), data patterns (0x0000/0xffff for serial line/clocking issues), strict/loose/record/timestamp options, sweep sizes.</li>
+<li>Troubleshooting flow: verify basic reachability FIRST — most "complex" failures are L1–L3.</li>
+</ul>
+<h2>traceroute (4.1)</h2>
+<ul>
+<li>Increments TTL; each hop answers ICMP Time Exceeded. <code>*</code> = no reply for that probe (timeout); tries <strong>30 hops by default</strong> before quitting.</li>
+<li>All-asterisk rows = missing route/typo'd destination. <code>!H</code> = host unreachable — a less-specific route got you to the next hop, but the path dies beyond it.</li>
+<li>Overlay reminder: a tunnel shows as one hop.</li>
+</ul>
+<h2>debug + conditional debug (4.1)</h2>
+<p>OSPF adjacency debugging is the exam's favorite case study:</p>
+<table>
+<thead>
+<tr>
+<th>Symptom in debug</th>
+<th>Root cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug ip ospf adj</code>: "Nbr ... has smaller/larger interface MTU"</td>
+<td><strong>MTU mismatch</strong> (stuck EXSTART)</td>
+</tr>
+<tr>
+<td><code>debug ip ospf hello</code>: "Mismatched hello parameters ... Dead R 40 C 120, Hello R 10 C 30"</td>
+<td>Timer/<strong>network-type</strong> mismatch (R = received, C = configured; 10/40 broadcast &amp; p2p vs 30/120 non-broadcast &amp; p2mp)</td>
+</tr>
+<tr>
+<td>Same debug showing "Mask R 255.255.255.0 C 255.255.255.248"</td>
+<td><strong>Subnet mask mismatch</strong> (neighbor stuck INIT)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Kill switch: <code>undebug all</code>.</li>
+<li><strong>Conditional debugging</strong> keeps production safe: <code>debug ip packet &lt;acl&gt;</code> scopes by ACL; <code>debug interface &lt;X&gt;</code> adds an interface condition. ⚠ Interface conditions <strong>survive <code>undebug all</code></strong> — remove with <code>undebug interface &lt;X&gt;</code> (router warns about message floods).</li>
+</ul>
+<h2>SNMP (4.1)</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Security level</th>
+<th>Auth</th>
+<th>Encryption</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1 / v2c</td>
+<td>noAuthNoPriv</td>
+<td><strong>Community string</strong></td>
+<td>None</td>
+</tr>
+<tr>
+<td>v3</td>
+<td>noAuthNoPriv</td>
+<td>Username</td>
+<td>None</td>
+</tr>
+<tr>
+<td>v3</td>
+<td>authNoPriv</td>
+<td>MD5/SHA HMAC</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>v3 authPriv</strong></td>
+<td><strong>Auth + privacy</strong></td>
+<td>MD5/SHA</td>
+<td><strong>DES/3DES/AES</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>v2c improved error handling/bulk retrieval over v1; <strong>v3 is best practice</strong>. Restrict with ACLs; community strings are RO or RW.</li>
+<li>Operations: get / get-next / <strong>get-bulk</strong> (large tables) / get-response / set / <strong>trap</strong> (unsolicited, unacknowledged — informs are acknowledged). The <strong>MIB</strong> is the tree of pollable/trappable objects (OIDs).</li>
+</ul>
+<h2>Syslog (4.1)</h2>
+<ul>
+<li>Severities 0–7: emergency, alert, critical, error, warning, notification, informational, debugging. Format <code>%FACILITY-SEVERITY-MNEMONIC</code>.</li>
+<li>Destinations: console, monitor (vty), <strong>buffered</strong> (<code>logging buffered &lt;size&gt; &lt;level&gt;</code>), host/collector (<code>logging host &lt;ip&gt;</code> — <strong>UDP 514</strong>) with <code>logging trap &lt;level&gt;</code> setting the max level shipped (that level and all more-severe).</li>
+<li><code>show logging</code> confirms each destination's level and counts.</li>
+</ul>
+<h2>NetFlow &amp; Flexible NetFlow (4.2)</h2>
+<p><strong>Classic NetFlow:</strong> unidirectional <strong>flows</strong> keyed on 7 fields: src/dst IP, src/dst port, protocol, ToS, input interface. Latest export format = <strong>Version 9</strong> (template-based). Config: <code>ip flow ingress</code>/<code>ip flow egress</code> on the interface + <code>ip flow-export version 9</code> / <code>ip flow-export destination &lt;ip&gt; &lt;udp-port&gt;</code>. Verify: <code>show ip cache flow</code> (the flow table), <code>show ip flow export</code>, <code>show ip flow interface</code>. Quick wins: <code>ip flow-top-talkers</code> (top N by bytes/packets → <code>show ip flow top-talkers</code>).</p>
+<p><strong>Flexible NetFlow = the customizable, exam-named version:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Flow record</strong></td>
+<td><code>match</code> = <strong>key fields</strong> (define the flow) + <code>collect</code> = non-key data gathered</td>
+</tr>
+<tr>
+<td><strong>Flow exporter</strong></td>
+<td>destination/UDP port/NetFlow v9</td>
+</tr>
+<tr>
+<td><strong>Flow monitor</strong></td>
+<td><strong>Binds record + exporter; only works once applied to an interface with a direction</strong> (<code>ip flow monitor NAME input</code>)</td>
+</tr>
+<tr>
+<td>Flow sampler (optional)</td>
+<td>Samples a subset — less CPU/memory, less accuracy</td>
+</tr>
+</tbody>
+</table>
+<p>The three required pieces: <strong>record, exporter, monitor</strong>. Multiple monitors can watch the same traffic with different policies. FNF's per-header matching makes it a security/anomaly tool (feeds Secure Network Analytics).</p>
+<h2>SPAN / RSPAN / ERSPAN (4.3)</h2>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Scope</th>
+<th>Key config</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Local SPAN</strong></td>
+<td>Same switch</td>
+<td><code>monitor session 1 source interface X [rx\|tx\|both]</code> + <code>destination interface Y</code></td>
+</tr>
+<tr>
+<td><strong>RSPAN</strong></td>
+<td>Across switches at <strong>L2</strong></td>
+<td>Dedicated <strong>RSPAN VLAN</strong> (<code>vlan 99</code> + <code>remote-span</code>) carried on trunks end-to-end; source switch: <code>destination remote vlan 99</code>; destination switch: <code>source remote vlan 99</code> → local port</td>
+</tr>
+<tr>
+<td><strong>ERSPAN</strong></td>
+<td>Across <strong>L3</strong> (GRE-encapsulated, routable)</td>
+<td><code>monitor session 1 type erspan-source</code> → source + <code>no shutdown</code>; destination submode: <strong><code>ip address</code> (analyzer), <code>erspan-id</code>, <code>origin ip address</code></strong>; optional <code>erspan ttl</code>; <code>filter vlan</code> for trunk sources</td>
+</tr>
+</tbody>
+</table>
+<p>Notes: mirrored traffic doubles load on trunks; STP runs on the RSPAN VLAN (no BPDU filtering!); session IDs are locally significant — match them anyway for sanity.</p>
+<h2>IP SLA (4.4)</h2>
+<ul>
+<li>Synthetic probes measuring: <strong>delay, jitter, packet loss, voice quality scores</strong>, packet sequencing, path, connectivity, web download time. Gives END-TO-END visibility (an SP's SLA covers only its own cloud).</li>
+<li>Config pattern: <code>ip sla 1</code> → operation (<code>icmp-echo &lt;dst&gt; source-interface X</code>, <code>http get &lt;url&gt;</code>, udp-jitter…) → <code>frequency &lt;sec&gt;</code> → <strong><code>ip sla schedule 1 life forever start-time now</code></strong> (unscheduled probes never run!). Verify: <code>show ip sla configuration</code>, <code>show ip sla statistics</code>.</li>
+<li>udp-jitter requires <code>ip sla responder</code> on the far-end IOS device. Results can feed object tracking (FHRP/static-route failover) and SNMP traps (CISCO-RTTMON-MIB).</li>
+</ul>
+<h2>Catalyst Center (DNA Center) Assurance (4.5)</h2>
+<ul>
+<li>One platform replacing tool sprawl: SD-Access fabric config, <strong>SWIM</strong> (software image management), Plug and Play, simplified provisioning, templates, security policy, <strong>assurance</strong> — for routers, switches, AND wireless (not just routers/switches).</li>
+<li><strong>Assurance</strong> = 30+ years of TAC logic + <strong>machine learning</strong>: issue detection WITH guided remediation, <strong>health scores</strong> (network/client/app, color-coded), <strong>Client 360 / Device 360</strong> views.</li>
+<li><strong>Network Time Travel</strong> — the "network DVR": <strong>streaming telemetry</strong> records past state so you can replay "last Tuesday at 3 p.m."; sensors add predictive analytics for the future.</li>
+<li>Integrations via <strong>open APIs/SDKs</strong>: AD, ISE, ServiceNow, Infoblox → search a USER by name and see all their devices and context.</li>
+<li>How it simplifies troubleshooting (exam phrasing): <strong>streaming telemetry for device insight + open APIs for contextual integration</strong>.</li>
+<li>⚠ v1.2 says "<strong>AI-powered workflows</strong>" — this 2nd-ed coverage (ML-based issue detection, predictive analytics, AI Network Analytics baselining) is the foundation; skim current Catalyst Center AI docs to top up.</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>traceroute default = <strong>30 hops</strong> (not 20). OSPF debugging diagnoses <strong>MTU, hello/timer, and mask mismatches</strong> (not routing-table viewing).</li>
+<li>NetFlow's latest version = <strong>9</strong>; matching key fields = <strong>Flexible NetFlow</strong>; FNF's required trio = <strong>record + exporter + monitor</strong>.</li>
+<li>Capture across a routed L3 network = <strong>ERSPAN</strong> (RSPAN = L2 trunk path; local SPAN = same box).</li>
+<li>IP SLA monitors <strong>delay, jitter, loss, voice scores</strong> — not syslog/SNMP traps.</li>
+<li>Catalyst Center workflow components include <strong>Design, Provision, Assurance</strong> (plus Policy) — "Plan/Operate" are distractors. It manages more than routers/switches (false), and its troubleshooting magic = telemetry + open APIs.</li>
+<li>Conditional debug leftovers: interface conditions persist past <code>undebug all</code>.</li>
+<li>Flow monitor with an empty cache = monitor never applied to an interface (your question bank's exhibit 24.13).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

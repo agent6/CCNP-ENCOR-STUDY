@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 4 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Multiple Spanning Tree Protocol</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 4 — Multiple Spanning Tree Protocol</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> MST is named directly in topic <strong>3.1.c</strong> ("configure and verify common Spanning Tree Protocols (RSTP, <strong>MST</strong>)"). Closes out the STP trilogy (Ch 2 fundamentals, Ch 3 tuning/guards). Know the region-matching rules, the IST, and the two interop designs.</p>
+<hr />
+<h2>Why MST exists — the STP evolution</h2>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Trees</th>
+<th>Trade-off</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CST (802.1D)</td>
+<td><strong>One topology for every VLAN</strong></td>
+<td>No per-VLAN load sharing — all traffic follows the same blocked/forwarding ports</td>
+</tr>
+<tr>
+<td>PVST/PVST+</td>
+<td>One tree <strong>per VLAN</strong></td>
+<td>Full tuning flexibility, but thousands of VLANs = thousands of topologies: BPDU processing and reconvergence burden on the CPU</td>
+</tr>
+<tr>
+<td><strong>MST (802.1S)</strong></td>
+<td>One tree per <strong>instance</strong>; many VLANs map to each instance</td>
+<td>Per-VLAN-group engineering with only a handful of topologies to compute</td>
+</tr>
+</tbody>
+</table>
+<p>MST's two exam-stated wins: <strong>traffic load balancing for groups of VLANs</strong> + <strong>reduced CPU/memory</strong> in VLAN-heavy environments.</p>
+<h2>MST region — the matching trio</h2>
+<p>Switches belong to the same region only when ALL THREE match:</p>
+<ol>
+<li><strong>Region name</strong></li>
+<li><strong>Revision number</strong> — NOT locally significant, NOT auto-propagated; you set the same value on every switch by hand</li>
+<li><strong>VLAN-to-instance mapping table</strong></li>
+</ol>
+<p>⚠ The root bridge does <strong>not</strong> advertise the mappings — every switch must be configured identically (config management matters; a mismatch silently splits the region).</p>
+<p>To the outside world, the entire region presents itself as <strong>one virtual switch</strong>. External switches calculate STP against the region as if it were a single hop — which is why an outside switch two physical hops from the root may still block a port (the region "hop" counts as one bridge).</p>
+<h2>IST and MSTIs</h2>
+<ul>
+<li><strong>IST = instance 0.</strong> Always exists; runs on <strong>every port in the region regardless of access VLAN</strong>.</li>
+<li>Other instances (MSTIs, typically 1–15; ≥16 instances supported) carry whatever VLANs you map to them. <strong>By default all 4094 VLANs live in instance 0.</strong></li>
+<li>The IST BPDU carries the other instances' information <strong>nested inside it</strong> — one BPDU set for the whole region no matter how many instances. That's the BPDU-reduction magic.</li>
+<li>MSTIs never interact outside the region; only the IST speaks at boundaries.</li>
+</ul>
+<h2>Configuration (the 5-step recipe)</h2>
+<pre><code>spanning-tree mode mst
+spanning-tree mst 0 root primary        ! per-instance priority (24576/28672, 4096 steps)
+spanning-tree mst 1 root primary
+spanning-tree mst configuration         ! the region-defining submode:
+ name ENTERPRISE_CORE
+ revision 2
+ instance 1 vlan 10,20
+ instance 2 vlan 99
+</code></pre>
+<p>Per-instance tuning mirrors PVST+ (MST is fully tunable): <code>spanning-tree mst &lt;N&gt; cost &lt;c&gt;</code> and <code>spanning-tree mst &lt;N&gt; port-priority &lt;p&gt;</code> on interfaces.</p>
+<p>Note from outputs: MST uses <strong>long-mode costs</strong> (1 Gbps = 20000, not 4).</p>
+<h2>Verification</h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Look for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>show spanning-tree mst configuration</code></td>
+<td>Name, revision, instance/VLAN map — instance 0 shows "everything else" (e.g., 1-9,11-19,21-98,100-4094)</td>
+</tr>
+<tr>
+<td><code>show spanning-tree</code></td>
+<td>Sections per MST instance (MST0, MST1…); protocol shows <strong>mstp</strong>; priority = base + <strong>instance number</strong> as the sys-id-ext (24576 + instance 2 = 24578)</td>
+</tr>
+<tr>
+<td><code>show spanning-tree mst [N]</code></td>
+<td>Topology per instance WITH "vlans mapped" column — easiest troubleshooting view; root line says "this switch for the <strong>CIST</strong>" on instance 0</td>
+</tr>
+<tr>
+<td><code>show spanning-tree mst interface X</code></td>
+<td>Per-instance role/state on one port, plus edge/guard/BPDU filter/guard flags and <strong>Boundary</strong> status</td>
+</tr>
+</tbody>
+</table>
+<h2>The two classic MST misconfigurations</h2>
+<p><strong>1. User VLANs left on the IST.</strong> The IST spans every link in the region, so its topology is computed across ALL ports — including links you thought were dedicated to one VLAN. A VLAN mapped to instance 0 can end up blocked on the very access link it was supposed to use. Fixes: map user VLANs to a real MSTI, or allow IST VLANs on all inter-switch trunks.</p>
+<p><strong>2. Pruning trunk VLANs that splits an instance.</strong> The MSTI topology is computed per instance, not per VLAN. If you prune VLAN 20 off one trunk and VLAN 10 off another while both live in the same instance, the instance topology no longer matches where the VLANs can actually flow → blackholed traffic. <strong>Rule: prune all of an MSTI's VLANs together on a trunk, or none.</strong></p>
+<h2>Region boundary &amp; PVST+ interop</h2>
+<p>A <strong>boundary port</strong> connects to a different MST region or to a PVST+/RSTP (802.1D/802.1W) switch.</p>
+<ul>
+<li>Outbound: <strong>PVST simulation</strong> replicates the IST-derived BPDU into per-VLAN PVST+ BPDUs (one per VLAN), since PVST+ can't parse IST BPDUs.</li>
+<li>Inbound: only the <strong>VLAN 1</strong> PVST+ BPDU is mapped into the IST; the rest are ignored for topology math.</li>
+</ul>
+<p>Only two supported designs (all-or-nothing):</p>
+<table>
+<thead>
+<tr>
+<th>Design</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MST region is root for ALL VLANs</strong> (preferred)</td>
+<td>Region floods superior BPDUs for every VLAN; the external PVST+ switches do the blocking. External switch can still load-balance by tuning its per-VLAN uplink costs.</td>
+</tr>
+<tr>
+<td><strong>MST region is root for NO VLAN</strong></td>
+<td>Boundary ports block or forward <strong>for all VLANs as one</strong> — no per-VLAN load balancing possible, since everything rides the single IST view.</td>
+</tr>
+</tbody>
+</table>
+<p>The enforcement mechanism: if a boundary port hears a <strong>better BPDU for some specific VLAN</strong> (i.e., an in-between case), the <strong>PVST simulation check</strong> fails and the port is blocked (root-inconsistent style) to guarantee loop-freedom — even if that isolates downstream switches.</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>MST solves per-VLAN-group load balancing AND CPU/memory burden (DIKTA 1: A, B). VLANs map to <strong>instances</strong> (DIKTA 2).</li>
+<li>CST and 802.1D share the trait of <strong>one topology</strong> (DIKTA 3).</li>
+<li>VLAN-to-instance mappings are <strong>not advertised</strong> by the root — configure every switch (DIKTA 4: false).</li>
+<li>The revision number must <strong>match region-wide</strong> — it is not locally significant (DIKTA 5: false).</li>
+<li>MST is tunable like PVST+/RSTP — priority, cost, port-priority per instance (DIKTA 6: true).</li>
+<li>Interop is binary: region is root for <strong>all</strong> VLANs or the PVST+ side is root for <strong>all</strong> VLANs (DIKTA 7: A, C).</li>
+<li>Region trio: <strong>name + revision + mappings</strong>. Two of three matching = still two different regions.</li>
+<li>Instance 0 = IST, runs everywhere, carries everyone's BPDUs; "this switch for the CIST" in output = root of the inter-region tree.</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

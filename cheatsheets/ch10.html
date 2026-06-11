@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 10 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>OSPFv3</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 10 — OSPFv3</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Topic <strong>3.2.b</strong> names OSPFv3 directly ("configure simple OSPFv2/<strong>v3</strong> environments"). This chapter is mostly <em>deltas from OSPFv2</em> — same mechanics underneath (areas, SPF, DR/BDR, network types, timers), new plumbing on top. Learn the differences table and the config recipe.</p>
+<hr />
+<h2>What changed from OSPFv2 (the differences table)</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>OSPFv3 behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Address families</td>
+<td>Supports <strong>both IPv6 and IPv4</strong> (one protocol, two AFs)</td>
+</tr>
+<tr>
+<td>Prefix handling</td>
+<td>Addressing semantics REMOVED from packet headers — prefixes ride in LSA payloads; SPF is per <strong>link</strong>, not per subnet</td>
+</tr>
+<tr>
+<td>New/renamed LSAs</td>
+<td>Router LSA carries only interface type + metric. Prefixes move to two new LSAs: <strong>Link LSA</strong> (link-local info) and <strong>Intra-Area Prefix LSA</strong>. "Network summary" → <strong>inter-area prefix LSA</strong>; "ASBR summary" → <strong>inter-area router LSA</strong></td>
+</tr>
+<tr>
+<td>SPF impact</td>
+<td>Dijkstra examines only router/network LSAs → <strong>adding/changing an IP prefix no longer forces a full SPF run</strong></td>
+</tr>
+<tr>
+<td>Transport</td>
+<td>Runs directly over IPv6, still <strong>protocol 89</strong></td>
+</tr>
+<tr>
+<td>Adjacencies</td>
+<td>Formed over <strong>link-local addresses</strong> (FE80::/10); neighbors don't even need a shared global subnet; NBMA neighbors must be specified manually by link-local address</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>Stripped from OSPF itself — handled by <strong>IPsec extension headers</strong> in IPv6</td>
+</tr>
+<tr>
+<td>Router ID</td>
+<td>Still <strong>32-bit</strong>; with no IPv4 addresses on the box it becomes 0.0.0.0 and <strong>no adjacencies form</strong> — set it manually</td>
+</tr>
+<tr>
+<td>Instance ID</td>
+<td>New field; controls which routers on a segment may peer (and selects address family per RFC 5838)</td>
+</tr>
+<tr>
+<td>Flooding</td>
+<td>New link-state type field defines flooding scope + unknown-LSA handling</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Unchanged:</strong> five packet types, neighbor states, DR/BDR logic, network types, timers (10/40 broadcast &amp; p2p), area rules, cost.</p>
+<p><strong>Multicast:</strong> <strong>FF02::5</strong> AllSPFRouters (hellos, DR floods) and <strong>FF02::6</strong> AllDRouters — mirror images of 224.0.0.5/.6.</p>
+<h2>Configuration recipe</h2>
+<pre><code>ipv6 unicast-routing                  ! prerequisite
+router ospfv3 1
+ router-id 192.168.1.1                ! manual — mandatory on IPv6-only routers
+ address-family ipv6 unicast          ! optional; auto-created on first interface
+interface Gi0/1
+ ipv6 address 2001:db8:0:1::1/64
+ ospfv3 1 ipv6 area 0                 ! interface-level enablement — NO network statement
+</code></pre>
+<ul>
+<li><strong>There is no network statement in OSPFv3.</strong> Interface enablement only.</li>
+<li>Legacy syntax you may still see: <code>ipv6 router ospf</code> + <code>ipv6 ospf &lt;pid&gt; area &lt;id&gt;</code> — migrate to <code>ospfv3</code>.</li>
+<li>Passive interfaces: same commands (<code>passive-interface X</code>, <code>passive-interface default</code>, <code>no passive-interface Y</code>) under the process (cascades to both AFs) or under one address family.</li>
+</ul>
+<h2>Verification (swap <code>ip ospf</code> → <code>ospfv3</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neighbors</td>
+<td><code>show ospfv3 ipv6 neighbor</code></td>
+<td>Same Pri/State/Dead columns; <strong>Interface ID</strong> replaces neighbor IP</td>
+</tr>
+<tr>
+<td>Interface detail</td>
+<td><code>show ospfv3 interface [X]</code></td>
+<td>Shows link-local address, instance ID, network type, DR/BDR, timers; "No Hellos (Passive interface)" flags passive</td>
+</tr>
+<tr>
+<td>Interface summary</td>
+<td><code>show ospfv3 interface brief</code></td>
+<td>Adds an <strong>AF column</strong> (ipv4/ipv6) — dual-stack interfaces appear TWICE, once per AF</td>
+</tr>
+<tr>
+<td>Routes</td>
+<td><code>show ipv6 route ospf</code></td>
+<td><strong>O</strong> intra-area, <strong>OI</strong> inter-area, OE1/OE2 external; AD still 110; <strong>next hop = the neighbor's link-local (FE80::...)</strong>, not a global address</td>
+</tr>
+</tbody>
+</table>
+<h2>Summarization</h2>
+<ul>
+<li>Same rule as v2: internal summarization happens <strong>on ABRs</strong>.</li>
+<li>Config lives under the address family: <code>area &lt;id&gt; range &lt;prefix&gt;/&lt;length&gt;</code>.</li>
+<li>⚠ <strong>Hex trap:</strong> summarization math is binary/hex, not decimal. The hextet 2001 is 0x20 and 0x01 — don't treat "2001" like the decimal number two-thousand-one when picking a summary boundary (e.g., loopbacks ::1–::3 summarize at 2001:db8::/65).</li>
+</ul>
+<h2>Network types</h2>
+<p>Same five as OSPFv2, same defaults and timers. Change per interface: <code>ospfv3 network {point-to-point | broadcast}</code> — P2P skips DR election; <code>show ospfv3 interface brief</code> State column shows P2P.</p>
+<h2>IPv4 routing over OSPFv3 (RFC 5838 address families)</h2>
+<p>OSPFv3 can carry IPv4 routes — one protocol for both stacks. Instance IDs 64–95 are reserved for IPv4 (0–31 for IPv6).</p>
+<ol>
+<li>The interface needs an <strong>IPv6 address (at least link-local)</strong> — OSPFv3 packets are IPv6 even when carrying IPv4 routes — plus its IPv4 address.</li>
+<li>Enable per interface: <code>ospfv3 1 ipv4 area 0</code>.</li>
+</ol>
+<p>Verify: <code>show ip route ospfv3</code> (IPv4 RIB), <code>show ospfv3 neighbor</code> (separate ipv4 and ipv6 address-family sections — two adjacencies per neighbor when dual-stacked), <code>show ospfv3 interface brief</code> (entry per AF).</p>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>OSPFv3 keeps <strong>five</strong> packet types (DIKTA 1). Hellos target <strong>FF02::5</strong> (DIKTA 2).</li>
+<li>Enablement = interface command <strong><code>ospfv3 &lt;pid&gt; ipv6 area &lt;id&gt;</code></strong> — no network statements (DIKTA 3).</li>
+<li>Link-local + enablement is NOT sufficient on a fresh IPv6-only router — <strong>the RID must be set manually</strong> or adjacencies never form (DIKTA 4: false).</li>
+<li>IPv4-over-OSPFv3 needs more than an IPv4 address: the interface also needs an <strong>IPv6/link-local address</strong> because the protocol packets are IPv6 (DIKTA 5: false).</li>
+<li>Prefix changes don't trigger full SPF — topology (router/network LSAs) and prefixes (link/intra-area prefix LSAs) are decoupled.</li>
+<li>Routing table decoder: O vs <strong>OI</strong> (note: not "O IA" like v2), next hops are FE80:: link-locals.</li>
+<li>Neighbors can form adjacency without sharing a global subnet — link-local peering (contrast with v2's matching-subnet rule).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>

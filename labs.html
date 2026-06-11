@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Labs · ENCOR 350-401 Study App</title>
 <link rel="stylesheet" href="assets/app.css">
+<link rel="prefetch" href="quiz.html">
+<link rel="prefetch" href="flashcards.html">
+<link rel="prefetch" href="cheatsheets.html">
+<link rel="prefetch" href="infographics.html">
+<link rel="prefetch" href="labs.html">
+
 </head>
 <body>
 <div class="wrap">
@@ -23,16 +29,57 @@
 
   <div class="card">
     <h2 style="margin-bottom:6px;">Hands-On Labs</h2>
-    <p style="color:var(--muted); font-size:.92rem; margin-bottom:6px;"><span id="labCount"></span> custom CML labs with graded tasks and solutions, grouped by exam domain. Each lab opens a full guide; the YAML imports into your CML server.</p>
-    <div id="labList"></div>
+    <p style="color:var(--muted); font-size:.92rem; margin-bottom:6px;">36 custom CML labs with graded tasks and solutions, grouped by exam domain. Each lab opens a full guide; the YAML imports into your CML server.</p>
+    <div id="labList">
+      <div class="labSection">Architecture</div>
+      <div class="labRow"><div class="labTitle">Interpret QoS Configurations and Counters<br><span class="labId">ENCOR-QOS-INTERPRET</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-QOS-INTERPRET/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-QOS-INTERPRET.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Cisco Express Forwarding<br><span class="labId">KWT-CISCO-EXPRESS-FORWARDING</span></div><span class="labTasks">4 tasks</span><a class="labLink" href="labs/guides/KWT-CISCO-EXPRESS-FORWARDING/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-CISCO-EXPRESS-FORWARDING.yaml" download>CML YAML</a></div>
+      <div class="labSection">Layer 2</div>
+      <div class="labRow"><div class="labTitle">802.1Q Trunk Engineering and Verification<br><span class="labId">ENCOR-8021Q</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-8021Q/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-8021Q.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">EtherChannel Engineering: LACP, PAgP, and Bundle Troubleshooting<br><span class="labId">ENCOR-ETHERCHANNEL</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-ETHERCHANNEL/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-ETHERCHANNEL.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Spanning Tree Protocol<br><span class="labId">KWT-SPANNING-TREE-PROTOCOL</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/KWT-SPANNING-TREE-PROTOCOL/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-SPANNING-TREE-PROTOCOL.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">BPDU Guard<br><span class="labId">KWT-BPDU-GUARD</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-BPDU-GUARD/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-BPDU-GUARD.yaml" download>CML YAML</a></div>
+      <div class="labSection">Layer 3</div>
+      <div class="labRow"><div class="labTitle">OSPFv2 and OSPFv3 Foundations<br><span class="labId">ENCOR-OSPF-FOUNDATION</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-OSPF-FOUNDATION/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-OSPF-FOUNDATION.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">OSPFv2 Basic Configuration<br><span class="labId">KWT-OSPFV2-BASIC</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/KWT-OSPFV2-BASIC/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-OSPFV2-BASIC.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">OSPFv3 Traditional Configuration<br><span class="labId">KWT-OSPFV3-TRADITIONAL</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-OSPFV3-TRADITIONAL/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-OSPFV3-TRADITIONAL.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Multi-Area OSPF Summarization and Filtering<br><span class="labId">ENCOR-OSPF-MULTIAREA</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-OSPF-MULTIAREA/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-OSPF-MULTIAREA.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">OSPF Route Summarization<br><span class="labId">KWT-OSPF-ROUTE-SUMMARIZATION</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/KWT-OSPF-ROUTE-SUMMARIZATION/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-OSPF-ROUTE-SUMMARIZATION.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">OSPF Route Filtering<br><span class="labId">KWT-OSPF-ROUTE-FILTERING</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-OSPF-ROUTE-FILTERING/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-OSPF-ROUTE-FILTERING.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">OSPF Network Types and Passive-Interface Troubleshooting<br><span class="labId">ENCOR-OSPF-NETWORK-TYPES</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-OSPF-NETWORK-TYPES/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-OSPF-NETWORK-TYPES.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify eBGP<br><span class="labId">ENCOR-EBGP</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-EBGP/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-EBGP.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">BGP for IPv4<br><span class="labId">KWT-BGP-IPV4</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/KWT-BGP-IPV4/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-BGP-IPV4.yaml" download>CML YAML</a></div>
+      <div class="labSection">Virtualization</div>
+      <div class="labRow"><div class="labTitle">VRF-Lite Segmentation and Route Leaking<br><span class="labId">ENCOR-VRF</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-VRF/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-VRF.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">GRE Overlay Tunnels and Path Verification<br><span class="labId">ENCOR-GRE</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-GRE/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-GRE.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">IPsec Tunnel Policy and Verification<br><span class="labId">ENCOR-IPSEC</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-IPSEC/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-IPSEC.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">GRE over IPsec Transport Protection<br><span class="labId">ENCOR-GRE-IPSEC</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-GRE-IPSEC/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-GRE-IPSEC.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">GRE over IPsec Crypto Map<br><span class="labId">KWT-GRE-OVER-IPSEC</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/KWT-GRE-OVER-IPSEC/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-GRE-OVER-IPSEC.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">VRF, GRE, and IPsec Integrated Data Path<br><span class="labId">ENCOR-VRF-GRE-IPSEC</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-VRF-GRE-IPSEC/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-VRF-GRE-IPSEC.yaml" download>CML YAML</a></div>
+      <div class="labSection">IP Services</div>
+      <div class="labRow"><div class="labTitle">PIM Sparse Mode: Shared Tree, Register, and SPT Switchover<br><span class="labId">ENCOR-PIM-SPARSE-MODE</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-PIM-SPARSE-MODE/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-PIM-SPARSE-MODE.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Interpret Network Time<br><span class="labId">ENCOR-NETWORK-TIME</span></div><span class="labTasks">5 tasks</span><a class="labLink" href="labs/guides/ENCOR-NETWORK-TIME/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-NETWORK-TIME.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">NTP Security<br><span class="labId">KWT-NTP-SECURITY</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-NTP-SECURITY/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-NTP-SECURITY.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure NAT/PAT<br><span class="labId">ENCOR-NAT-PAT</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-NAT-PAT/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-NAT-PAT.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure First Hop Redundancy<br><span class="labId">ENCOR-FHRP</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-FHRP/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-FHRP.yaml" download>CML YAML</a></div>
+      <div class="labSection">Network Assurance</div>
+      <div class="labRow"><div class="labTitle">Configure and Verify Flexible NetFlow<br><span class="labId">ENCOR-FLEXIBLE-NETFLOW</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-FLEXIBLE-NETFLOW/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-FLEXIBLE-NETFLOW.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure SPAN/RSPAN/ERSPAN<br><span class="labId">ENCOR-SPAN-RSPAN-ERSPAN</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-SPAN-RSPAN-ERSPAN/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-SPAN-RSPAN-ERSPAN.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify IP SLA<br><span class="labId">ENCOR-IPSLA</span></div><span class="labTasks">7 tasks</span><a class="labLink" href="labs/guides/ENCOR-IPSLA/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-IPSLA.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">IP SLA Path Selection<br><span class="labId">KWT-IP-SLA-PATH-SELECTION</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-IP-SLA-PATH-SELECTION/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-IP-SLA-PATH-SELECTION.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">IP SLA Response Time Reporter<br><span class="labId">KWT-IP-SLA-RTR</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/KWT-IP-SLA-RTR/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/KWT-IP-SLA-RTR.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify NETCONF and RESTCONF<br><span class="labId">ENCOR-NETCONF-RESTCONF</span></div><span class="labTasks">7 tasks</span><a class="labLink" href="labs/guides/ENCOR-NETCONF-RESTCONF/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-NETCONF-RESTCONF.yaml" download>CML YAML</a></div>
+      <div class="labSection">Security</div>
+      <div class="labRow"><div class="labTitle">Configure and Verify Device Access Control<br><span class="labId">ENCOR-DEVICE-ACCESS</span></div><span class="labTasks">7 tasks</span><a class="labLink" href="labs/guides/ENCOR-DEVICE-ACCESS/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-DEVICE-ACCESS.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify AAA Device Access<br><span class="labId">ENCOR-AAA</span></div><span class="labTasks">7 tasks</span><a class="labLink" href="labs/guides/ENCOR-AAA/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-AAA.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify ACLs<br><span class="labId">ENCOR-ACL</span></div><span class="labTasks">7 tasks</span><a class="labLink" href="labs/guides/ENCOR-ACL/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-ACL.yaml" download>CML YAML</a></div>
+      <div class="labRow"><div class="labTitle">Configure and Verify CoPP<br><span class="labId">ENCOR-COPP</span></div><span class="labTasks">6 tasks</span><a class="labLink" href="labs/guides/ENCOR-COPP/index.html" target="_blank" rel="noopener">Open guide</a><a class="labLink" href="labs/cml/ENCOR-COPP.yaml" download>CML YAML</a></div>
+    </div>
   </div>
 
 
   <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
 </div>
-<script src="assets/data/labs.js"></script>
-<script src="assets/shared.js"></script>
-<script src="assets/labs.js"></script>
 <script>document.querySelector('nav.top a[data-page="labs"]').classList.add("active");</script>
 </body>
 </html>

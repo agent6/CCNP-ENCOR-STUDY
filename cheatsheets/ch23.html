@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 23 Cheat Sheet · ENCOR 350-401 Study App</title>
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="prefetch" href="../quiz.html">
+<link rel="prefetch" href="../flashcards.html">
+<link rel="prefetch" href="../cheatsheets.html">
+<link rel="prefetch" href="../infographics.html">
+<link rel="prefetch" href="../labs.html">
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a href="../index.html">ENCOR 350-401 <span>Study App</span></a></h1>
+    <p>Fabric Technologies: SD-Access &amp; Catalyst SD-WAN</p>
+  </header>
+  <nav class="top">
+    <a href="../index.html" data-page="home">Home</a>
+    <a href="../quiz.html" data-page="quiz">Quiz</a>
+    <a href="../flashcards.html" data-page="flashcards">Flashcards</a>
+    <a href="../cheatsheets.html" data-page="cheatsheets">Cheat Sheets</a>
+    <a href="../infographics.html" data-page="infographics">Infographics</a>
+    <a href="../labs.html" data-page="labs">Labs</a>
+  </nav>
+
+  <div class="topRow">
+    <span class="pill">Ch 23 — Fabric Technologies: SD-Access &amp; Catalyst SD-WAN</span>
+    <a class="btn secondary" style="padding:6px 14px; font-size:.85rem; text-decoration:none;" href="../cheatsheets.html">All cheat sheets</a>
+  </div>
+  <div class="card sheet">
+<p><strong>ENCOR v1.2 relevance:</strong> Two full exam topics — <strong>1.3 (Cisco SD-Access: control/data plane elements, traditional campus interop)</strong> and <strong>1.2 (Cisco Catalyst SD-WAN: control/data plane elements, benefits and limitations)</strong> — plus the workflow half of 4.5. ⚠ <strong>Naming:</strong> the book predates the rebrand — DNA Center = <strong>Catalyst Center</strong>, vManage = <strong>SD-WAN Manager</strong>, vBond = <strong>Validator</strong>, vSmart = <strong>Controller</strong>. Expect either name on the exam.</p>
+<hr />
+<h1>SD-Access (1.3)</h1>
+<p><strong>SD-Access = Campus Fabric + Catalyst Center.</strong> Same fabric managed by CLI/NETCONF-YANG instead = just "campus fabric." Designed for <strong>enterprise campus and branch ONLY</strong> (not DC/SP/WAN).</p>
+<p>Why: automation (one point of management), assurance/telemetry, <strong>wired + wireless host mobility</strong>, identity via ISE, <strong>group-based policy (SGACLs) instead of IP-based ACLs</strong>, segmentation, virtualization (VNs).</p>
+<h2>The three fabric planes (1.3.a — memorize)</h2>
+<table>
+<thead>
+<tr>
+<th>Plane</th>
+<th>Protocol</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Control</strong></td>
+<td><strong>LISP</strong></td>
+<td>Control plane node = <strong>MS/MR</strong> with a host-tracking database of EID→RLOC; routers query instead of holding every route; gives mobility + smaller tables</td>
+</tr>
+<tr>
+<td><strong>Data</strong></td>
+<td><strong>VXLAN (VXLAN-GPO)</strong></td>
+<td>MAC-in-IP/UDP — chosen over LISP encapsulation because LISP can't carry the <strong>Layer 2</strong> header. GPO variant adds the <strong>Group Policy ID field carrying the SGT</strong> (up to 64k tags) into the VXLAN header</td>
+</tr>
+<tr>
+<td><strong>Policy</strong></td>
+<td><strong>Cisco TrustSec (SGTs)</strong></td>
+<td>Policy follows the tag, not the IP; enforced anywhere; carried inline in VXLAN-GPO or via SXP outward</td>
+</tr>
+</tbody>
+</table>
+<h2>Architecture layers</h2>
+<p><strong>Physical</strong> (Catalyst switches, routers, WLCs+APs, Catalyst Center &amp; ISE appliances — no firewalls/IPS in the fabric architecture) → <strong>Network</strong> (underlay + overlay) → <strong>Controller</strong> (NCP automation + NDP analytics inside Catalyst Center, plus <strong>ISE</strong> for identity) → <strong>Management</strong> (GUI; Design/Policy/Provision/Assurance).</p>
+<p><strong>Underlay:</strong> recommended = <strong>Layer 3 routed access running IS-IS</strong> (no IP-dependent adjacencies, protocol-agnostic). Two models: <strong>manual</strong> (customizable, any IGP, supports legacy/3rd-party gear) vs <strong>automated</strong> (Catalyst Center <strong>LAN Automation</strong> + Plug and Play builds the IS-IS design hands-free; no customization).</p>
+<h2>Fabric roles</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Control plane node</strong></td>
+<td>LISP MS/MR; the EID→RLOC host database (size it for the whole fabric)</td>
+</tr>
+<tr>
+<td><strong>Border node</strong></td>
+<td>LISP <strong>PxTR</strong> to outside networks; types: <strong>internal</strong> (known company networks), <strong>default</strong> (unknown/Internet — default route), internal+default</td>
+</tr>
+<tr>
+<td><strong>Edge node</strong></td>
+<td>LISP xTR at access; <strong>802.1X onboarding, SGT assignment, anycast gateway</strong> (same SVI/IP everywhere), registers endpoint EIDs, VXLAN encap/decap</td>
+</tr>
+<tr>
+<td><strong>Fabric WLC</strong></td>
+<td>Sits outside the fabric; registers wireless EIDs on behalf of APs. <strong>Control plane stays centralized (CAPWAP to WLC), data plane is distributed — APs tunnel client data in VXLAN straight to the edge node</strong> (vs traditional CAPWAP hauling everything to the WLC)</td>
+</tr>
+<tr>
+<td>Intermediate node</td>
+<td>Underlay transport only</td>
+</tr>
+<tr>
+<td>Extended node</td>
+<td>Non-fabric access switch attached through automation</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key concepts:</strong> <strong>VN = VRF = macro-segmentation</strong>; <strong>SGT = micro-segmentation inside a VN</strong>; anycast gateway = seamless roaming. <strong>Traditional-campus interop (1.3.b): through the border node</strong> — typically with a fusion router/firewall leaking routes between fabric VNs and the legacy network.</p>
+<h2>Catalyst Center workflows (4.5)</h2>
+<p><strong>Design</strong> (site hierarchy, network settings/AAA/DHCP/DNS, image repository, profiles) → <strong>Policy</strong> (group-based access control = SGACLs via ISE, IP-based ACLs, application/QoS policy, traffic copy/ERSPAN, VNs) → <strong>Provision</strong> (assign devices to sites, create fabrics, set device roles, host onboarding) → <strong>Assurance</strong> (health dashboards, Client 360 / Device 360, proactive + reactive issues).</p>
+<hr />
+<h1>Catalyst SD-WAN (1.2)</h1>
+<p>Cloud-delivered overlay WAN (Viptela-based). <strong>Benefits (1.2.b):</strong> transport independence (<strong>any IP transport — Internet, MPLS, 3G/4G LTE, satellite</strong>), centralized config/policy from one GUI, app visibility with SLA-driven path control, end-to-end segmentation + encryption, seamless cloud/SaaS extension, lower cost. <strong>Limitations:</strong> controller dependency, Cisco-only fabric, overlay+underlay complexity, vEdge legacy platforms lack newer security features (URL filtering/IPS live in IOS XE containers on cEdge).</p>
+<h2>The four mandatory components (+1 optional)</h2>
+<table>
+<thead>
+<tr>
+<th>Component (new name)</th>
+<th>Plane</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vBond (Validator)</strong></td>
+<td>Orchestration</td>
+<td><strong>Authenticates every device (certificates/RSA) and orchestrates connectivity</strong> between edges, vSmart, vManage; <strong>NAT detection via STUN</strong>; load-balances controller assignments; permanent DTLS to every vSmart; reach it by FQDN for scale</td>
+</tr>
+<tr>
+<td><strong>vManage (SD-WAN Manager)</strong></td>
+<td>Management</td>
+<td><strong>Single pane of glass</strong> — device configs/templates, software upgrades, policy creation, REST APIs</td>
+</tr>
+<tr>
+<td><strong>vSmart (Controller)</strong></td>
+<td><strong>Control</strong></td>
+<td><strong>OMP over DTLS</strong> to edges: advertises routes, <strong>TLOCs</strong>, encryption keys, and policy; converts vManage policies and pushes them — no CLI per device. Does NOT forward user data</td>
+</tr>
+<tr>
+<td><strong>Edge devices</strong> (cEdge IOS XE; legacy vEdge)</td>
+<td><strong>Data</strong></td>
+<td>Build <strong>IPsec tunnels edge-to-edge</strong>, run BFD per tunnel, keep local smarts (OSPF/EIGRP/BGP, ACLs, QoS); DTLS+OMP up to vSmart</td>
+</tr>
+<tr>
+<td>vAnalytics (optional)</td>
+<td>Analytics</td>
+<td>WAN visibility, forecasting, what-if, carrier comparisons</td>
+</tr>
+</tbody>
+</table>
+<p>⚠ Connection decoder: <strong>vSmart↔edge = DTLS carrying OMP (control). Edge↔edge = IPsec (data).</strong> vSmart does not form IPsec tunnels to edges.</p>
+<h2>Policy &amp; path intelligence</h2>
+<ul>
+<li><strong>Local policy</strong> (pushed to the device: ACLs, QoS, routing) vs <strong>centralized policy</strong> (lives on vSmart): <strong>topology</strong>, <strong>VPN membership</strong>, <strong>application-aware routing (AAR)</strong>, <strong>traffic data</strong> policies.</li>
+<li><strong>AAR:</strong> per-tunnel <strong>BFD probes measure loss/latency/jitter</strong>; traffic steered app-by-app to whichever transport meets the app's SLA — automatic re-path on brownouts/soft failures.</li>
+<li><strong>Cloud OnRamp (CoR):</strong></li>
+<li><strong>SaaS:</strong> edge sends <strong>HTTP probes</strong> toward the SaaS app (no far-end edge for BFD); paths scored by <strong>vQoE 0–10</strong>; modes: DIA site (local Internet exits), gateway site (compare local DIA vs fabric-to-hub path via OMP-shared stats), client site (private transports only — pick the best gateway).</li>
+<li><strong>IaaS:</strong> SD-WAN <strong>cloud routers</strong> instantiated in AWS VPCs / Azure VNETs extend the fabric, segmentation, and QoS into public cloud over any transport (including DX/ER dedicated circuits).</li>
+</ul>
+<h2>Exam-day nuggets</h2>
+<ul>
+<li>SD-Access trio: <strong>LISP control / VXLAN-GPO data / TrustSec policy</strong>; VXLAN won the data plane because it carries L2 + the SGT.</li>
+<li>Control plane node answers "where is this host?"; border = PxTR to the outside (internal vs default); edge = anycast gateway + 802.1X + EID registration; fabric wireless = <strong>centralized control, distributed VXLAN data</strong>.</li>
+<li>SD-Access is for <strong>campus + branch</strong> only; the architecture parts list includes WLCs, APs, switches, routers, ISE, Catalyst Center — <strong>not firewalls/IPS</strong>.</li>
+<li>SD-WAN mandatory four: <strong>vManage, vSmart, vBond, edge devices</strong> (vAnalytics optional). vManage = single pane of glass. vBond = authenticate + orchestrate (incl. NAT/STUN).</li>
+<li>OMP advertises <strong>routes, TLOCs, keys, policy</strong>. Any IP transport works — "Internet or MPLS only" is false.</li>
+<li>Underlay best practice: routed access + <strong>IS-IS</strong>; LAN Automation = the automated underlay.</li>
+<li>Interop answer for 1.3.b: border node (+ fusion device for VRF route leaking).</li>
+</ul>
+  </div>
+
+
+  <footer>Pair with the book's DIKTA quizzes &amp; Pearson Test Prep exams · Good luck on exam day!</footer>
+</div>
+<script>document.querySelector('nav.top a[data-page="cheatsheets"]').classList.add("active");</script>
+</body>
+</html>
